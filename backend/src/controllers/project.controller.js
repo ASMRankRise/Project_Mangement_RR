@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Project = require("../models/Project");
 const User = require("../models/User");
-const Task = require("../models/task.model");
+const Task = require("../models/Task");
 const getCurrentUser = async (userId) => {
   if (!mongoose.isValidObjectId(userId)) return null;
 
