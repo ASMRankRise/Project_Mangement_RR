@@ -9,7 +9,7 @@ import {
 import api from "../services/api";
 
 const AuthContext = createContext(null);
-const LOGOUT_KEY = "auth_logout_event";
+const CHANNEL_NAME = "auth-channel";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -17,9 +17,6 @@ export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
-
-  const getUserId = (authenticatedUser) =>
-    authenticatedUser?._id || authenticatedUser?.id || null;
 
   const checkAuth = useCallback(async () => {
     try {
@@ -36,14 +33,15 @@ export function AuthProvider({ children }) {
         response = await api.get("/auth/me");
       }
 
-      const authenticatedUser = response.data.user || null;
-      setUser(authenticatedUser);
+      setUser(response.data.user || null);
+      return response.data.user || null;
     } catch (error) {
       if (error.response?.status !== 401) {
         console.error("Session check failed:", error);
       }
 
       setUser(null);
+      return null;
     } finally {
       setAuthChecking(false);
     }
@@ -54,20 +52,26 @@ export function AuthProvider({ children }) {
   }, [checkAuth]);
 
   useEffect(() => {
-    const handleStorage = (event) => {
-      if (event.key === LOGOUT_KEY && event.newValue) {
+    const channel = new BroadcastChannel(CHANNEL_NAME);
+
+    channel.onmessage = async (event) => {
+      if (event.data?.type === "logout") {
         setUser(null);
         setAuthError("");
         setAuthSuccess("");
       }
-    };
 
-    window.addEventListener("storage", handleStorage);
+      if (event.data?.type === "login") {
+        setAuthError("");
+        setAuthSuccess("");
+        await checkAuth();
+      }
+    };
 
     return () => {
-      window.removeEventListener("storage", handleStorage);
+      channel.close();
     };
-  }, []);
+  }, [checkAuth]);
 
   const authenticate = async (mode, payload) => {
     setAuthError("");
@@ -88,6 +92,11 @@ export function AuthProvider({ children }) {
       const authenticatedUser = response.data.user;
 
       setUser(authenticatedUser);
+
+      const channel = new BroadcastChannel(CHANNEL_NAME);
+      channel.postMessage({ type: "login" });
+      channel.close();
+
       return authenticatedUser;
     } catch (error) {
       setAuthError(
@@ -116,11 +125,9 @@ export function AuthProvider({ children }) {
       setAuthSuccess("");
       setAuthLoading(false);
 
-      try {
-        localStorage.setItem(LOGOUT_KEY, String(Date.now()));
-      } catch (error) {
-        console.error("Could not notify other tabs:", error);
-      }
+      const channel = new BroadcastChannel(CHANNEL_NAME);
+      channel.postMessage({ type: "logout" });
+      channel.close();
     }
   };
 
