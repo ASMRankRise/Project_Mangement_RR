@@ -22,7 +22,7 @@ const taskSchema = new mongoose.Schema(
     priority: {
       type: String,
       enum: ["low", "medium", "high"],
-      default: "medium",
+      default: "low",
     },
 
     project: {
@@ -31,7 +31,6 @@ const taskSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Multiple users can be assigned to one task
     assignedTo: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -74,11 +74,11 @@ function TasksPage({ user }) {
 
         <TaskFilters
           search={taskState.search}
-          onSearchChange={handleSearchChange}
+          setSearch={handleSearchChange}
           statusFilter={taskState.statusFilter}
-          onStatusFilterChange={handleStatusFilterChange}
+          setStatusFilter={handleStatusFilterChange}
           priorityFilter={taskState.priorityFilter}
-          onPriorityFilterChange={handlePriorityFilterChange}
+          setPriorityFilter={handlePriorityFilterChange}
         />
 
         <TaskList

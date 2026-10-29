@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Project = require("../models/Project");
 const User = require("../models/User");
-
+const Task = require("../models/task.model");
 const getCurrentUser = async (userId) => {
   if (!mongoose.isValidObjectId(userId)) return null;
 
@@ -200,10 +200,14 @@ const deleteProject = async (req, res) => {
       });
     }
 
+    await Task.deleteMany({
+      project: project._id,
+    });
+
     await project.deleteOne();
 
     return res.status(200).json({
-      message: "Project deleted successfully",
+      message: "Project and its tasks deleted successfully",
     });
   } catch (error) {
     console.error("Delete project error:", error);

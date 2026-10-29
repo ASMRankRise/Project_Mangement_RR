@@ -3,7 +3,7 @@ const Project = require("../models/Project");
 const User = require("../models/User");
 const mongoose = require("mongoose");
 
-const validStatuses = ["todo", "in-progress", "completed"];
+const validStatuses = ["todo", "in-progress", "completed", "testing", "done"];
 const validPriorities = ["low", "medium", "high"];
 
 const getCurrentUser = async (userId) => {
@@ -95,7 +95,6 @@ const createTask = async (req, res) => {
       }
     }
 
-    // Assignment is mandatory
     if (
       assignToAll !== true &&
       (!Array.isArray(assignedTo) || assignedTo.length === 0)
@@ -105,7 +104,6 @@ const createTask = async (req, res) => {
       });
     }
 
-    // Owner + project members are eligible assignees
     const eligibleIds = [
       foundProject.owner.toString(),
       ...foundProject.members.map((id) => id.toString()),
@@ -206,7 +204,9 @@ const getTasks = async (req, res) => {
     const currentUser = await getCurrentUser(userId);
 
     if (!currentUser) {
-      return res.status(401).json({ message: "User not found" });
+      return res.status(401).json({
+        message: "User not found",
+      });
     }
 
     const {
@@ -249,16 +249,17 @@ const getTasks = async (req, res) => {
         $in: projects.map((item) => item._id),
       };
 
-      // Member ko sirf apne assigned tasks dikhaye jaate hain
-      filter.assignedTo = userId;
+      if (assignedTo && assignedTo !== userId.toString()) {
+        return res.status(403).json({
+          message: "You can only view your own assigned tasks",
+        });
+      }
+    } else if (assignedTo) {
+      filter.assignedTo = assignedTo;
     }
 
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
-
-    if (assignedTo) {
-      filter.assignedTo = assignedTo;
-    }
 
     if (search && search.trim()) {
       const escapedSearch = search
@@ -269,8 +270,18 @@ const getTasks = async (req, res) => {
         ...(filter.$and || []),
         {
           $or: [
-            { title: { $regex: escapedSearch, $options: "i" } },
-            { description: { $regex: escapedSearch, $options: "i" } },
+            {
+              title: {
+                $regex: escapedSearch,
+                $options: "i",
+              },
+            },
+            {
+              description: {
+                $regex: escapedSearch,
+                $options: "i",
+              },
+            },
           ],
         },
       ];
