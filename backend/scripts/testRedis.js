@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-const redis = require("./config/redis");
+const redis = require("../src/config/redis");
 
 async function pingRedis() {
   try {
