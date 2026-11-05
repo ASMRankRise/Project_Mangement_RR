@@ -11,7 +11,7 @@ const {
   deleteTask,
 } = require("../controllers/task.controller");
 
-router.post("/", authMiddleware, requireRole("admin"), createTask);
+router.post("/", authMiddleware, createTask);
 
 router.get("/", authMiddleware, getTasks);
 

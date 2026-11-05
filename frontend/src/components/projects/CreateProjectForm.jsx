@@ -10,20 +10,27 @@ function CreateProjectForm({ onCreate, loading = false, error, success }) {
     e.preventDefault();
     setValidationError("");
 
-    if (!name.trim()) {
-      setValidationError("Project name is required.");
+    const trimmedName = name.trim();
+
+    if (trimmedName.length < 3 || trimmedName.length > 50) {
+      setValidationError("Project name must be between 3 and 50 characters.");
       return;
     }
 
-    if (name.trim().length > 100) {
-      setValidationError("Project name cannot exceed 100 characters.");
+    if (!/^[\p{L}\p{N}][\p{L}\p{N}\s_-]*$/u.test(trimmedName)) {
+      setValidationError("Project name contains invalid characters.");
+      return;
+    }
+
+    if (description.trim().length > 500) {
+      setValidationError("Description cannot exceed 500 characters.");
       return;
     }
 
     if (loading || !onCreate) return;
 
     try {
-      const created = await onCreate(name.trim(), description.trim());
+      const created = await onCreate(trimmedName, description.trim());
 
       if (created) {
         setName("");
@@ -49,7 +56,7 @@ function CreateProjectForm({ onCreate, loading = false, error, success }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Project name"
-          maxLength={100}
+          maxLength={50}
           required
           className="w-full rounded-xl border border-white/10 bg-[#090d19] px-4 py-3 outline-none focus:border-indigo-500"
         />
@@ -59,6 +66,7 @@ function CreateProjectForm({ onCreate, loading = false, error, success }) {
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Project description"
           rows={3}
+          maxLength={500}
           className="w-full rounded-xl border border-white/10 bg-[#090d19] px-4 py-3 outline-none focus:border-indigo-500"
         />
 

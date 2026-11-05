@@ -51,7 +51,7 @@ function ProjectsPage({ user }) {
     <div className="space-y-8 text-white">
       <h1 className="text-3xl font-bold">Projects</h1>
 
-      {user?.role === "admin" && (
+      {user && (
         <section className="space-y-4 rounded-xl border border-white/10 bg-white/5 p-5">
           <h2 className="text-xl font-semibold">Create Project</h2>
 

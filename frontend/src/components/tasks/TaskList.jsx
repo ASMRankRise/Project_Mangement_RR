@@ -1,6 +1,5 @@
 import TaskCard from "./TaskCard";
-import Pagination from "./Pagination";
-
+import Pagination from "../common/Pagination";
 function TaskList({
   tasks = [],
   projects = [],
@@ -56,7 +55,6 @@ function TaskList({
           total={total}
           loading={loading}
           onPageChange={onPageChange}
-          
         />
       )}
     </section>

@@ -1,48 +1,76 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import api from "../services/api";
 
 function useTasks(user) {
+  const userId = user?._id || user?.id || user?.userId;
+
   const [tasks, setTasks] = useState([]);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [priorityFilter, setPriorityFilter] = useState("");
-  const [page, setPage] = useState(1);
+  const [search, setSearchValue] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilterValue] = useState("");
+  const [priorityFilter, setPriorityFilterValue] = useState("");
+  const [page, setPageValue] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const requestId = useRef(0);
+
+  useEffect(() => {
+    requestId.current += 1;
+
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  const setSearch = (value) => {
+    setSearchValue(value);
+    setPageValue(1);
+  };
+
+  const setStatusFilter = (value) => {
+    setStatusFilterValue(value);
+    setPageValue(1);
+  };
+
+  const setPriorityFilter = (value) => {
+    setPriorityFilterValue(value);
+    setPageValue(1);
+  };
+
+  const setPage = (value) => {
+    setPageValue((currentPage) =>
+      typeof value === "function" ? value(currentPage) : value,
+    );
+  };
+
   const fetchTasks = useCallback(async () => {
-    if (!user) {
-      setTasks([]);
-      setTotal(0);
-      setTotalPages(1);
-      return false;
+    if (!userId) return false;
+
+    const currentRequestId = ++requestId.current;
+
+    const params = { page, limit: 5 };
+
+    if (debouncedSearch.trim()) {
+      params.search = debouncedSearch.trim();
     }
 
+    if (statusFilter) params.status = statusFilter;
+    if (priorityFilter) params.priority = priorityFilter;
+
+    setLoading(true);
+    setError("");
+
     try {
-      setLoading(true);
-      setError("");
-
-      const params = {
-        page,
-        limit: 5,
-      };
-
-      if (search.trim()) {
-        params.search = search.trim();
-      }
-
-      if (statusFilter) {
-        params.status = statusFilter;
-      }
-
-      if (priorityFilter) {
-        params.priority = priorityFilter;
-      }
-
       const response = await api.get("/tasks", { params });
+
+      if (currentRequestId !== requestId.current) return false;
+
       const data = response.data;
 
       setTasks(data.tasks || []);
@@ -51,17 +79,17 @@ function useTasks(user) {
 
       return true;
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch tasks.");
+      if (currentRequestId === requestId.current) {
+        setError(err.response?.data?.message || "Failed to fetch tasks.");
+      }
 
       return false;
     } finally {
-      setLoading(false);
+      if (currentRequestId === requestId.current) {
+        setLoading(false);
+      }
     }
-  }, [user, page, search, statusFilter, priorityFilter]);
-
-  useEffect(() => {
-    void fetchTasks();
-  }, [fetchTasks]);
+  }, [userId, page, debouncedSearch, statusFilter, priorityFilter]);
 
   const createTask = async (payload) => {
     setError("");
@@ -69,19 +97,11 @@ function useTasks(user) {
 
     try {
       await api.post("/tasks", payload);
-
       setSuccess("Task created successfully!");
-
-      if (page !== 1) {
-        setPage(1);
-      } else {
-        await fetchTasks();
-      }
-
+      await fetchTasks();
       return true;
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create task.");
-
       return false;
     }
   };
@@ -92,14 +112,11 @@ function useTasks(user) {
 
     try {
       await api.patch(`/tasks/${taskId}`, changes);
-
       setSuccess("Task updated successfully!");
       await fetchTasks();
-
       return true;
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update task.");
-
       return false;
     }
   };
@@ -110,11 +127,10 @@ function useTasks(user) {
 
     try {
       await api.delete(`/tasks/${taskId}`);
-
       setSuccess("Task deleted successfully!");
 
       if (tasks.length === 1 && page > 1) {
-        setPage((currentPage) => currentPage - 1);
+        setPageValue((currentPage) => currentPage - 1);
       } else {
         await fetchTasks();
       }
@@ -122,7 +138,6 @@ function useTasks(user) {
       return true;
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete task.");
-
       return false;
     }
   };

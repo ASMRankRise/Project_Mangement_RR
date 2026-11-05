@@ -8,68 +8,63 @@ function useProjects() {
   const [success, setSuccess] = useState("");
 
   const fetchProjects = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
     try {
-      setLoading(true);
-      setError("");
-
       const response = await api.get("/projects");
-      const projectData = response.data.projects || [];
-
-      setProjects(projectData);
+      setProjects(response.data.projects || []);
       return true;
     } catch (err) {
       setError(err.response?.data?.message || "Failed to fetch projects.");
-
       return false;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const createProject = async (name, description = "") => {
-    setError("");
-    setSuccess("");
+  const createProject = useCallback(
+    async (name, description = "") => {
+      setError("");
+      setSuccess("");
 
-    if (typeof name !== "string" || !name.trim()) {
-      setError("Project name is required.");
-      return false;
-    }
-
-    if (name.trim().length > 100) {
-      setError("Project name cannot exceed 100 characters.");
-      return false;
-    }
-
-    if (typeof description !== "string") {
-      setError("Project description must be text.");
-      return false;
-    }
-
-    try {
-      setLoading(true);
-
-      await api.post("/projects", {
-        name: name.trim(),
-        description: description.trim(),
-      });
-
-      const refreshed = await fetchProjects();
-
-      if (!refreshed) {
-        setSuccess("Project created, but refreshing the list failed.");
-        return true;
+      if (typeof name !== "string" || !name.trim()) {
+        setError("Project name is required.");
+        return false;
       }
 
-      setSuccess("Project created successfully!");
-      return true;
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to create project.");
+      if (name.trim().length > 100) {
+        setError("Project name cannot exceed 100 characters.");
+        return false;
+      }
 
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (typeof description !== "string") {
+        setError("Project description must be text.");
+        return false;
+      }
+
+      try {
+        await api.post("/projects", {
+          name: name.trim(),
+          description: description.trim(),
+        });
+
+        const refreshed = await fetchProjects();
+
+        if (!refreshed) {
+          setSuccess("Project created, but refreshing the list failed.");
+          return true;
+        }
+
+        setSuccess("Project created successfully!");
+        return true;
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to create project.");
+        return false;
+      }
+    },
+    [fetchProjects],
+  );
 
   return {
     projects,

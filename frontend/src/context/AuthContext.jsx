@@ -10,6 +10,7 @@ import api from "../services/api";
 
 const AuthContext = createContext(null);
 const CHANNEL_NAME = "auth-channel";
+let authRequest = null;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -18,33 +19,38 @@ export function AuthProvider({ children }) {
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
 
-  const checkAuth = useCallback(async () => {
-    try {
-      let response;
+  const checkAuth = useCallback(() => {
+    if (authRequest) return authRequest;
 
+    authRequest = (async () => {
       try {
-        response = await api.get("/auth/me");
-      } catch (error) {
-        if (error.response?.status !== 401) {
-          throw error;
+        let response;
+
+        try {
+          response = await api.get("/auth/me");
+        } catch (error) {
+          if (error.response?.status !== 401) throw error;
+
+          await api.post("/auth/refresh");
+          response = await api.get("/auth/me");
         }
 
-        await api.post("/auth/refresh");
-        response = await api.get("/auth/me");
-      }
+        setUser(response.data.user);
+        return response.data.user || null;
+      } catch (error) {
+        if (error.response?.status !== 401) {
+          console.error("Session check failed:", error);
+        }
 
-      setUser(response.data.user || null);
-      return response.data.user || null;
-    } catch (error) {
-      if (error.response?.status !== 401) {
-        console.error("Session check failed:", error);
+        setUser(null);
+        return null;
+      } finally {
+        setAuthChecking(false);
+        authRequest = null;
       }
+    })();
 
-      setUser(null);
-      return null;
-    } finally {
-      setAuthChecking(false);
-    }
+    return authRequest;
   }, []);
 
   useEffect(() => {
@@ -68,9 +74,7 @@ export function AuthProvider({ children }) {
       }
     };
 
-    return () => {
-      channel.close();
-    };
+    return () => channel.close();
   }, [checkAuth]);
 
   const authenticate = async (mode, payload) => {
@@ -80,15 +84,13 @@ export function AuthProvider({ children }) {
 
     try {
       const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
-
-      await api.post(endpoint, payload);
+      const response = await api.post(endpoint, payload);
 
       if (mode === "register") {
         setAuthSuccess("Registration successful. Please log in.");
         return true;
       }
 
-      const response = await api.get("/auth/me");
       const authenticatedUser = response.data.user;
 
       setUser(authenticatedUser);
@@ -118,7 +120,6 @@ export function AuthProvider({ children }) {
       await api.post("/auth/logout");
     } catch (error) {
       console.error("Logout API failed:", error);
-
       setAuthError(error.response?.data?.message || "Logout request failed.");
     } finally {
       setUser(null);

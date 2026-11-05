@@ -10,17 +10,11 @@ function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 
-function CreateTaskForm({
-  projects = [],
-  onCreate,
-  loading = false,
-  error,
-  success,
-}) {
+function CreateTaskForm({ projects = [], onCreate, loading = false }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [project, setProject] = useState("");
-  const [priority, setPriority] = useState("medium");
+  const [priority, setPriority] = useState("low");
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState(getTodayDate());
   const [validationError, setValidationError] = useState("");
@@ -88,7 +82,7 @@ function CreateTaskForm({
         setTitle("");
         setDescription("");
         setProject("");
-        setPriority("medium");
+        setPriority("low");
         setAssignedTo("");
         setDueDate(getTodayDate());
         setValidationError("");
@@ -209,8 +203,7 @@ function CreateTaskForm({
           </div>
 
           <div className="space-y-3 sm:col-span-2">
-            <Alert message={validationError || error} />
-            <Alert message={success} type="success" />
+            <Alert message={validationError} />
 
             <button
               type="submit"

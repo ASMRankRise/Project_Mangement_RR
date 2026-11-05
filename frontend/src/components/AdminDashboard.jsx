@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../services/api";
 
 import useProjects from "../hooks/useProjects";
@@ -12,9 +12,11 @@ import TaskFilters from "./tasks/TaskFilters";
 import TaskList from "./tasks/TaskList";
 
 import Alert from "./common/Alert";
-import Loading from "./common/Loading";
 
 function AdminDashboard({ user }) {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardError, setDashboardError] = useState("");
+
   const {
     projects,
     loading: projectsLoading,
@@ -28,10 +30,63 @@ function AdminDashboard({ user }) {
 
   const taskState = useTasks(user);
 
-  // Fetch projects when the admin dashboard mounts.
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const response = await api.get("/dashboard");
+      setDashboardData(response.data);
+      setDashboardError("");
+    } catch (err) {
+      setDashboardError(
+        err.response?.data?.message || "Failed to fetch dashboard data.",
+      );
+    }
+  }, []);
+
   useEffect(() => {
+    fetchDashboard();
     fetchProjects();
-  }, [fetchProjects]);
+    taskState.fetchTasks();
+  }, [fetchDashboard, fetchProjects, taskState.fetchTasks]);
+
+  const handleCreateProject = async (name, description) => {
+    const created = await createProject(name, description);
+
+    if (created) {
+      await fetchDashboard();
+    }
+
+    return created;
+  };
+
+  const handleCreateTask = async (payload) => {
+    const created = await taskState.createTask(payload);
+
+    if (created) {
+      await fetchDashboard();
+    }
+
+    return created;
+  };
+
+  const handleUpdateTask = async (taskId, changes) => {
+    const updated = await taskState.updateTask(taskId, changes);
+
+    if (updated) {
+      await fetchDashboard();
+    }
+
+    return updated;
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    const deleted = await taskState.deleteTask(taskId);
+
+    if (deleted) {
+      await fetchDashboard();
+    }
+
+    return deleted;
+  };
 
   const handleDeleteProject = async (projectId) => {
     const confirmed = window.confirm(
@@ -48,8 +103,11 @@ function AdminDashboard({ user }) {
 
       setProjectSuccess("Project deleted successfully.");
 
-      await fetchProjects();
-      await taskState.fetchTasks();
+      await Promise.all([
+        fetchProjects(),
+        taskState.fetchTasks(),
+        fetchDashboard(),
+      ]);
     } catch (err) {
       setProjectError(
         err.response?.data?.message || "Failed to delete project.",
@@ -59,22 +117,15 @@ function AdminDashboard({ user }) {
 
   const handleSearchChange = (value) => {
     taskState.setSearch(value);
-    taskState.setPage(1);
   };
 
   const handleStatusFilterChange = (value) => {
     taskState.setStatusFilter(value);
-    taskState.setPage(1);
   };
 
   const handlePriorityFilterChange = (value) => {
     taskState.setPriorityFilter(value);
-    taskState.setPage(1);
   };
-
-  if (projectsLoading && projects.length === 0) {
-    return <Loading message="Loading projects..." />;
-  }
 
   return (
     <div className="space-y-8">
@@ -83,9 +134,11 @@ function AdminDashboard({ user }) {
         <p className="text-gray-400">Manage projects and tasks.</p>
       </div>
 
+      {dashboardError && <Alert message={dashboardError} />}
+
       <SummaryCards
-        projectCount={projects.length}
-        taskCount={taskState.total}
+        projectCount={dashboardData?.summary?.totalProjects ?? 0}
+        taskCount={dashboardData?.summary?.totalTasks ?? 0}
         user={user}
       />
 
@@ -96,10 +149,10 @@ function AdminDashboard({ user }) {
         <Alert message={projectSuccess} type="success" />
 
         <CreateProjectForm
-          onCreate={createProject}
+          onCreate={handleCreateProject}
           loading={projectsLoading}
-          error={projectError}
-          success={projectSuccess}
+          error=""
+          success=""
         />
       </section>
 
@@ -123,7 +176,7 @@ function AdminDashboard({ user }) {
 
         <CreateTaskForm
           projects={projects}
-          onCreate={taskState.createTask}
+          onCreate={handleCreateTask}
           loading={taskState.loading}
           error=""
           success=""
@@ -151,8 +204,8 @@ function AdminDashboard({ user }) {
           total={taskState.total}
           loading={taskState.loading}
           onPageChange={taskState.setPage}
-          onUpdate={taskState.updateTask}
-          onDelete={taskState.deleteTask}
+          onUpdate={handleUpdateTask}
+          onDelete={handleDeleteTask}
         />
       </section>
     </div>

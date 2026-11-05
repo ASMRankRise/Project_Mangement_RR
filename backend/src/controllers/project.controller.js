@@ -2,28 +2,19 @@ const mongoose = require("mongoose");
 const Project = require("../models/Project");
 const User = require("../models/User");
 const Task = require("../models/Task");
-const getCurrentUser = async (userId) => {
-  if (!mongoose.isValidObjectId(userId)) return null;
 
-  return User.findById(userId).select("role");
-};
+const redis = require("../config/redis");
 
+const {
+  invalidateProjectRelatedCaches,
+  PROJECT_CACHE_VERSION_KEY,
+} = require("../utils/cache");
+
+// Create Project
 const createProject = async (req, res) => {
   try {
-    const currentUser = await getCurrentUser(req.user.userId);
-
-    if (!currentUser) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    if (currentUser.role !== "admin") {
-      return res.status(403).json({
-        message: "Only Admin can create projects",
-      });
-    }
-
-    // Allow only name and description
     const allowedFields = ["name", "description"];
+
     const extraFields = Object.keys(req.body).filter(
       (key) => !allowedFields.includes(key),
     );
@@ -37,7 +28,6 @@ const createProject = async (req, res) => {
 
     const { name, description } = req.body;
 
-    // Validate name
     if (typeof name !== "string" || !name.trim()) {
       return res.status(400).json({
         message: "Project name is required",
@@ -58,7 +48,6 @@ const createProject = async (req, res) => {
       });
     }
 
-    // Validate description
     if (description !== undefined && typeof description !== "string") {
       return res.status(400).json({
         message: "Description must be a string",
@@ -85,6 +74,8 @@ const createProject = async (req, res) => {
       { path: "members", select: "name email" },
     ]);
 
+    await invalidateProjectRelatedCaches();
+
     return res.status(201).json({
       message: "Project created successfully",
       project,
@@ -98,16 +89,35 @@ const createProject = async (req, res) => {
   }
 };
 
+// Get Projects with Redis Cache
 const getProjects = async (req, res) => {
   try {
-    const currentUser = await getCurrentUser(req.user.userId);
+    let version = 0;
 
-    if (!currentUser) {
-      return res.status(401).json({ message: "User not found" });
+    try {
+      version = await redis.get(PROJECT_CACHE_VERSION_KEY);
+    } catch (redisError) {
+      console.error("Redis version error:", redisError);
     }
 
+    const cacheKey = `projects:v${version}:user:${req.user.userId}:role:${req.user.role}`;
+
+    try {
+      const cachedProjects = await redis.get(cacheKey);
+
+      if (cachedProjects !== null) {
+        console.log("Projects fetched from Redis");
+
+        return res.status(200).json(cachedProjects);
+      }
+    } catch (redisError) {
+      console.error("Redis cache read error:", redisError);
+    }
+
+    console.log("Projects fetched from MongoDB");
+
     const filter =
-      currentUser.role === "admin"
+      req.user.role === "admin"
         ? {}
         : {
             $or: [{ owner: req.user.userId }, { members: req.user.userId }],
@@ -118,10 +128,24 @@ const getProjects = async (req, res) => {
       .populate("members", "name email")
       .sort({ createdAt: -1 });
 
-    return res.status(200).json({
+    const responseData = {
       count: projects.length,
       projects,
-    });
+    };
+
+    try {
+      const latestVersion = await redis.get(PROJECT_CACHE_VERSION_KEY);
+
+      if (Number(version) === Number(latestVersion)) {
+        await redis.set(cacheKey, responseData, {
+          ex: 60,
+        });
+      }
+    } catch (redisError) {
+      console.error("Redis cache write error:", redisError);
+    }
+
+    return res.status(200).json(responseData);
   } catch (error) {
     console.error("Get projects error:", error);
 
@@ -131,6 +155,7 @@ const getProjects = async (req, res) => {
   }
 };
 
+// Update Project
 const updateProject = async (req, res) => {
   try {
     const project = req.project;
@@ -163,6 +188,8 @@ const updateProject = async (req, res) => {
       { path: "members", select: "name email" },
     ]);
 
+    await invalidateProjectRelatedCaches();
+
     return res.status(200).json({
       message: "Project updated successfully",
       project,
@@ -176,17 +203,10 @@ const updateProject = async (req, res) => {
   }
 };
 
+// Delete Project
 const deleteProject = async (req, res) => {
   try {
-    const currentUser = await getCurrentUser(req.user.userId);
-
-    if (!currentUser) {
-      return res.status(401).json({
-        message: "User not found",
-      });
-    }
-
-    if (currentUser.role !== "admin") {
+    if (req.user.role !== "admin") {
       return res.status(403).json({
         message: "Only Admin can delete projects",
       });
@@ -206,6 +226,8 @@ const deleteProject = async (req, res) => {
 
     await project.deleteOne();
 
+    await invalidateProjectRelatedCaches();
+
     return res.status(200).json({
       message: "Project and its tasks deleted successfully",
     });
@@ -218,6 +240,7 @@ const deleteProject = async (req, res) => {
   }
 };
 
+// Add Project Member
 const addProjectMember = async (req, res) => {
   try {
     const project = req.project;
@@ -252,12 +275,15 @@ const addProjectMember = async (req, res) => {
     }
 
     project.members.push(user._id);
+
     await project.save();
 
     await project.populate([
       { path: "owner", select: "name email" },
       { path: "members", select: "name email" },
     ]);
+
+    await invalidateProjectRelatedCaches();
 
     return res.status(200).json({
       message: "Project member added successfully",
@@ -272,6 +298,7 @@ const addProjectMember = async (req, res) => {
   }
 };
 
+// Remove Project Member
 const removeProjectMember = async (req, res) => {
   try {
     const project = req.project;
@@ -307,6 +334,8 @@ const removeProjectMember = async (req, res) => {
       { path: "owner", select: "name email" },
       { path: "members", select: "name email" },
     ]);
+
+    await invalidateProjectRelatedCaches();
 
     return res.status(200).json({
       message: "Project member removed successfully",

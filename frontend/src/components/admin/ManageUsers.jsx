@@ -15,9 +15,9 @@ function ManageUsers() {
 
     try {
       const response = await api.get("/admin/users");
-      setUsers(response.data.users || []);
+      setUsers(response.data.users);
     } catch (err) {
-      setError(err.response?.data?.message || "Could not load users.");
+      setError(err.response?.data?.message);
     } finally {
       setLoading(false);
     }

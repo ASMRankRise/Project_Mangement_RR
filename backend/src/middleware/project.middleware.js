@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const Project = require("../models/Project");
-const User = require("../models/User");
 
 const requireProjectOwner = async (req, res, next) => {
   try {
@@ -20,15 +19,7 @@ const requireProjectOwner = async (req, res, next) => {
       });
     }
 
-    const user = await User.findById(req.user.userId).select("role");
-
-    if (!user) {
-      return res.status(401).json({
-        message: "User not found",
-      });
-    }
-
-    const isAdmin = user.role === "admin";
+    const isAdmin = req.user.role === "admin";
     const isOwner = project.owner.toString() === req.user.userId;
 
     if (!isAdmin && !isOwner) {

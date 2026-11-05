@@ -10,16 +10,12 @@ function TaskCard({ task, projects = [], user, onUpdate, onDelete }) {
     typeof value === "object" && value !== null ? value._id || value.id : value;
 
   const currentUserId = String(getId(user) || "");
-  const ownerId = String(getId(task.project?.owner) || "");
 
-  // Support both the new array format and old single-user format.
   const assignedUsers = Array.isArray(task.assignedTo)
     ? task.assignedTo
     : task.assignedTo
       ? [task.assignedTo]
       : [];
-
-  const isProjectOwner = currentUserId !== "" && currentUserId === ownerId;
 
   const isAssignedToMe =
     currentUserId !== "" &&
@@ -27,14 +23,20 @@ function TaskCard({ task, projects = [], user, onUpdate, onDelete }) {
       (member) => String(getId(member) || "") === currentUserId,
     );
 
-  const canManageTask = isAdmin || isProjectOwner;
-  const canUpdateStatus = canManageTask || isAssignedToMe;
-
   const projectId = getId(task.project);
 
   const project = projects.find(
     (item) => String(getId(item)) === String(projectId),
   );
+
+  const projectOwnerId = String(getId(project?.owner) || "");
+
+  const isProjectOwner =
+    currentUserId !== "" && projectOwnerId === currentUserId;
+
+  const canManageTask = isAdmin;
+
+  const canUpdateStatus = canManageTask || isProjectOwner || isAssignedToMe;
 
   const assignedNames = assignedUsers
     .map((member) => {
@@ -42,7 +44,6 @@ function TaskCard({ task, projects = [], user, onUpdate, onDelete }) {
         return member.name || member.email || null;
       }
 
-      // An ID alone is not enough to display a member's name.
       return null;
     })
     .filter(Boolean);

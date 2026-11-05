@@ -11,6 +11,7 @@ import AdminDashboard from "./components/AdminDashboard";
 import UserDashboard from "./components/UserDashboard";
 import ProjectsPage from "./components/pages/ProjectsPage";
 import TasksPage from "./components/pages/TasksPage";
+import ManageUsers from "./components/admin/ManageUsers";
 
 function App() {
   const { user, authChecking, logout } = useAuth();
@@ -52,6 +53,16 @@ function App() {
           <ProtectedRoute role="admin">
             <DashboardLayout>
               <AdminDashboard user={user} />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute role="admin">
+            <DashboardLayout>
+              <ManageUsers />
             </DashboardLayout>
           </ProtectedRoute>
         }

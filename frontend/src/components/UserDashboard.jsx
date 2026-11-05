@@ -1,4 +1,6 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+import api from "../services/api";
 
 import useProjects from "../hooks/useProjects";
 import useTasks from "../hooks/useTasks";
@@ -7,9 +9,12 @@ import ProjectList from "./projects/ProjectList";
 import TaskFilters from "./tasks/TaskFilters";
 import TaskList from "./tasks/TaskList";
 import Alert from "./common/Alert";
-import Loading from "./common/Loading";
 
 function UserDashboard({ user }) {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState("");
+
   const {
     projects,
     loading: projectsLoading,
@@ -19,30 +24,51 @@ function UserDashboard({ user }) {
 
   const taskState = useTasks(user);
 
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+  const fetchDashboard = useCallback(async () => {
+    try {
+      setDashboardLoading(true);
+      setDashboardError("");
 
-  const firstName = user?.name?.trim()?.split(/\s+/)[0] || "there";
+      const response = await api.get("/dashboard");
+      setDashboardData(response.data);
+    } catch (err) {
+      setDashboardError(
+        err.response?.data?.message || "Failed to load dashboard data.",
+      );
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboard();
+    fetchProjects();
+    taskState.fetchTasks();
+  }, [fetchDashboard, fetchProjects, taskState.fetchTasks]);
+
+  const handleUpdateTask = async (taskId, changes) => {
+    const updated = await taskState.updateTask(taskId, changes);
+
+    if (updated) {
+      await fetchDashboard();
+    }
+
+    return updated;
+  };
 
   const handleSearchChange = (value) => {
     taskState.setSearch(value);
-    taskState.setPage(1);
   };
 
   const handleStatusFilterChange = (value) => {
     taskState.setStatusFilter(value);
-    taskState.setPage(1);
   };
 
   const handlePriorityFilterChange = (value) => {
     taskState.setPriorityFilter(value);
-    taskState.setPage(1);
   };
 
-  if (projectsLoading && projects.length === 0) {
-    return <Loading message="Loading your dashboard..." />;
-  }
+  const firstName = user?.name?.trim()?.split(/\s+/)[0] || "there";
 
   return (
     <div className="min-h-screen space-y-10 bg-[#080b16] text-white">
@@ -64,15 +90,34 @@ function UserDashboard({ user }) {
           forward.
         </p>
 
+        <Alert message={dashboardError} />
+
         <div className="mt-6 flex flex-wrap gap-3">
           <div className="rounded-xl border border-white/10 bg-black/10 px-4 py-3">
             <p className="text-xs text-slate-400">Accessible Projects</p>
-            <p className="mt-1 text-xl font-bold">{projects.length}</p>
+            <p className="mt-1 text-xl font-bold">
+              {dashboardLoading
+                ? "..."
+                : (dashboardData?.summary?.totalProjects ?? 0)}
+            </p>
           </div>
 
           <div className="rounded-xl border border-white/10 bg-black/10 px-4 py-3">
-            <p className="text-xs text-slate-400">Matching Tasks</p>
-            <p className="mt-1 text-xl font-bold">{taskState.total}</p>
+            <p className="text-xs text-slate-400">Accessible Tasks</p>
+            <p className="mt-1 text-xl font-bold">
+              {dashboardLoading
+                ? "..."
+                : (dashboardData?.summary?.totalTasks ?? 0)}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-black/10 px-4 py-3">
+            <p className="text-xs text-slate-400">Assigned Tasks</p>
+            <p className="mt-1 text-xl font-bold">
+              {dashboardLoading
+                ? "..."
+                : (dashboardData?.summary?.assignedTasks ?? 0)}
+            </p>
           </div>
         </div>
       </header>
@@ -138,7 +183,7 @@ function UserDashboard({ user }) {
               total={taskState.total}
               loading={taskState.loading}
               onPageChange={taskState.setPage}
-              onUpdate={taskState.updateTask}
+              onUpdate={handleUpdateTask}
               onDelete={taskState.deleteTask}
             />
           </div>

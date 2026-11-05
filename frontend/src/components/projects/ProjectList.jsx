@@ -13,6 +13,12 @@ function ProjectList({
   const [addingProject, setAddingProject] = useState(null);
   const [deletingProject, setDeletingProject] = useState(null);
   const [removingMember, setRemovingMember] = useState(null);
+  const [editingProject, setEditingProject] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+  });
+  const [updatingProject, setUpdatingProject] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -20,6 +26,46 @@ function ProjectList({
 
   const getId = (value) =>
     typeof value === "object" && value !== null ? value._id || value.id : value;
+
+  const isProjectOwner = (project) =>
+    String(getId(project.owner)) === String(user?._id || user?.id);
+
+  const canManageProject = (project) => isAdmin || isProjectOwner(project);
+
+  const handleEditProject = (project) => {
+    setEditingProject(getId(project));
+    setEditForm({
+      name: project.name || "",
+      description: project.description || "",
+    });
+    setError("");
+    setSuccess("");
+  };
+
+  const handleUpdateProject = async (e, projectId) => {
+    e.preventDefault();
+
+    setError("");
+    setSuccess("");
+
+    try {
+      setUpdatingProject(true);
+
+      await api.patch(`/projects/${projectId}`, {
+        name: editForm.name,
+        description: editForm.description,
+      });
+
+      setSuccess("Project updated successfully.");
+      setEditingProject(null);
+
+      await onRefresh?.();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to update project.");
+    } finally {
+      setUpdatingProject(false);
+    }
+  };
 
   const handleAddMember = async (projectId) => {
     const email = (emails[projectId] || "").trim().toLowerCase();
@@ -88,15 +134,10 @@ function ProjectList({
   const handleDeleteProject = async (projectId) => {
     if (!onDeleteProject || deletingProject !== null) return;
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this project? This action cannot be undone.",
-    );
-
-    if (!confirmed) return;
-
     setError("");
     setSuccess("");
     setDeletingProject(projectId);
+    
 
     try {
       const deleted = await onDeleteProject(projectId);
@@ -179,6 +220,71 @@ function ProjectList({
                       {new Date(project.createdAt).toLocaleDateString()}
                     </p>
                   )}
+
+                  {canManageProject(project) && (
+                    <button
+                      type="button"
+                      onClick={() => handleEditProject(project)}
+                      className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                    >
+                      Edit Project
+                    </button>
+                  )}
+
+                  {editingProject === projectId && (
+                    <form
+                      onSubmit={(e) => handleUpdateProject(e, projectId)}
+                      className="mt-4 space-y-3"
+                    >
+                      <input
+                        type="text"
+                        required
+                        minLength={3}
+                        maxLength={50}
+                        value={editForm.name}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
+                        placeholder="Project name"
+                        className="w-full rounded-xl border border-white/10 bg-[#090d19] px-3 py-3 text-sm text-white"
+                      />
+
+                      <textarea
+                        maxLength={500}
+                        value={editForm.description}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
+                        placeholder="Project description"
+                        className="w-full rounded-xl border border-white/10 bg-[#090d19] px-3 py-3 text-sm text-white"
+                      />
+
+                      <div className="flex gap-2">
+                        <button
+                          type="submit"
+                          disabled={updatingProject}
+                          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                        >
+                          {updatingProject ? "Saving..." : "Save Changes"}
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={updatingProject}
+                          onClick={() => setEditingProject(null)}
+                          className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -234,7 +340,7 @@ function ProjectList({
                               {memberName}
                             </span>
 
-                            {isAdmin && !isOwner && (
+                            {canManageProject(project) && !isOwner && (
                               <button
                                 type="button"
                                 onClick={() =>
@@ -258,7 +364,7 @@ function ProjectList({
                   )}
                 </div>
 
-                {isAdmin && (
+                {canManageProject(project) && (
                   <div className="mt-5 space-y-3 border-t border-white/10 pt-4">
                     <form
                       onSubmit={(e) => {

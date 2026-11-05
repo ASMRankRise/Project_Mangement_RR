@@ -1,35 +1,48 @@
 const Task = require("../models/Task");
+
 const Project = require("../models/Project");
+
 const User = require("../models/User");
+
 const mongoose = require("mongoose");
 
 const validStatuses = ["todo", "in-progress", "completed", "testing", "done"];
+
 const validPriorities = ["low", "medium", "high"];
 
-const getCurrentUser = async (userId) => {
-  if (!mongoose.isValidObjectId(userId)) return null;
-  return User.findById(userId).select("role");
-};
+const crypto = require("crypto");
+
+const redis = require("../config/redis");
+
+const {
+  TASK_CACHE_VERSION_KEY,
+
+  invalidateTaskRelatedCaches,
+} = require("../utils/cache");
 
 // CREATE TASK
+
 // Admin, project owner, or project member
+
 const createTask = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const currentUser = await getCurrentUser(userId);
-
-    if (!currentUser) {
-      return res.status(401).json({ message: "User not found" });
-    }
+    const { userId, role } = req.user;
 
     const {
       title,
+
       description,
+
       status,
+
       priority,
+
       project: projectId,
+
       assignedTo,
+
       assignToAll,
+
       dueDate,
     } = req.body;
 
@@ -53,25 +66,33 @@ const createTask = async (req, res) => {
       });
     }
 
-    const isAdmin = currentUser.role === "admin";
+    const isAdmin = role === "admin";
     const isOwner = foundProject.owner.toString() === userId.toString();
+    const isProjectOwnerOfAnotherProject = await Project.exists({
+      owner: userId,
+      _id: { $ne: foundProject._id },
+    });
 
-    const isMember = foundProject.members.some(
-      (id) => id.toString() === userId.toString(),
-    );
+    if (!isAdmin && !isOwner) {
+      if (isProjectOwnerOfAnotherProject) {
+        return res.status(403).json({
+          message: "You can create tasks only in your own projects",
+        });
+      }
 
-    if (!isAdmin && !isOwner && !isMember) {
       return res.status(403).json({
-        message: "You can only create tasks in your projects",
+        message: "Only Admin or Project Owner can create tasks",
       });
     }
 
     const taskStatus = status ?? "todo";
-    const taskPriority = priority ?? "medium";
+
+    const taskPriority = priority ?? "low";
 
     if (!validStatuses.includes(taskStatus)) {
       return res.status(400).json({
         message: "Invalid status",
+
         allowed: validStatuses,
       });
     }
@@ -79,6 +100,7 @@ const createTask = async (req, res) => {
     if (!validPriorities.includes(taskPriority)) {
       return res.status(400).json({
         message: "Invalid priority",
+
         allowed: validPriorities,
       });
     }
@@ -106,6 +128,7 @@ const createTask = async (req, res) => {
 
     const eligibleIds = [
       foundProject.owner.toString(),
+
       ...foundProject.members.map((id) => id.toString()),
     ];
 
@@ -169,23 +192,35 @@ const createTask = async (req, res) => {
 
     const task = await Task.create({
       title: title.trim(),
+
       description: typeof description === "string" ? description.trim() : "",
+
       status: taskStatus,
+
       priority: taskPriority,
+
       project: foundProject._id,
+
       assignedTo: assignedUserIds,
+
       createdBy: userId,
+
       dueDate: parsedDueDate,
     });
 
     await task.populate([
       { path: "project", select: "name" },
+
       { path: "assignedTo", select: "name email" },
+
       { path: "createdBy", select: "name email" },
     ]);
 
+    await invalidateTaskRelatedCaches();
+
     return res.status(201).json({
       message: "Task created successfully",
+
       task,
     });
   } catch (error) {
@@ -198,29 +233,28 @@ const createTask = async (req, res) => {
 };
 
 // GET TASKS
+
 const getTasks = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const currentUser = await getCurrentUser(userId);
-
-    if (!currentUser) {
-      return res.status(401).json({
-        message: "User not found",
-      });
-    }
-
+    const { userId, role } = req.user;
     const {
       status,
+
       priority,
+
       search,
+
       assignedTo,
+
       page = 1,
+
       limit = 10,
     } = req.query;
 
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({
         message: "Invalid status",
+
         allowed: validStatuses,
       });
     }
@@ -228,6 +262,7 @@ const getTasks = async (req, res) => {
     if (priority && !validPriorities.includes(priority)) {
       return res.status(400).json({
         message: "Invalid priority",
+
         allowed: validPriorities,
       });
     }
@@ -240,7 +275,7 @@ const getTasks = async (req, res) => {
 
     const filter = {};
 
-    if (currentUser.role !== "admin") {
+    if (role !== "admin") {
       const projects = await Project.find({
         $or: [{ owner: userId }, { members: userId }],
       }).select("_id");
@@ -259,26 +294,33 @@ const getTasks = async (req, res) => {
     }
 
     if (status) filter.status = status;
+
     if (priority) filter.priority = priority;
 
     if (search && search.trim()) {
       const escapedSearch = search
+
         .trim()
+
         .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
       filter.$and = [
         ...(filter.$and || []),
+
         {
           $or: [
             {
               title: {
                 $regex: escapedSearch,
+
                 $options: "i",
               },
             },
+
             {
               description: {
                 $regex: escapedSearch,
+
                 $options: "i",
               },
             },
@@ -288,28 +330,106 @@ const getTasks = async (req, res) => {
     }
 
     const pageNumber = Math.max(Number(page) || 1, 1);
+
     const limitNumber = Math.min(Math.max(Number(limit) || 10, 1), 100);
+
     const skip = (pageNumber - 1) * limitNumber;
+
+    const cacheParams = {
+      userId: userId.toString(),
+
+      role: role,
+
+      status: status || "",
+
+      priority: priority || "",
+
+      search: search?.trim() || "",
+
+      assignedTo: assignedTo || "",
+
+      page: pageNumber,
+
+      limit: limitNumber,
+    };
+
+    const cacheHash = crypto
+
+      .createHash("sha256")
+
+      .update(JSON.stringify(cacheParams))
+
+      .digest("hex");
+
+    let cacheKey = null;
+
+    let cacheVersion = null;
+
+    try {
+      cacheVersion = (await redis.get(TASK_CACHE_VERSION_KEY)) ?? 0;
+
+      cacheKey = `tasks:v${cacheVersion}:user:${userId}:role:${role}:${cacheHash}`;
+
+      const cachedTasks = await redis.get(cacheKey);
+
+      if (cachedTasks !== null) {
+        console.log("Tasks fetched from Redis");
+
+        return res.status(200).json(cachedTasks);
+      }
+
+      console.log("Tasks cache miss");
+    } catch (error) {
+      console.error("Tasks Redis cache read error:", error);
+
+      cacheKey = null;
+    }
 
     const [tasks, totalTasks] = await Promise.all([
       Task.find(filter)
+
         .populate("project", "name")
+
         .populate("assignedTo", "name email")
+
         .populate("createdBy", "name email")
+
         .sort({ createdAt: -1 })
+
         .skip(skip)
+
         .limit(limitNumber),
 
       Task.countDocuments(filter),
     ]);
 
-    return res.status(200).json({
+    const responseData = {
       count: tasks.length,
+
       totalTasks,
+
       currentPage: pageNumber,
+
       totalPages: Math.ceil(totalTasks / limitNumber),
+
       tasks,
-    });
+    };
+
+    if (cacheKey) {
+      try {
+        const latestVersion = (await redis.get(TASK_CACHE_VERSION_KEY)) ?? 0;
+
+        if (String(latestVersion) === String(cacheVersion)) {
+          await redis.set(cacheKey, responseData, {
+            ex: 60,
+          });
+        }
+      } catch (error) {
+        console.error("Tasks Redis cache write error:", error);
+      }
+    }
+
+    return res.status(200).json(responseData);
   } catch (error) {
     console.error("Get tasks error:", error);
 
@@ -320,14 +440,10 @@ const getTasks = async (req, res) => {
 };
 
 // UPDATE TASK
+
 const updateTask = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const currentUser = await getCurrentUser(userId);
-
-    if (!currentUser) {
-      return res.status(401).json({ message: "User not found" });
-    }
+    const { userId, role } = req.user;
 
     const { taskId } = req.params;
 
@@ -347,23 +463,22 @@ const updateTask = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    const isAdmin = currentUser.role === "admin";
+    const isAdmin = role === "admin";
+    const isProjectOwner = project.owner.toString() === userId.toString();
+
     const isAssignedUser = task.assignedTo.some(
       (id) => id.toString() === userId.toString(),
     );
 
-    if (!isAdmin) {
-      const isProjectMember =
-        project.owner.toString() === userId.toString() ||
-        project.members.some((id) => id.toString() === userId.toString());
-
-      if (!isProjectMember || !isAssignedUser) {
+    if (!isAdmin && !isProjectOwner) {
+      if (!isAssignedUser) {
         return res.status(403).json({
           message: "You can only update tasks assigned to you",
         });
       }
 
       const keys = Object.keys(req.body);
+
       const onlyStatus =
         keys.length === 1 &&
         keys[0] === "status" &&
@@ -484,6 +599,8 @@ const updateTask = async (req, res) => {
 
     await task.save();
 
+    await invalidateTaskRelatedCaches();
+
     await task.populate([
       { path: "project", select: "name" },
       { path: "assignedTo", select: "name email" },
@@ -504,16 +621,10 @@ const updateTask = async (req, res) => {
 };
 
 // DELETE TASK: ADMIN ONLY
+
 const deleteTask = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const currentUser = await getCurrentUser(userId);
-
-    if (!currentUser) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    if (currentUser.role !== "admin") {
+    if (req.user.role !== "admin") {
       return res.status(403).json({
         message: "Only Admin can delete tasks",
       });
@@ -522,16 +633,22 @@ const deleteTask = async (req, res) => {
     const { taskId } = req.params;
 
     if (!mongoose.isValidObjectId(taskId)) {
-      return res.status(400).json({ message: "Invalid task ID" });
+      return res.status(400).json({
+        message: "Invalid task ID",
+      });
     }
 
     const task = await Task.findById(taskId);
 
     if (!task) {
-      return res.status(404).json({ message: "Task not found" });
+      return res.status(404).json({
+        message: "Task not found",
+      });
     }
 
     await task.deleteOne();
+
+    await invalidateTaskRelatedCaches();
 
     return res.status(200).json({
       message: "Task deleted successfully",
@@ -547,7 +664,10 @@ const deleteTask = async (req, res) => {
 
 module.exports = {
   createTask,
+
   getTasks,
+
   updateTask,
+
   deleteTask,
 };

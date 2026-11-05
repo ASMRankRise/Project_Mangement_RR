@@ -7,7 +7,6 @@ import CreateTaskForm from "../tasks/CreateTaskForm";
 import TaskFilters from "../tasks/TaskFilters";
 import TaskList from "../tasks/TaskList";
 import Alert from "../common/Alert";
-import Loading from "../common/Loading";
 
 function TasksPage({ user }) {
   const {
@@ -19,49 +18,40 @@ function TasksPage({ user }) {
 
   const taskState = useTasks(user);
 
-  // Projects are needed for the Create Task project's dropdown.
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
+  useEffect(() => {
+    taskState.fetchTasks();
+  }, [taskState.fetchTasks]);
+
   const handleSearchChange = (value) => {
     taskState.setSearch(value);
-    taskState.setPage(1);
   };
 
   const handleStatusFilterChange = (value) => {
     taskState.setStatusFilter(value);
-    taskState.setPage(1);
   };
 
   const handlePriorityFilterChange = (value) => {
     taskState.setPriorityFilter(value);
-    taskState.setPage(1);
   };
-
-  if (projectsLoading && projects.length === 0) {
-    return <Loading message="Loading tasks..." />;
-  }
 
   return (
     <div className="space-y-8 text-white">
       <h1 className="text-3xl font-bold">Tasks</h1>
-
-      {user?.role === "admin" && (
-        <section className="space-y-4 rounded-xl border border-white/10 bg-white/5 p-5">
-          <h2 className="text-xl font-semibold">Create Task</h2>
-
-          <Alert type="error" message={taskState.error} />
-          <Alert type="success" message={taskState.success} />
-
-          <CreateTaskForm
-            projects={projects}
-            onCreate={taskState.createTask}
-            loading={taskState.loading || projectsLoading}
-            error=""
-            success=""
-          />
-        </section>
+      {(user?.role === "admin" ||
+        projects.some(
+          (project) =>
+            String(project.owner?._id || project.owner) ===
+            String(user?._id || user?.id),
+        )) && (
+        <CreateTaskForm
+          projects={projects}
+          onCreate={taskState.createTask}
+          loading={taskState.loading || projectsLoading}
+        />
       )}
 
       <Alert type="error" message={projectError} />

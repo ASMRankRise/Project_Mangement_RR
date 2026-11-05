@@ -1,39 +1,19 @@
-const User = require("../models/User");
-
 const requireRole = (...allowedRoles) => {
-  return async (req, res, next) => {
-    try {
-      if (!req.user || !req.user.userId) {
-        return res.status(401).json({
-          message: "Please login first",
-        });
-      }
-
-      // Get the latest role from database
-      const user = await User.findById(req.user.userId).select("role");
-
-      if (!user) {
-        return res.status(401).json({
-          message: "User not found",
-        });
-      }
-
-      if (!allowedRoles.includes(user.role)) {
-        return res.status(403).json({
-          message: "You are not allowed to access this resource",
-        });
-      }
-
-      req.user.role = user.role;
-
-      next();
-    } catch (error) {
-      console.error("Role middleware error:", error);
-
-      return res.status(500).json({
-        message: "Server error while checking role",
+  return (req, res, next) => {
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({
+        message: "Please login first",
       });
     }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      //get from the auth middleware req.user.role
+      return res.status(403).json({
+        message: "You are not allowed to access this resource",
+      });
+    }
+
+    next();
   };
 };
 
