@@ -1,23 +1,38 @@
-function Alert({ message, type = "error" }) {
+import Icon from "./Icons";
+
+export function Alert({ message, type = "error" }) {
   if (!message) return null;
 
   const styles = {
-    success: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
-    error: "bg-red-500/10 text-red-300 border-red-500/20",
-    warning: "bg-amber-500/10 text-amber-300 border-amber-500/20",
-    info: "bg-blue-500/10 text-blue-300 border-blue-500/20",
+    success: {
+      box: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
+      icon: "checkCircle",
+    },
+    error: {
+      box: "bg-rose-500/10 text-rose-300 border-rose-500/20",
+      icon: "alertCircle",
+    },
+    warning: {
+      box: "bg-amber-500/10 text-amber-300 border-amber-500/20",
+      icon: "alertCircle",
+    },
+    info: {
+      box: "bg-sky-500/10 text-sky-300 border-sky-500/20",
+      icon: "alertCircle",
+    },
   };
 
-  const alertStyle = styles[type] || styles.error;
+  const current = styles[type] || styles.error;
 
   return (
-    <p
+    <div
       role={type === "success" ? "status" : "alert"}
       aria-live={type === "success" ? "polite" : "assertive"}
-      className={`rounded-lg border p-3 text-sm ${alertStyle}`}
+      className={`flex items-start gap-2.5 rounded-xl border p-3.5 text-xs font-medium leading-relaxed ${current.box} animate-in fade-in duration-200`}
     >
-      {message}
-    </p>
+      <Icon name={current.icon} className="h-4 w-4 shrink-0 mt-0.5" />
+      <span className="flex-1">{message}</span>
+    </div>
   );
 }
 

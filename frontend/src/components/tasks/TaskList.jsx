@@ -1,40 +1,49 @@
 import TaskCard from "./TaskCard";
+import KanbanBoard from "./KanbanBoard";
 import Pagination from "../common/Pagination";
-function TaskList({
+import Icon from "../common/Icons";
+
+export function TaskList({
   tasks = [],
   projects = [],
   user,
   page,
   totalPages = 1,
   total = 0,
-  loading,
+  loading = false,
   onPageChange,
   onUpdate,
   onDelete,
+  viewMode = "kanban",
 }) {
-  const isAdmin = user?.role === "admin";
-
   return (
-    <section className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-semibold">
-          {isAdmin ? "All Tasks" : "My Tasks"}
-        </h2>
-
-        <span className="text-sm text-gray-400">Total Tasks: {total}</span>
-      </div>
-
-      {loading ? (
-        <p className="py-6 text-center text-gray-400">Loading tasks...</p>
+    <div className="space-y-4">
+      {/* Loading state */}
+      {loading && tasks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-16 text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+          <p className="mt-3 text-xs text-slate-400">Loading task pipeline...</p>
+        </div>
       ) : tasks.length === 0 ? (
-        <div className="rounded-lg border border-gray-700 p-6 text-center">
-          <p className="text-gray-300">No tasks found.</p>
-          <p className="mt-1 text-sm text-gray-500">
-            Try changing your search or filters.
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-12 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400">
+            <Icon name="tasks" className="h-7 w-7" />
+          </div>
+          <h3 className="mt-4 text-base font-bold text-white">No tasks match criteria</h3>
+          <p className="mt-1 max-w-sm text-xs text-slate-400">
+            No work items match your current filter parameters or search query.
           </p>
         </div>
+      ) : viewMode === "kanban" ? (
+        <KanbanBoard
+          tasks={tasks}
+          projects={projects}
+          user={user}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+        />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {tasks.map((task) => (
             <TaskCard
               key={task._id || task.id}
@@ -48,16 +57,24 @@ function TaskList({
         </div>
       )}
 
+      {/* Pagination Bar */}
       {!loading && totalPages > 1 && (
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          total={total}
-          loading={loading}
-          onPageChange={onPageChange}
-        />
+        <div className="flex items-center justify-between border-t border-white/10 pt-4">
+          <span className="text-xs text-slate-400">
+            Showing page <strong className="text-white">{page}</strong> of{" "}
+            <strong className="text-white">{totalPages}</strong> ({total} total tasks)
+          </span>
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            loading={loading}
+            onPageChange={onPageChange}
+          />
+        </div>
       )}
-    </section>
+    </div>
   );
 }
 
