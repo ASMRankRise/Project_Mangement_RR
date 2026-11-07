@@ -19,8 +19,6 @@ function useTasks(user) {
   const requestId = useRef(0);
 
   useEffect(() => {
-    requestId.current += 1;
-
     const timeout = setTimeout(() => {
       setDebouncedSearch(search);
     }, 500);
@@ -49,12 +47,13 @@ function useTasks(user) {
     );
   };
 
-  const fetchTasks = useCallback(async () => {
+  const fetchTasks = useCallback(async (customPage) => {
     if (!userId) return false;
 
     const currentRequestId = ++requestId.current;
+    const targetPage = typeof customPage === "number" ? customPage : page;
 
-    const params = { page, limit: 5 };
+    const params = { page: targetPage, limit: 5 };
 
     if (debouncedSearch.trim()) {
       params.search = debouncedSearch.trim();
@@ -130,7 +129,9 @@ function useTasks(user) {
       setSuccess("Task deleted successfully!");
 
       if (tasks.length === 1 && page > 1) {
-        setPageValue((currentPage) => currentPage - 1);
+        const prevPage = page - 1;
+        setPageValue(prevPage);
+        await fetchTasks(prevPage);
       } else {
         await fetchTasks();
       }

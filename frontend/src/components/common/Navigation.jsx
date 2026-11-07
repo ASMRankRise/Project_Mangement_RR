@@ -4,6 +4,7 @@
     const links = [
       { to: "/dashboard", label: "Dashboard", roles: ["user"] },
       { to: "/admin", label: "Admin", roles: ["admin"] },
+      { to: "/admin/users", label: "Manage Users", roles: ["admin"] },
       { to: "/projects", label: "Projects", roles: ["user", "admin"] },
       { to: "/tasks", label: "Tasks", roles: ["user", "admin"] },
     ];

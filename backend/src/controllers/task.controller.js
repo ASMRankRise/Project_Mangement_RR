@@ -52,6 +52,18 @@ const createTask = async (req, res) => {
       });
     }
 
+    if (title.trim().length > 150) {
+      return res.status(400).json({
+        message: "Task title cannot exceed 150 characters",
+      });
+    }
+
+    if (description && typeof description === "string" && description.trim().length > 1000) {
+      return res.status(400).json({
+        message: "Task description cannot exceed 1000 characters",
+      });
+    }
+
     if (!mongoose.isValidObjectId(projectId)) {
       return res.status(400).json({
         message: "Valid project ID is required",
@@ -68,18 +80,8 @@ const createTask = async (req, res) => {
 
     const isAdmin = role === "admin";
     const isOwner = foundProject.owner.toString() === userId.toString();
-    const isProjectOwnerOfAnotherProject = await Project.exists({
-      owner: userId,
-      _id: { $ne: foundProject._id },
-    });
 
     if (!isAdmin && !isOwner) {
-      if (isProjectOwnerOfAnotherProject) {
-        return res.status(403).json({
-          message: "You can create tasks only in your own projects",
-        });
-      }
-
       return res.status(403).json({
         message: "Only Admin or Project Owner can create tasks",
       });
@@ -284,10 +286,13 @@ const getTasks = async (req, res) => {
         $in: projects.map((item) => item._id),
       };
 
-      if (assignedTo && assignedTo !== userId.toString()) {
-        return res.status(403).json({
-          message: "You can only view your own assigned tasks",
-        });
+      if (assignedTo) {
+        if (assignedTo !== userId.toString()) {
+          return res.status(403).json({
+            message: "You can only view your own assigned tasks",
+          });
+        }
+        filter.assignedTo = assignedTo;
       }
     } else if (assignedTo) {
       filter.assignedTo = assignedTo;
@@ -502,6 +507,12 @@ const updateTask = async (req, res) => {
           });
         }
 
+        if (title.trim().length > 150) {
+          return res.status(400).json({
+            message: "Task title cannot exceed 150 characters",
+          });
+        }
+
         task.title = title.trim();
       }
 
@@ -509,6 +520,12 @@ const updateTask = async (req, res) => {
         if (typeof description !== "string") {
           return res.status(400).json({
             message: "Description must be a string",
+          });
+        }
+
+        if (description.trim().length > 1000) {
+          return res.status(400).json({
+            message: "Task description cannot exceed 1000 characters",
           });
         }
 
@@ -620,16 +637,10 @@ const updateTask = async (req, res) => {
   }
 };
 
-// DELETE TASK: ADMIN ONLY
+// DELETE TASK: ADMIN OR PROJECT OWNER
 
 const deleteTask = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({
-        message: "Only Admin can delete tasks",
-      });
-    }
-
     const { taskId } = req.params;
 
     if (!mongoose.isValidObjectId(taskId)) {
@@ -643,6 +654,17 @@ const deleteTask = async (req, res) => {
     if (!task) {
       return res.status(404).json({
         message: "Task not found",
+      });
+    }
+
+    const project = await Project.findById(task.project);
+    const isAdmin = req.user.role === "admin";
+    const isProjectOwner =
+      project && project.owner.toString() === req.user.userId;
+
+    if (!isAdmin && !isProjectOwner) {
+      return res.status(403).json({
+        message: "Only Admin or Project Owner can delete tasks",
       });
     }
 

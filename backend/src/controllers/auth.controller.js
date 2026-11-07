@@ -1,37 +1,66 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const isProduction = process.env.NODE_ENV === "production";
 
-const cookieOptions = {
-  httpOnly: true,
-  secure: isProduction,
-  sameSite: "lax",
-  path: "/",
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+  };
 };
 
-const accessCookieOptions = {
-  ...cookieOptions,
+const getAccessCookieOptions = () => ({
+  ...getCookieOptions(),
   maxAge: 15 * 60 * 1000,
-};
+});
 
-const refreshCookieOptions = {
-  ...cookieOptions,
+const getRefreshCookieOptions = () => ({
+  ...getCookieOptions(),
   maxAge: 7 * 24 * 60 * 60 * 1000,
-};
+});
 
 // REGISTER
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    if (!name?.trim() || !email?.trim() || !password) {
+    if (
+      typeof name !== "string" ||
+      !name.trim() ||
+      typeof email !== "string" ||
+      !email.trim() ||
+      typeof password !== "string" ||
+      !password
+    ) {
       return res.status(400).json({
         message: "Name, email and password are required",
       });
     }
 
+    const trimmedName = name.trim();
+    if (trimmedName.length < 2 || trimmedName.length > 100) {
+      return res.status(400).json({
+        message: "Name must be between 2 and 100 characters",
+      });
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail.length > 254 || !emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({
+        message: "Please enter a valid email address",
+      });
+    }
+
+    if (password.length < 6 || password.length > 128) {
+      return res.status(400).json({
+        message: "Password must be between 6 and 128 characters",
+      });
+    }
 
     const existingUser = await User.findOne({
       email: normalizedEmail,
@@ -46,7 +75,7 @@ const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await User.create({
-      name: name.trim(),
+      name: trimmedName,
       email: normalizedEmail,
       password: hashedPassword,
     });
@@ -80,9 +109,21 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email?.trim() || !password) {
+    if (
+      typeof email !== "string" ||
+      !email.trim() ||
+      typeof password !== "string" ||
+      !password
+    ) {
       return res.status(400).json({
         message: "Email and password are required",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({
+        message: "Invalid email or password",
       });
     }
 
@@ -95,7 +136,7 @@ const login = async (req, res) => {
     }
 
     const user = await User.findOne({
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
     }).select("+password");
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -113,7 +154,7 @@ const login = async (req, res) => {
         tokenVersion,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "15m" },
+      { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "15m" },
     );
 
     const refreshToken = jwt.sign(
@@ -123,11 +164,11 @@ const login = async (req, res) => {
         tokenVersion,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" },
+      { expiresIn: process.env.REFRESH_TOKEN_DAYS || "7d" },
     );
 
-    res.cookie("accessToken", accessToken, accessCookieOptions);
-    res.cookie("refreshToken", refreshToken, refreshCookieOptions);
+    res.cookie("accessToken", accessToken, getAccessCookieOptions());
+    res.cookie("refreshToken", refreshToken, getRefreshCookieOptions());
 
     return res.status(200).json({
       message: "Login successful",
@@ -175,8 +216,8 @@ const refresh = async (req, res) => {
     const user = await User.findById(decoded.userId);
 
     if (!user || (decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
-      res.clearCookie("accessToken", cookieOptions);
-      res.clearCookie("refreshToken", cookieOptions);
+      res.clearCookie("accessToken", getCookieOptions());
+      res.clearCookie("refreshToken", getCookieOptions());
 
       return res.status(401).json({
         message: "Session expired. Please login again.",
@@ -190,15 +231,17 @@ const refresh = async (req, res) => {
         tokenVersion: user.tokenVersion ?? 0,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "15m" },
+      { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "15m" },
     );
 
-    res.cookie("accessToken", accessToken, accessCookieOptions);
+    res.cookie("accessToken", accessToken, getAccessCookieOptions());
 
     return res.status(200).json({
       message: "Access token refreshed",
     });
   } catch (error) {
+    res.clearCookie("accessToken", getCookieOptions());
+    res.clearCookie("refreshToken", getCookieOptions());
     return res.status(401).json({
       message: "Refresh token expired or invalid. Please login again.",
     });
@@ -221,7 +264,7 @@ const logout = async (req, res) => {
           userId = decoded.userId;
         }
       } catch {
-        console.warn("Access token invalid or expired during logout");
+        // Access token might be expired, continue to check refreshToken
       }
     }
 
@@ -233,7 +276,7 @@ const logout = async (req, res) => {
           userId = decoded.userId;
         }
       } catch {
-        console.warn("Refresh token invalid or expired during logout");
+        // Refresh token might be expired
       }
     }
 
@@ -243,14 +286,17 @@ const logout = async (req, res) => {
       });
     }
 
-    res.clearCookie("accessToken", cookieOptions);
-    res.clearCookie("refreshToken", cookieOptions);
+    res.clearCookie("accessToken", getCookieOptions());
+    res.clearCookie("refreshToken", getCookieOptions());
 
     return res.status(200).json({
       message: "Logged out successfully",
     });
   } catch (error) {
     console.error("Logout error:", error);
+
+    res.clearCookie("accessToken", getCookieOptions());
+    res.clearCookie("refreshToken", getCookieOptions());
 
     return res.status(500).json({
       message: "Logout failed",

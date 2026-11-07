@@ -56,6 +56,16 @@ function UserDashboard({ user }) {
     return updated;
   };
 
+  const handleDeleteTask = async (taskId) => {
+    const deleted = await taskState.deleteTask(taskId);
+
+    if (deleted) {
+      await fetchDashboard();
+    }
+
+    return deleted;
+  };
+
   const handleSearchChange = (value) => {
     taskState.setSearch(value);
   };
@@ -184,7 +194,7 @@ function UserDashboard({ user }) {
               loading={taskState.loading}
               onPageChange={taskState.setPage}
               onUpdate={handleUpdateTask}
-              onDelete={taskState.deleteTask}
+              onDelete={handleDeleteTask}
             />
           </div>
         </div>

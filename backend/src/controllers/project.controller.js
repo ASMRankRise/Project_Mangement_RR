@@ -95,7 +95,7 @@ const getProjects = async (req, res) => {
     let version = 0;
 
     try {
-      version = await redis.get(PROJECT_CACHE_VERSION_KEY);
+      version = Number(await redis.get(PROJECT_CACHE_VERSION_KEY)) || 0;
     } catch (redisError) {
       console.error("Redis version error:", redisError);
     }
@@ -106,15 +106,11 @@ const getProjects = async (req, res) => {
       const cachedProjects = await redis.get(cacheKey);
 
       if (cachedProjects !== null) {
-        console.log("Projects fetched from Redis");
-
         return res.status(200).json(cachedProjects);
       }
     } catch (redisError) {
       console.error("Redis cache read error:", redisError);
     }
-
-    console.log("Projects fetched from MongoDB");
 
     const filter =
       req.user.role === "admin"
@@ -134,9 +130,10 @@ const getProjects = async (req, res) => {
     };
 
     try {
-      const latestVersion = await redis.get(PROJECT_CACHE_VERSION_KEY);
+      const latestVersion =
+        Number(await redis.get(PROJECT_CACHE_VERSION_KEY)) || 0;
 
-      if (Number(version) === Number(latestVersion)) {
+      if (version === latestVersion) {
         await redis.set(cacheKey, responseData, {
           ex: 60,
         });
@@ -168,7 +165,21 @@ const updateProject = async (req, res) => {
         });
       }
 
-      project.name = name.trim();
+      const trimmedName = name.trim();
+
+      if (trimmedName.length < 3 || trimmedName.length > 50) {
+        return res.status(400).json({
+          message: "Project name must be between 3 and 50 characters",
+        });
+      }
+
+      if (!/^[\p{L}\p{N}][\p{L}\p{N}\s_-]*$/u.test(trimmedName)) {
+        return res.status(400).json({
+          message: "Project name contains invalid characters",
+        });
+      }
+
+      project.name = trimmedName;
     }
 
     if (description !== undefined) {
@@ -178,7 +189,15 @@ const updateProject = async (req, res) => {
         });
       }
 
-      project.description = description.trim();
+      const trimmedDescription = description.trim();
+
+      if (trimmedDescription.length > 500) {
+        return res.status(400).json({
+          message: "Description cannot exceed 500 characters",
+        });
+      }
+
+      project.description = trimmedDescription;
     }
 
     await project.save();
@@ -213,12 +232,6 @@ const deleteProject = async (req, res) => {
     }
 
     const project = req.project;
-
-    if (!project) {
-      return res.status(404).json({
-        message: "Project not found",
-      });
-    }
 
     await Task.deleteMany({
       project: project._id,
@@ -258,7 +271,7 @@ const addProjectMember = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        message: "User not found. Please register first",
+        message: "User not found. Please register them first",
       });
     }
 
@@ -329,6 +342,12 @@ const removeProjectMember = async (req, res) => {
     );
 
     await project.save();
+
+    // Also unassign this member from any tasks in this project
+    await Task.updateMany(
+      { project: project._id },
+      { $pull: { assignedTo: memberId } },
+    );
 
     await project.populate([
       { path: "owner", select: "name email" },

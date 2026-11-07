@@ -28,7 +28,7 @@ function ProjectsPage({ user }) {
       "Are you sure you want to delete this project and its tasks?",
     );
 
-    if (!confirmed) return;
+    if (!confirmed) return false;
 
     setError("");
     setSuccess("");
@@ -38,8 +38,10 @@ function ProjectsPage({ user }) {
 
       setSuccess("Project deleted successfully.");
       await fetchProjects();
+      return true;
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete project.");
+      return false;
     }
   };
 

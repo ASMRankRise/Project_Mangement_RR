@@ -93,7 +93,7 @@ function AdminDashboard({ user }) {
       "Are you sure you want to delete this project and its tasks?",
     );
 
-    if (!confirmed) return;
+    if (!confirmed) return false;
 
     setProjectError("");
     setProjectSuccess("");
@@ -108,10 +108,12 @@ function AdminDashboard({ user }) {
         taskState.fetchTasks(),
         fetchDashboard(),
       ]);
+      return true;
     } catch (err) {
       setProjectError(
         err.response?.data?.message || "Failed to delete project.",
       );
+      return false;
     }
   };
 

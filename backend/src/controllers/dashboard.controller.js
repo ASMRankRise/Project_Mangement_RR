@@ -24,7 +24,7 @@ const getDashboard = async (req, res) => {
     let version = 0;
 
     try {
-      version = Number(await redis.get(DASHBOARD_CACHE_VERSION_KEY));
+      version = Number(await redis.get(DASHBOARD_CACHE_VERSION_KEY)) || 0;
     } catch (error) {
       console.error("Redis version error:", error);
     }

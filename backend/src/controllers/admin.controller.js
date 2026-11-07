@@ -1,5 +1,7 @@
 const User = require("../models/User");
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // Get all registered users
 const getUsers = async (req, res) => {
   try {
@@ -19,14 +21,25 @@ const updateUserRole = async (req, res) => {
   try {
     const { email, role } = req.body;
 
-    if (!email || !["admin", "user"].includes(role)) {
+    if (
+      typeof email !== "string" ||
+      !email.trim() ||
+      !["admin", "user"].includes(role)
+    ) {
       return res.status(400).json({
         message: "Valid email and role (admin/user) are required",
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({
+        message: "Invalid email format",
+      });
+    }
+
     const user = await User.findOne({
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
     });
 
     if (!user) {

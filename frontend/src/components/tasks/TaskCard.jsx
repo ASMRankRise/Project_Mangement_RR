@@ -34,7 +34,7 @@ function TaskCard({ task, projects = [], user, onUpdate, onDelete }) {
   const isProjectOwner =
     currentUserId !== "" && projectOwnerId === currentUserId;
 
-  const canManageTask = isAdmin;
+  const canManageTask = isAdmin || isProjectOwner;
 
   const canUpdateStatus = canManageTask || isProjectOwner || isAssignedToMe;
 
@@ -86,6 +86,8 @@ function TaskCard({ task, projects = [], user, onUpdate, onDelete }) {
     todo: "bg-gray-700 text-gray-200",
     "in-progress": "bg-blue-900 text-blue-200",
     completed: "bg-green-900 text-green-200",
+    testing: "bg-purple-900 text-purple-200",
+    done: "bg-emerald-900 text-emerald-200",
   };
 
   const priorityColors = {
@@ -162,7 +164,9 @@ function TaskCard({ task, projects = [], user, onUpdate, onDelete }) {
           >
             <option value="todo">To Do</option>
             <option value="in-progress">In Progress</option>
+            <option value="testing">Testing</option>
             <option value="completed">Completed</option>
+            <option value="done">Done</option>
           </select>
         ) : (
           <span

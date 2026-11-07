@@ -3,6 +3,8 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -10,7 +12,6 @@ import api from "../services/api";
 
 const AuthContext = createContext(null);
 const CHANNEL_NAME = "auth-channel";
-let authRequest = null;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -19,10 +20,12 @@ export function AuthProvider({ children }) {
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
 
-  const checkAuth = useCallback(() => {
-    if (authRequest) return authRequest;
+  const authRequestRef = useRef(null);
 
-    authRequest = (async () => {
+  const checkAuth = useCallback(() => {
+    if (authRequestRef.current) return authRequestRef.current;
+
+    authRequestRef.current = (async () => {
       try {
         let response;
 
@@ -46,11 +49,11 @@ export function AuthProvider({ children }) {
         return null;
       } finally {
         setAuthChecking(false);
-        authRequest = null;
+        authRequestRef.current = null;
       }
     })();
 
-    return authRequest;
+    return authRequestRef.current;
   }, []);
 
   useEffect(() => {
@@ -77,7 +80,7 @@ export function AuthProvider({ children }) {
     return () => channel.close();
   }, [checkAuth]);
 
-  const authenticate = async (mode, payload) => {
+  const authenticate = useCallback(async (mode, payload) => {
     setAuthError("");
     setAuthSuccess("");
     setAuthLoading(true);
@@ -109,9 +112,9 @@ export function AuthProvider({ children }) {
     } finally {
       setAuthLoading(false);
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setAuthError("");
     setAuthSuccess("");
     setAuthLoading(true);
@@ -130,27 +133,35 @@ export function AuthProvider({ children }) {
       channel.postMessage({ type: "logout" });
       channel.close();
     }
-  };
+  }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        setUser,
-        authChecking,
-        authLoading,
-        authError,
-        authSuccess,
-        setAuthError,
-        setAuthSuccess,
-        checkAuth,
-        authenticate,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      setUser,
+      authChecking,
+      authLoading,
+      authError,
+      authSuccess,
+      setAuthError,
+      setAuthSuccess,
+      checkAuth,
+      authenticate,
+      logout,
+    }),
+    [
+      user,
+      authChecking,
+      authLoading,
+      authError,
+      authSuccess,
+      checkAuth,
+      authenticate,
+      logout,
+    ],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

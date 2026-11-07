@@ -142,7 +142,7 @@ function ProjectList({
     try {
       const deleted = await onDeleteProject(projectId);
 
-      if (deleted !== false) {
+      if (deleted === true) {
         setSuccess("Project deleted successfully.");
       }
     } catch (err) {

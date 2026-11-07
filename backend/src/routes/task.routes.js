@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 const authMiddleware = require("../middleware/auth");
-const requireRole = require("../middleware/role");
 
 const {
   createTask,
@@ -17,6 +16,6 @@ router.get("/", authMiddleware, getTasks);
 
 router.patch("/:taskId", authMiddleware, updateTask);
 
-router.delete("/:taskId", authMiddleware, requireRole("admin"), deleteTask);
+router.delete("/:taskId", authMiddleware, deleteTask);
 
 module.exports = router;

@@ -32,7 +32,9 @@ function TaskFilters({
         <option value="">All statuses</option>
         <option value="todo">To Do</option>
         <option value="in-progress">In Progress</option>
+        <option value="testing">Testing</option>
         <option value="completed">Completed</option>
+        <option value="done">Done</option>
       </select>
 
       {/* Filter by priority */}

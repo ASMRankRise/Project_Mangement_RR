@@ -15,9 +15,11 @@ function ManageUsers() {
 
     try {
       const response = await api.get("/admin/users");
-      setUsers(response.data.users);
+      setUsers(Array.isArray(response.data?.users) ? response.data.users : []);
     } catch (err) {
-      setError(err.response?.data?.message);
+      setError(
+        err.response?.data?.message || err.message || "Failed to fetch users.",
+      );
     } finally {
       setLoading(false);
     }

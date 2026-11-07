@@ -33,13 +33,25 @@ function useProjects() {
         return false;
       }
 
-      if (name.trim().length > 100) {
-        setError("Project name cannot exceed 100 characters.");
+      const trimmedName = name.trim();
+
+      if (trimmedName.length < 3 || trimmedName.length > 50) {
+        setError("Project name must be between 3 and 50 characters.");
+        return false;
+      }
+
+      if (!/^[\p{L}\p{N}][\p{L}\p{N}\s_-]*$/u.test(trimmedName)) {
+        setError("Project name contains invalid characters.");
         return false;
       }
 
       if (typeof description !== "string") {
         setError("Project description must be text.");
+        return false;
+      }
+
+      if (description.trim().length > 500) {
+        setError("Description cannot exceed 500 characters.");
         return false;
       }
 
