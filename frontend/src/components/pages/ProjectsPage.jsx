@@ -84,16 +84,16 @@ export function ProjectsPage({ user }) {
       ) : (
         <>
           {/* Page Header */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
+              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                 Workspaces & Teams
               </span>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h1 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 Projects
               </h1>
-              <p className="mt-1 text-xs text-slate-400">
-                Organize projects, manage team permissions, and monitor task completion progress.
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                Manage project workspaces, invite collaborators, and oversee delivery progress.
               </p>
             </div>
 
@@ -101,7 +101,7 @@ export function ProjectsPage({ user }) {
               <button
                 type="button"
                 onClick={() => setCreateModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 transition"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 transition"
               >
                 <PlusIcon className="h-4 w-4" />
                 <span>New Project</span>

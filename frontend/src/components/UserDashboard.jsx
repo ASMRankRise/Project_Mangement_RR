@@ -78,7 +78,7 @@ export function UserDashboard({ user }) {
   const userId = String(getId(user) || "");
   const firstName = user?.name?.trim()?.split(/\s+/)[0] || "User";
 
-  // Calculate Real SaaS metrics from actual backend data:
+  // Real SaaS metrics
   const ownedProjectsCount = useMemo(() => {
     return projects.filter((p) => String(getId(p.owner)) === userId).length;
   }, [projects, userId]);
@@ -122,7 +122,7 @@ export function UserDashboard({ user }) {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* If a project workspace was opened from dashboard */}
       {selectedProject ? (
         <ProjectWorkspace
@@ -142,40 +142,40 @@ export function UserDashboard({ user }) {
       ) : (
         <>
           {/* Welcome & Pulse Header */}
-          <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0E131F] p-6 backdrop-blur-xl">
+          <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-5 sm:p-6 shadow-xs transition-colors">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[11px] font-semibold text-indigo-300">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Live Workspace Pipeline
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Personal Workspace</span>
                 </div>
 
-                <h1 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                <h1 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                   Welcome back, {firstName}
                 </h1>
-                <p className="mt-1 text-xs text-slate-400">
-                  Real-time status across your {projects.length} project workspaces and active deliverables.
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  Tracking {projects.length} accessible project workspaces and active deliverables.
                 </p>
               </div>
 
               {/* Progress Summary Pill */}
-              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#070a13] p-3 text-xs">
+              <div className="flex items-center gap-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-4 py-2 text-xs">
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">
-                    Overall Completion
+                  <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">
+                    Completion
                   </span>
-                  <span className="text-lg font-bold text-white">
+                  <span className="text-base font-bold text-slate-900 dark:text-white">
                     {completionRate}%
                   </span>
                 </div>
-                <div className="h-8 w-[1px] bg-white/10" />
+                <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800" />
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                  <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">
                     Overdue
                   </span>
                   <span
-                    className={`text-lg font-bold ${
-                      overdueTasksCount > 0 ? "text-rose-400" : "text-emerald-400"
+                    className={`text-base font-bold ${
+                      overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
                     }`}
                   >
                     {overdueTasksCount}
@@ -192,80 +192,80 @@ export function UserDashboard({ user }) {
           </section>
 
           {/* 6 Real Metric Cards Grid */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4 text-left">
-              <span className="text-[11px] font-medium text-slate-400 block truncate">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
                 Projects Owned
               </span>
-              <div className="mt-2 text-2xl font-bold text-white">
+              <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
                 {dashboardLoading ? "..." : ownedProjectsCount}
               </div>
-              <span className="text-[10px] text-indigo-400 mt-1 block">Lead role</span>
+              <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 mt-0.5 block">Project lead</span>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4 text-left">
-              <span className="text-[11px] font-medium text-slate-400 block truncate">
-                Assigned Workspaces
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
+                Team Workspaces
               </span>
-              <div className="mt-2 text-2xl font-bold text-white">
+              <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
                 {dashboardLoading ? "..." : assignedProjectsCount}
               </div>
-              <span className="text-[10px] text-slate-400 mt-1 block">Team member</span>
+              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Participant</span>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4 text-left">
-              <span className="text-[11px] font-medium text-slate-400 block truncate">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
                 Total Tasks
               </span>
-              <div className="mt-2 text-2xl font-bold text-white">
+              <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
                 {dashboardLoading ? "..." : totalTasksCount}
               </div>
-              <span className="text-[10px] text-slate-400 mt-1 block">All projects</span>
+              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">All pipelines</span>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4 text-left">
-              <span className="text-[11px] font-medium text-slate-400 block truncate">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
                 In Progress
               </span>
-              <div className="mt-2 text-2xl font-bold text-sky-400">
+              <div className="mt-1 text-2xl font-bold text-sky-600 dark:text-sky-400">
                 {dashboardLoading ? "..." : inProgressTasksCount}
               </div>
-              <span className="text-[10px] text-sky-400/80 mt-1 block">Underway</span>
+              <span className="text-[10px] font-medium text-sky-600 dark:text-sky-400/80 mt-0.5 block">Underway</span>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4 text-left">
-              <span className="text-[11px] font-medium text-slate-400 block truncate">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
                 Completed
               </span>
-              <div className="mt-2 text-2xl font-bold text-emerald-400">
+              <div className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                 {dashboardLoading ? "..." : completedTasksCount}
               </div>
-              <span className="text-[10px] text-emerald-400/80 mt-1 block">Resolved</span>
+              <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400/80 mt-0.5 block">Delivered</span>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4 text-left">
-              <span className="text-[11px] font-medium text-slate-400 block truncate">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
                 Overdue Tasks
               </span>
               <div
-                className={`mt-2 text-2xl font-bold ${
-                  overdueTasksCount > 0 ? "text-rose-400" : "text-slate-300"
+                className={`mt-1 text-2xl font-bold ${
+                  overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-slate-200"
                 }`}
               >
                 {dashboardLoading ? "..." : overdueTasksCount}
               </div>
               <span
-                className={`text-[10px] mt-1 block ${
-                  overdueTasksCount > 0 ? "text-rose-400" : "text-slate-500"
+                className={`text-[10px] font-medium mt-0.5 block ${
+                  overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
                 }`}
               >
-                {overdueTasksCount > 0 ? "Needs action" : "On schedule"}
+                {overdueTasksCount > 0 ? "Requires action" : "On schedule"}
               </span>
             </div>
           </div>
 
           {/* Real Analytics: Distribution & Upcoming Deadlines */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
             <div className="lg:col-span-2">
               {dashboardData?.taskStats && (
                 <TaskDistribution taskStats={dashboardData.taskStats} />
@@ -281,14 +281,14 @@ export function UserDashboard({ user }) {
           </div>
 
           {/* Project Workspaces Gallery */}
-          <section className="space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <section className="space-y-3 pt-2">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <FolderIcon className="h-4 w-4 text-indigo-400" />
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <FolderIcon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                   <span>Active Project Workspaces</span>
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                   Select a workspace to manage its tasks, roster, and timelines
                 </p>
               </div>
@@ -311,15 +311,15 @@ export function UserDashboard({ user }) {
           </section>
 
           {/* Tasks Pipeline Section */}
-          <section className="space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <section className="space-y-3 pt-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <CheckSquareIcon className="h-4 w-4 text-indigo-400" />
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <CheckSquareIcon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                   <span>Tasks Delivery Pipeline</span>
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-400">
-                  Quickly view and progress work items across your workspaces
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  Filter and progress work items across your workspaces
                 </p>
               </div>
             </div>

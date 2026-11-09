@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Modal from "../common/Modal";
 import Alert from "../common/Alert";
-import Icon from "../common/Icons";
+import { PlusIcon } from "../common/Icons";
 
 function getTodayDate() {
   const today = new Date();
@@ -84,7 +84,7 @@ export function CreateTaskModal({
 
     try {
       const created = await onCreate(payload);
-      if (created) {
+      if (created?.success !== false) {
         setTitle("");
         setDescription("");
         setProject("");
@@ -105,12 +105,12 @@ export function CreateTaskModal({
       onClose={onClose}
       title="Create New Task"
       subtitle="Define actionable work, schedule deadlines, and assign team ownership."
-      maxWidth="max-w-xl"
+      size="lg"
     >
       {projects.length === 0 ? (
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-5 text-center text-xs text-amber-200">
+        <div className="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-5 text-center text-xs text-amber-800 dark:text-amber-200">
           <p className="font-semibold">No active workspaces available.</p>
-          <p className="mt-1 text-slate-400">
+          <p className="mt-1 text-slate-500 dark:text-slate-400">
             Please create or join a project workspace first before creating tasks.
           </p>
         </div>
@@ -120,8 +120,8 @@ export function CreateTaskModal({
 
           {/* Project Workspace Selector */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">
-              Workspace / Project <span className="text-rose-400">*</span>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Workspace / Project <span className="text-rose-500">*</span>
             </label>
             <select
               value={project}
@@ -130,7 +130,7 @@ export function CreateTaskModal({
                 setAssignedTo("");
               }}
               required
-              className="w-full rounded-xl border border-white/10 bg-[#070a13] px-4 py-2.5 text-xs text-white outline-none focus:border-indigo-500 transition cursor-pointer"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition cursor-pointer shadow-xs"
             >
               <option value="">Select project workspace...</option>
               {projects.map((item) => (
@@ -143,8 +143,8 @@ export function CreateTaskModal({
 
           {/* Title */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">
-              Task Title <span className="text-rose-400">*</span>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Task Title <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -153,35 +153,35 @@ export function CreateTaskModal({
               placeholder="e.g. Implement OAuth2 Refresh Interceptor"
               maxLength={150}
               required
-              className="w-full rounded-xl border border-white/10 bg-[#070a13] px-4 py-2.5 text-xs text-white outline-none placeholder:text-slate-600 focus:border-indigo-500 transition"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 focus:border-indigo-500 transition shadow-xs"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">
-              Description <span className="text-slate-500 font-normal lowercase">(optional)</span>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Description <span className="text-slate-400 font-normal lowercase">(optional)</span>
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Context, specifications, acceptance criteria, links..."
+              placeholder="Context, specifications, acceptance criteria..."
               rows={3}
               maxLength={1000}
-              className="w-full rounded-xl border border-white/10 bg-[#070a13] px-4 py-2.5 text-xs text-white outline-none placeholder:text-slate-600 focus:border-indigo-500 transition resize-none"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 focus:border-indigo-500 transition resize-none shadow-xs"
             />
           </div>
 
           {/* Priority & Assignee Grid */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Priority
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#070a13] px-4 py-2.5 text-xs text-white outline-none focus:border-indigo-500 transition cursor-pointer"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition cursor-pointer shadow-xs"
               >
                 <option value="low">Low Priority</option>
                 <option value="medium">Medium Priority</option>
@@ -190,7 +190,7 @@ export function CreateTaskModal({
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Target Due Date
               </label>
               <input
@@ -198,22 +198,22 @@ export function CreateTaskModal({
                 value={dueDate}
                 min={getTodayDate()}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#070a13] px-4 py-2 text-xs text-white outline-none focus:border-indigo-500 transition cursor-pointer"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition cursor-pointer shadow-xs"
               />
             </div>
           </div>
 
           {/* Assignee */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">
-              Assignee <span className="text-rose-400">*</span>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Assignee <span className="text-rose-500">*</span>
             </label>
             <select
               value={assignedTo}
               onChange={(e) => setAssignedTo(e.target.value)}
               disabled={!project || projectMembers.length === 0}
               required
-              className="w-full rounded-xl border border-white/10 bg-[#070a13] px-4 py-2.5 text-xs text-white outline-none focus:border-indigo-500 transition cursor-pointer disabled:opacity-50"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition cursor-pointer disabled:opacity-50 shadow-xs"
             >
               <option value="">
                 {!project
@@ -228,34 +228,34 @@ export function CreateTaskModal({
                 </option>
               ))}
               {projectMembers.length > 0 && (
-                <option value="ALL">👥 Assign to All Project Members</option>
+                <option value="ALL">Assign to All Project Members</option>
               )}
             </select>
           </div>
 
           {/* Modal Footer */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="rounded-xl border border-white/10 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-white/5 transition"
+              className="rounded-lg border border-slate-200 dark:border-slate-700 px-3.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !title.trim() || !project || !assignedTo}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition hover:from-indigo-500 hover:to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   <span>Creating Task...</span>
                 </>
               ) : (
                 <>
-                  <Icon name="plus" className="h-4 w-4" />
+                  <PlusIcon className="h-3.5 w-3.5" />
                   <span>Create Task</span>
                 </>
               )}

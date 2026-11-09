@@ -21,13 +21,13 @@ export function Pagination({
         type="button"
         disabled={currentPage <= 1 || loading}
         onClick={() => handlePageChange(currentPage - 1)}
-        className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-[#070a13] text-slate-300 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#070a13] text-slate-700 dark:text-slate-300 transition hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
         aria-label="Previous page"
       >
         <Icon name="chevronLeft" className="h-4 w-4" />
       </button>
 
-      <span className="min-w-16 text-center text-xs font-semibold text-slate-300">
+      <span className="min-w-16 text-center text-xs font-semibold text-slate-600 dark:text-slate-300">
         {currentPage} / {lastPage}
       </span>
 
@@ -35,7 +35,7 @@ export function Pagination({
         type="button"
         disabled={currentPage >= lastPage || loading}
         onClick={() => handlePageChange(currentPage + 1)}
-        className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-[#070a13] text-slate-300 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#070a13] text-slate-700 dark:text-slate-300 transition hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
         aria-label="Next page"
       >
         <Icon name="chevronRight" className="h-4 w-4" />

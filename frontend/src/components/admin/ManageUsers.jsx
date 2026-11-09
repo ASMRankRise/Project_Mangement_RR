@@ -108,13 +108,13 @@ export function ManageUsers() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
             Access Control
           </span>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
             User Directory & Roles
           </h1>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Oversee user accounts, verify access privileges, and assign administration permissions.
           </p>
         </div>
@@ -123,9 +123,9 @@ export function ManageUsers() {
           type="button"
           onClick={fetchUsers}
           disabled={loading || Boolean(updatingEmail)}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#0E131F] px-4 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-white/5 transition disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E131F] px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition disabled:opacity-50 shadow-sm"
         >
-          <RotateCwIcon className={`h-4 w-4 text-indigo-400 ${loading ? "animate-spin" : ""}`} />
+          <RotateCwIcon className={`h-4 w-4 text-indigo-600 dark:text-indigo-400 ${loading ? "animate-spin" : ""}`} />
           <span>{loading ? "Refreshing..." : "Refresh Directory"}</span>
         </button>
       </div>
@@ -135,36 +135,36 @@ export function ManageUsers() {
 
       {/* Directory Metrics Strip */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-4 shadow-sm">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Total Users
           </p>
-          <p className="mt-2 text-2xl font-bold text-white">{users.length}</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{users.length}</p>
         </div>
-        <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4">
-          <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-4 shadow-sm">
+          <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
             Administrators
           </p>
-          <p className="mt-2 text-2xl font-bold text-indigo-300">{adminCount}</p>
+          <p className="mt-2 text-2xl font-bold text-indigo-600 dark:text-indigo-300">{adminCount}</p>
         </div>
-        <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-4 shadow-sm">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Standard Members
           </p>
-          <p className="mt-2 text-2xl font-bold text-slate-300">{memberCount}</p>
+          <p className="mt-2 text-2xl font-bold text-slate-700 dark:text-slate-300">{memberCount}</p>
         </div>
       </div>
 
       {/* Search & Role Filter Toolbar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-white/10 bg-[#0E131F] p-3.5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E131F] p-3.5 shadow-sm">
         <div className="relative flex-1 max-w-md">
-          <SearchIcon className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+          <SearchIcon className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search users by name or email address..."
-            className="w-full rounded-lg border border-white/10 bg-[#070a13] py-2 pl-10 pr-4 text-xs text-white outline-none placeholder:text-slate-500 focus:border-indigo-500 transition"
+            className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#070a13] py-2 pl-10 pr-4 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-500 transition"
           />
         </div>
 
@@ -172,34 +172,34 @@ export function ManageUsers() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="rounded-lg border border-white/10 bg-[#070a13] px-3.5 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500 transition cursor-pointer"
+            className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#070a13] px-3.5 py-2 text-xs text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500 transition cursor-pointer"
           >
             <option value="">All Roles</option>
             <option value="admin">Administrators Only</option>
             <option value="user">Members Only</option>
           </select>
 
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             {filteredUsers.length} shown
           </span>
         </div>
       </div>
 
       {/* User Directory Table */}
-      <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0E131F]">
+      <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0E131F] shadow-sm">
         {loading && users.length === 0 ? (
-          <div className="p-12 text-center text-xs text-slate-400">
-            <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+          <div className="p-12 text-center text-xs text-slate-500 dark:text-slate-400">
+            <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 dark:border-indigo-500 border-t-transparent" />
             <p className="mt-3">Loading registered accounts...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="p-12 text-center text-xs text-slate-400">
+          <div className="p-12 text-center text-xs text-slate-500 dark:text-slate-400">
             No users match your search parameters.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-white/10 bg-white/[0.02] text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+              <thead className="border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
                 <tr>
                   <th scope="col" className="py-3.5 pl-6 pr-3">User Profile</th>
                   <th scope="col" className="px-3 py-3.5">Assigned Role</th>
@@ -207,7 +207,7 @@ export function ManageUsers() {
                   <th scope="col" className="py-3.5 pl-3 pr-6 text-right">Modify Permission</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {filteredUsers.map((u) => {
                   const isUpdating = updatingEmail === u.email;
                   const formattedDate = u.createdAt
@@ -221,17 +221,17 @@ export function ManageUsers() {
                   return (
                     <tr
                       key={u._id}
-                      className="transition hover:bg-white/[0.02]"
+                      className="transition hover:bg-slate-50 dark:hover:bg-white/[0.02]"
                     >
                       {/* Name & Email */}
                       <td className="py-3.5 pl-6 pr-3">
                         <div className="flex items-center gap-3">
                           <Avatar user={u} size="md" />
                           <div className="min-w-0">
-                            <p className="font-semibold text-white truncate text-xs">
+                            <p className="font-semibold text-slate-900 dark:text-white truncate text-xs">
                               {u.name}
                             </p>
-                            <p className="text-slate-400 truncate text-[11px] mt-0.5">
+                            <p className="text-slate-500 dark:text-slate-400 truncate text-[11px] mt-0.5">
                               {u.email}
                             </p>
                           </div>
@@ -244,7 +244,7 @@ export function ManageUsers() {
                       </td>
 
                       {/* Joined Date */}
-                      <td className="px-3 py-3.5 text-slate-400">
+                      <td className="px-3 py-3.5 text-slate-500 dark:text-slate-400">
                         {formattedDate}
                       </td>
 
@@ -255,7 +255,7 @@ export function ManageUsers() {
                           value={u.role}
                           disabled={loading || isUpdating}
                           onChange={(e) => handleRoleChange(u.email, e.target.value)}
-                          className="rounded-lg border border-white/10 bg-[#070a13] px-3 py-1.5 text-xs text-white outline-none focus:border-indigo-500 transition cursor-pointer disabled:opacity-50"
+                          className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#070a13] px-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition cursor-pointer disabled:opacity-50"
                         >
                           <option value="user">Member</option>
                           <option value="admin">Administrator</option>

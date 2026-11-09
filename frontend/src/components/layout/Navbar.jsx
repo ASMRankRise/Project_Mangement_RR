@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { useTheme } from "../../context/ThemeContext";
 import { Avatar } from "../common/Avatar";
 import { RoleBadge } from "../common/Badge";
 import Breadcrumbs from "../common/Breadcrumbs";
@@ -16,10 +17,21 @@ import {
   CalendarIcon,
   CheckCircleIcon,
   XIcon,
+  SearchIcon,
+  SunIcon,
+  MoonIcon,
 } from "../common/Icons";
 
-export function Navbar({ user, onLogout, setMobileOpen }) {
+export function Navbar({
+  user,
+  onLogout,
+  setMobileOpen,
+  onOpenSearch,
+  onOpenSettings,
+}) {
   const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
+
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -100,13 +112,13 @@ export function Navbar({ user, onLogout, setMobileOpen }) {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#090d16]/80 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0B0F19]/95 px-4 backdrop-blur-md transition-colors sm:px-6">
       {/* Left: Mobile Toggle & Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="rounded-xl border border-white/10 bg-white/[0.04] p-2 text-slate-300 hover:bg-white/10 lg:hidden"
+          className="rounded-lg border border-slate-200 dark:border-slate-800 p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden transition"
           aria-label="Open navigation menu"
         >
           <MenuIcon className="h-5 w-5" />
@@ -117,19 +129,61 @@ export function Navbar({ user, onLogout, setMobileOpen }) {
         </div>
       </div>
 
+      {/* Center/Search trigger */}
+      <div className="flex-1 max-w-xs mx-4 hidden md:block">
+        <button
+          type="button"
+          onClick={onOpenSearch}
+          className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-900 text-xs text-slate-400 transition"
+        >
+          <span className="flex items-center gap-2">
+            <SearchIcon className="w-3.5 h-3.5" />
+            <span>Search workspaces, tasks...</span>
+          </span>
+          <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+            Ctrl K
+          </kbd>
+        </button>
+      </div>
+
       {/* Right Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-2.5">
+        {/* Mobile Search Button */}
+        <button
+          type="button"
+          onClick={onOpenSearch}
+          className="md:hidden rounded-lg border border-slate-200 dark:border-slate-800 p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition"
+          title="Search"
+        >
+          <SearchIcon className="h-4 w-4" />
+        </button>
+
+        {/* Theme Switcher Toggle */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="rounded-lg border border-slate-200 dark:border-slate-800 p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition"
+          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          aria-label="Toggle color theme"
+        >
+          {isDark ? (
+            <SunIcon className="h-4 w-4 text-amber-400" />
+          ) : (
+            <MoonIcon className="h-4 w-4 text-slate-600" />
+          )}
+        </button>
+
         {/* Real Notification Bell */}
         <div className="relative" ref={notifRef}>
           <button
             type="button"
             onClick={() => setNotificationOpen(!notificationOpen)}
-            className="relative rounded-xl border border-white/10 bg-white/[0.04] p-2 text-slate-300 hover:bg-white/10 transition"
+            className="relative rounded-lg border border-slate-200 dark:border-slate-800 p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition"
             title="Notifications"
           >
-            <BellIcon className="h-5 w-5" />
+            <BellIcon className="h-4 w-4" />
             {activeNotices.length > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white shadow-sm">
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-bold text-white shadow-xs">
                 {activeNotices.length}
               </span>
             )}
@@ -137,20 +191,20 @@ export function Navbar({ user, onLogout, setMobileOpen }) {
 
           {/* Notifications Flyout */}
           {notificationOpen && (
-            <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-white/10 bg-[#0E131F] p-4 text-white shadow-2xl shadow-black/80 z-50">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+            <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-slate-900 dark:text-white shadow-xl z-50">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Live Notifications
                 </h4>
-                <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+                <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-500/20">
                   {activeNotices.length} Active
                 </span>
               </div>
 
               <div className="mt-3 max-h-72 overflow-y-auto space-y-2">
                 {activeNotices.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-slate-400">
-                    <CheckCircleIcon className="w-5 h-5 text-emerald-400 mx-auto mb-1.5" />
+                  <div className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                    <CheckCircleIcon className="w-5 h-5 text-emerald-500 mx-auto mb-1.5" />
                     All caught up! No urgent task notices.
                   </div>
                 ) : (
@@ -166,23 +220,23 @@ export function Navbar({ user, onLogout, setMobileOpen }) {
                         }}
                         className={`flex items-start justify-between gap-2.5 p-2.5 rounded-lg border transition cursor-pointer ${
                           isOverdue
-                            ? "bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/15"
-                            : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15"
+                            ? "bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20 text-rose-900 dark:text-rose-200 hover:opacity-90"
+                            : "bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20 text-amber-900 dark:text-amber-200 hover:opacity-90"
                         }`}
                       >
                         <div className="shrink-0 mt-0.5">
                           {isOverdue ? (
-                            <AlertTriangleIcon className="w-4 h-4 text-rose-400" />
+                            <AlertTriangleIcon className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                           ) : (
-                            <CalendarIcon className="w-4 h-4 text-amber-400" />
+                            <CalendarIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-white truncate">
+                          <p className="text-xs font-semibold truncate">
                             {notif.title}
                           </p>
-                          <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                          <p className="text-[11px] opacity-90 mt-0.5 leading-snug">
                             {notif.desc}
                           </p>
                         </div>
@@ -190,7 +244,7 @@ export function Navbar({ user, onLogout, setMobileOpen }) {
                         <button
                           type="button"
                           onClick={(e) => handleDismissNotice(e, notif.id)}
-                          className="shrink-0 text-slate-400 hover:text-white p-0.5 rounded"
+                          className="shrink-0 opacity-70 hover:opacity-100 p-0.5 rounded"
                           title="Dismiss notice"
                         >
                           <XIcon className="w-3.5 h-3.5" />
@@ -209,14 +263,14 @@ export function Navbar({ user, onLogout, setMobileOpen }) {
           <button
             type="button"
             onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-            className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] p-1.5 pr-3 text-left transition hover:bg-white/10"
+            className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 p-1 pr-2.5 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <Avatar user={user} size="sm" />
             <div className="hidden text-left md:block">
-              <p className="max-w-[120px] truncate text-xs font-semibold text-white">
+              <p className="max-w-[110px] truncate text-xs font-semibold text-slate-900 dark:text-white leading-tight">
                 {user?.name || "User"}
               </p>
-              <p className="text-[10px] text-slate-400 capitalize">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize">
                 {user?.role || "user"}
               </p>
             </div>
@@ -225,29 +279,29 @@ export function Navbar({ user, onLogout, setMobileOpen }) {
 
           {/* Dropdown Menu */}
           {profileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl border border-white/10 bg-[#0E131F] p-2 text-white shadow-2xl shadow-black/80 z-50">
-              <div className="border-b border-white/10 p-3">
-                <p className="text-sm font-semibold text-white truncate">
+            <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-2 text-slate-900 dark:text-white shadow-xl z-50">
+              <div className="border-b border-slate-100 dark:border-slate-800/80 p-2.5">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                   {user?.name || "User"}
                 </p>
-                <p className="text-xs text-slate-400 truncate mt-0.5">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                   {user?.email || ""}
                 </p>
                 <div className="mt-2">
-                  <RoleBadge role={user?.role} />
+                  <RoleBadge role={user?.role} size="xs" />
                 </div>
               </div>
 
-              <div className="py-2 space-y-1 text-xs">
+              <div className="py-1.5 space-y-0.5 text-xs">
                 <button
                   type="button"
                   onClick={() => {
                     navigate("/projects");
                     setProfileDropdownOpen(false);
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-slate-300 hover:bg-white/10 hover:text-white transition"
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                 >
-                  <FolderIcon className="h-4 w-4 text-slate-400" />
+                  <FolderIcon className="h-3.5 w-3.5 text-slate-400" />
                   <span>Projects</span>
                 </button>
 
@@ -257,10 +311,10 @@ export function Navbar({ user, onLogout, setMobileOpen }) {
                     navigate("/tasks");
                     setProfileDropdownOpen(false);
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-slate-300 hover:bg-white/10 hover:text-white transition"
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                 >
-                  <CheckSquareIcon className="h-4 w-4 text-slate-400" />
-                  <span>Tasks</span>
+                  <CheckSquareIcon className="h-3.5 w-3.5 text-slate-400" />
+                  <span>My Tasks</span>
                 </button>
 
                 {user?.role === "admin" && (
@@ -270,24 +324,36 @@ export function Navbar({ user, onLogout, setMobileOpen }) {
                       navigate("/admin/users");
                       setProfileDropdownOpen(false);
                     }}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-slate-300 hover:bg-white/10 hover:text-white transition"
+                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                   >
-                    <UsersIcon className="h-4 w-4 text-slate-400" />
+                    <UsersIcon className="h-3.5 w-3.5 text-slate-400" />
                     <span>Manage Users</span>
                   </button>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileDropdownOpen(false);
+                    if (onOpenSettings) onOpenSettings();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                >
+                  <SunIcon className="h-3.5 w-3.5 text-slate-400" />
+                  <span>Preferences</span>
+                </button>
               </div>
 
-              <div className="border-t border-white/10 pt-2">
+              <div className="border-t border-slate-100 dark:border-slate-800/80 pt-1.5 mt-1">
                 <button
                   type="button"
                   onClick={() => {
                     setProfileDropdownOpen(false);
                     onLogout?.();
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition"
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition"
                 >
-                  <LogOutIcon className="h-4 w-4" />
+                  <LogOutIcon className="h-3.5 w-3.5" />
                   <span>Sign out</span>
                 </button>
               </div>

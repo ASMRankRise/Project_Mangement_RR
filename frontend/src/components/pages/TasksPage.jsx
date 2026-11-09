@@ -39,22 +39,22 @@ export function TasksPage({ user }) {
     );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
             Workspaces & Tasks
           </span>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            Tasks Management
+          <h1 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            My Tasks & Delivery Pipeline
           </h1>
-          <p className="mt-1 text-xs text-slate-400">
-            Track tasks across statuses, update progress, and meet deadlines.
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            Track tasks across statuses, progress workloads, and meet team milestones.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {/* Project Filter Selector */}
           {projects.length > 0 && (
             <div className="relative">
@@ -62,7 +62,7 @@ export function TasksPage({ user }) {
                 aria-label="Filter by project"
                 value={taskState.projectFilter}
                 onChange={(e) => taskState.setProjectFilter(e.target.value)}
-                className="rounded-xl border border-white/10 bg-[#0F1420] px-3.5 py-2 text-xs font-medium text-slate-200 outline-none focus:border-indigo-500 cursor-pointer transition shadow-sm"
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F1420] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500 cursor-pointer transition shadow-xs"
               >
                 <option value="">All Projects ({projects.length})</option>
                 {projects.map((p) => (
@@ -78,7 +78,7 @@ export function TasksPage({ user }) {
             <button
               type="button"
               onClick={() => setCreateModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 transition"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 transition"
             >
               <PlusIcon className="h-4 w-4" />
               <span>New Task</span>

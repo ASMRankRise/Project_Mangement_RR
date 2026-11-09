@@ -49,7 +49,7 @@ export function ToastProvider({ children }) {
       {children}
       {/* Toast container */}
       <div
-        className="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"
+        className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"
         aria-live="polite"
       >
         {toasts.map((toast) => {
@@ -61,29 +61,29 @@ export function ToastProvider({ children }) {
             <div
               key={toast.id}
               role="alert"
-              className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-lg border shadow-xl transition-all duration-200 transform translate-y-0 backdrop-blur-md ${
+              className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-xl border shadow-xl transition-all duration-200 transform translate-y-0 backdrop-blur-md ${
                 isSuccess
-                  ? "bg-[#0f1d19]/95 border-emerald-500/30 text-emerald-200"
+                  ? "bg-white dark:bg-[#0F1E19] border-emerald-200 dark:border-emerald-500/30 text-emerald-900 dark:text-emerald-200"
                   : isError
-                  ? "bg-[#241315]/95 border-red-500/30 text-red-200"
+                  ? "bg-white dark:bg-[#201215] border-rose-200 dark:border-rose-500/30 text-rose-900 dark:text-rose-200"
                   : isWarning
-                  ? "bg-[#251d10]/95 border-amber-500/30 text-amber-200"
-                  : "bg-[#121824]/95 border-sky-500/30 text-sky-200"
+                  ? "bg-white dark:bg-[#20190E] border-amber-200 dark:border-amber-500/30 text-amber-900 dark:text-amber-200"
+                  : "bg-white dark:bg-[#101726] border-sky-200 dark:border-sky-500/30 text-sky-900 dark:text-sky-200"
               }`}
             >
               <div className="shrink-0 mt-0.5">
-                {isSuccess && <CheckCircleIcon className="w-5 h-5 text-emerald-400" />}
-                {isError && <AlertTriangleIcon className="w-5 h-5 text-red-400" />}
-                {isWarning && <AlertTriangleIcon className="w-5 h-5 text-amber-400" />}
-                {!isSuccess && !isError && !isWarning && <InfoIcon className="w-5 h-5 text-sky-400" />}
+                {isSuccess && <CheckCircleIcon className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />}
+                {isError && <AlertTriangleIcon className="w-4.5 h-4.5 text-rose-600 dark:text-rose-400" />}
+                {isWarning && <AlertTriangleIcon className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400" />}
+                {!isSuccess && !isError && !isWarning && <InfoIcon className="w-4.5 h-4.5 text-sky-600 dark:text-sky-400" />}
               </div>
-              <div className="flex-1 text-sm font-medium leading-snug break-words">
+              <div className="flex-1 text-xs font-semibold leading-relaxed break-words">
                 {toast.message}
               </div>
               <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
-                className="shrink-0 text-slate-400 hover:text-white transition-colors p-0.5 rounded"
+                className="shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-0.5 rounded"
                 aria-label="Dismiss toast"
               >
                 <XIcon className="w-4 h-4" />
@@ -96,13 +96,12 @@ export function ToastProvider({ children }) {
   );
 }
 
-export function useToast() {
+export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
     throw new Error("useToast must be used within a ToastProvider");
   }
   return context;
-}
+};
 
 export default ToastContext;
-

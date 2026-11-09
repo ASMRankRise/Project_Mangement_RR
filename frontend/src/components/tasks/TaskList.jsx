@@ -28,16 +28,16 @@ export function TaskList({
       {/* Loading state */}
       {loading && tasks.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-16 text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-          <p className="mt-3 text-xs text-slate-400">Loading tasks...</p>
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Loading tasks...</p>
         </div>
       ) : tasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/20 p-12 text-center shadow-xs">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
             <CheckSquareIcon className="h-6 w-6" />
           </div>
-          <h3 className="mt-4 text-base font-bold text-white">No tasks found</h3>
-          <p className="mt-1 max-w-sm text-xs text-slate-400">
+          <h3 className="mt-3 text-sm font-bold text-slate-900 dark:text-white">No tasks found</h3>
+          <p className="mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400">
             No tasks match your current filter parameters or search query.
           </p>
         </div>
@@ -51,9 +51,9 @@ export function TaskList({
           onTaskClick={onTaskClick}
         />
       ) : viewMode === "table" ? (
-        <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#0E131F]/90 backdrop-blur-sm">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="border-b border-white/10 bg-white/[0.02] text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] shadow-xs">
+          <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+            <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
               <tr>
                 <th className="px-4 py-3">Task</th>
                 <th className="px-4 py-3">Status</th>
@@ -64,7 +64,7 @@ export function TaskList({
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {tasks.map((task) => {
                 const assignedUsers = Array.isArray(task.assignedTo)
                   ? task.assignedTo
@@ -90,10 +90,10 @@ export function TaskList({
                   <tr
                     key={task._id || task.id}
                     onClick={() => onTaskClick && onTaskClick(task)}
-                    className="hover:bg-white/[0.03] transition-colors cursor-pointer group"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group"
                   >
                     <td className="px-4 py-3 max-w-[240px]">
-                      <div className="font-semibold text-white group-hover:text-indigo-300 transition truncate">
+                      <div className="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition truncate">
                         {task.title}
                       </div>
                       {task.description && (
@@ -109,7 +109,7 @@ export function TaskList({
                       <PriorityBadge priority={task.priority} size="sm" />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className="text-slate-300 font-medium truncate max-w-[120px] inline-block">
+                      <span className="text-slate-700 dark:text-slate-300 font-medium truncate max-w-[120px] inline-block">
                         {project?.name || task.project?.name || "Workspace"}
                       </span>
                     </td>
@@ -120,17 +120,17 @@ export function TaskList({
                       {task.dueDate ? (
                         <span
                           className={`flex items-center gap-1 ${
-                            isOverdue ? "text-rose-400 font-semibold" : "text-slate-400"
+                            isOverdue ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-slate-500 dark:text-slate-400"
                           }`}
                         >
-                          <CalendarIcon className="w-3 h-3" />
+                          <CalendarIcon className="w-3 h-3 text-slate-400" />
                           {new Date(task.dueDate).toLocaleDateString(undefined, {
                             month: "short",
                             day: "numeric",
                           })}
                         </span>
                       ) : (
-                        <span className="text-slate-500">-</span>
+                        <span className="text-slate-400">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -142,7 +142,7 @@ export function TaskList({
                           <button
                             type="button"
                             onClick={() => onDelete && onDelete(task._id || task.id)}
-                            className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition"
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 rounded transition"
                             title="Delete task"
                           >
                             <TrashIcon className="w-3.5 h-3.5" />
@@ -157,7 +157,7 @@ export function TaskList({
           </table>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3">
           {tasks.map((task) => (
             <TaskCard
               key={task._id || task.id}
@@ -174,10 +174,10 @@ export function TaskList({
 
       {/* Pagination Bar */}
       {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-white/10 pt-4">
-          <span className="text-xs text-slate-400">
-            Page <strong className="text-white">{page}</strong> of{" "}
-            <strong className="text-white">{totalPages}</strong> ({total} total)
+        <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-3">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            Page <strong className="text-slate-900 dark:text-white">{page}</strong> of{" "}
+            <strong className="text-slate-900 dark:text-white">{totalPages}</strong> ({total} total)
           </span>
 
           <Pagination

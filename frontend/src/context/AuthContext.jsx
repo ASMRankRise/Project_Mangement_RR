@@ -164,7 +164,7 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
 
   if (!context) {
@@ -172,4 +172,4 @@ export function useAuth() {
   }
 
   return context;
-}
+};

@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import useProjects from "../../hooks/useProjects";
+import useTasks from "../../hooks/useTasks";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import GlobalSearchModal from "../common/GlobalSearchModal";
+import SettingsModal from "../common/SettingsModal";
 
 export function DashboardLayout({ children }) {
   const navigate = useNavigate();
@@ -10,6 +14,28 @@ export function DashboardLayout({ children }) {
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const { projects, fetchProjects } = useProjects();
+  const { allTasks, fetchTasks } = useTasks(user, { limit: 50 });
+
+  useEffect(() => {
+    fetchProjects();
+    fetchTasks();
+  }, [fetchProjects, fetchTasks]);
+
+  // Global Ctrl+K / Cmd+K shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -17,7 +43,7 @@ export function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#070a13] text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+    <div className="flex min-h-screen bg-slate-50 text-slate-900 dark:bg-[#090D16] dark:text-slate-100 antialiased selection:bg-indigo-600 selection:text-white transition-colors">
       {/* Sidebar Navigation */}
       <Sidebar
         user={user}
@@ -26,28 +52,42 @@ export function DashboardLayout({ children }) {
         mobileOpen={mobileOpen}
         setMobileOpen={setMobileOpen}
         onLogout={handleLogout}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
 
       {/* Main Container */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         {/* Top Navbar */}
         <Navbar
           user={user}
           onLogout={handleLogout}
           setMobileOpen={setMobileOpen}
+          onOpenSearch={() => setSearchOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
         />
 
         {/* Page Content Viewport */}
         <main className="relative flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          {/* Subtle Ambient Glows */}
-          <div className="pointer-events-none fixed top-0 right-1/4 -z-10 h-96 w-96 rounded-full bg-indigo-600/[0.07] blur-[120px]" />
-          <div className="pointer-events-none fixed bottom-0 left-1/3 -z-10 h-96 w-96 rounded-full bg-violet-600/[0.05] blur-[140px]" />
-
-          <div className="mx-auto max-w-7xl animate-in fade-in duration-300">
+          <div className="mx-auto max-w-7xl animate-in fade-in duration-200">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Global Search Modal */}
+      <GlobalSearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        projects={projects}
+        tasks={allTasks}
+      />
+
+      {/* Preferences & Settings Modal */}
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        user={user}
+      />
     </div>
   );
 }

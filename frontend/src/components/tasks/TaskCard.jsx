@@ -105,13 +105,13 @@ export function TaskCard({
   return (
     <article
       onClick={() => onClick && onClick(task)}
-      className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-white/10 bg-[#111622]/80 hover:bg-[#161C2C] p-4 backdrop-blur-md transition-all duration-200 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-black/40 cursor-pointer text-left"
+      className="group relative flex flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111622] hover:bg-slate-50/80 dark:hover:bg-[#161C2C] p-3.5 shadow-xs transition-all hover:border-indigo-400 dark:hover:border-indigo-500/40 hover:shadow-md cursor-pointer text-left"
     >
       <div>
         {/* Top Meta: Badges & Actions */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <StatusBadge status={task.status} size="sm" />
+            <StatusBadge status={task.status} size="xs" />
             {canManageTask ? (
               <select
                 aria-label="Change priority"
@@ -119,14 +119,14 @@ export function TaskCard({
                 disabled={updating}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => handlePriorityChange(e, e.target.value)}
-                className="rounded-full border border-white/10 bg-[#070a13] px-2 py-0.5 text-[11px] text-slate-300 outline-none focus:border-indigo-500 cursor-pointer disabled:opacity-50"
+                className="rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#070a13] px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-indigo-500 cursor-pointer disabled:opacity-50"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
             ) : (
-              <PriorityBadge priority={task.priority} size="sm" />
+              <PriorityBadge priority={task.priority} size="xs" />
             )}
           </div>
 
@@ -135,7 +135,7 @@ export function TaskCard({
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="rounded-lg p-1 text-slate-500 hover:bg-red-500/10 hover:text-red-300 transition opacity-80 group-hover:opacity-100 disabled:opacity-50"
+              className="rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition opacity-70 group-hover:opacity-100 disabled:opacity-50"
               title="Delete task"
             >
               <TrashIcon className="h-3.5 w-3.5" />
@@ -144,25 +144,25 @@ export function TaskCard({
         </div>
 
         {/* Task Title */}
-        <h4 className="mt-3 text-sm font-semibold text-white group-hover:text-indigo-300 transition line-clamp-2">
+        <h4 className="mt-2.5 text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2 leading-snug">
           {task.title}
         </h4>
 
         {/* Task Description */}
         {task.description && (
-          <p className="mt-1.5 text-xs text-slate-400 line-clamp-2 leading-relaxed">
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
             {task.description}
           </p>
         )}
       </div>
 
       {/* Bottom Footer Meta */}
-      <div className="mt-4 border-t border-white/5 pt-3">
+      <div className="mt-3.5 border-t border-slate-100 dark:border-slate-800/80 pt-2.5">
         <div className="flex items-center justify-between gap-2 text-xs">
           {/* Project Name & Due Date */}
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
             <span
-              className="truncate rounded-md bg-white/[0.04] px-2 py-0.5 text-[10px] font-semibold text-slate-400 border border-white/5 max-w-[110px]"
+              className="truncate rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 max-w-[95px]"
               title={project?.name || task.project?.name}
             >
               {project?.name || task.project?.name || "Workspace"}
@@ -170,8 +170,8 @@ export function TaskCard({
 
             {formattedDueDate && (
               <span
-                className={`flex items-center gap-1 text-[11px] font-medium ${
-                  isOverdue ? "text-rose-400 font-semibold" : "text-slate-400"
+                className={`flex items-center gap-1 text-[10px] font-medium ${
+                  isOverdue ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-slate-500 dark:text-slate-400"
                 }`}
                 title={`Due: ${formattedDueDate}`}
               >
@@ -190,17 +190,17 @@ export function TaskCard({
         {/* Quick Inline Status Changer */}
         {canUpdateStatus && (
           <div
-            className="mt-3 flex items-center gap-2 pt-2 border-t border-white/5"
+            className="mt-2.5 flex items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800/60"
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="text-[10px] uppercase font-semibold text-slate-500">
-              Move to:
+            <span className="text-[9px] uppercase font-bold text-slate-400">
+              Move:
             </span>
             <select
               value={task.status || "todo"}
               disabled={updating}
               onChange={(e) => handleStatusChange(e, e.target.value)}
-              className="flex-1 rounded-lg border border-white/10 bg-[#070a13] px-2 py-1 text-[11px] text-slate-300 outline-none focus:border-indigo-500 transition cursor-pointer disabled:opacity-50"
+              className="flex-1 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#070a13] px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:text-slate-300 outline-none focus:border-indigo-500 transition cursor-pointer disabled:opacity-50"
             >
               <option value="todo">To Do</option>
               <option value="in-progress">In Progress</option>
