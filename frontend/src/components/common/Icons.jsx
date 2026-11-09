@@ -1,4 +1,3 @@
-
 export function Icon({
   name,
   className = "w-5 h-5",
@@ -6,9 +5,7 @@ export function Icon({
   ...props
 }) {
   const icons = {
-    dashboard: (
-      <path d="M3 3h7v9H3zm11 0h7v5h-7zm0 9h7v9h-7zM3 16h7v5H3z" />
-    ),
+    dashboard: <path d="M3 3h7v9H3zm11 0h7v5h-7zm0 9h7v9h-7zM3 16h7v5H3z" />,
     projects: (
       <>
         <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
@@ -31,9 +28,7 @@ export function Icon({
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </>
     ),
-    shield: (
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    ),
+    shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
     search: (
       <>
         <circle cx="11" cy="11" r="8" />
@@ -138,9 +133,7 @@ export function Icon({
         <rect width="7" height="7" x="3" y="14" rx="1" />
       </>
     ),
-    filter: (
-      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-    ),
+    filter: <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />,
     eye: (
       <>
         <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
@@ -163,9 +156,7 @@ export function Icon({
       </>
     ),
     sparkles: (
-      <>
-        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-      </>
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
     ),
     user: (
       <>
@@ -204,10 +195,59 @@ export function Icon({
         <polyline points="22 4 12 14.01 9 11.01" />
       </>
     ),
-    flag: (
+    alertTriangle: (
       <>
-        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-        <line x1="4" x2="4" y1="22" y2="15" />
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+        <line x1="12" x2="12" y1="9" y2="13" />
+        <line x1="12" x2="12.01" y1="17" y2="17" />
+      </>
+    ),
+    info: (
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" x2="12" y1="16" y2="12" />
+        <line x1="12" x2="12.01" y1="8" y2="8" />
+      </>
+    ),
+    layers: (
+      <>
+        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+        <polyline points="2 17 12 22 22 17" />
+        <polyline points="2 12 12 17 22 12" />
+      </>
+    ),
+    arrowLeft: (
+      <>
+        <line x1="19" x2="5" y1="12" y2="12" />
+        <polyline points="12 19 5 12 12 5" />
+      </>
+    ),
+    arrowRight: (
+      <>
+        <line x1="5" x2="19" y1="12" y2="12" />
+        <polyline points="12 5 19 12 12 19" />
+      </>
+    ),
+    userPlus: (
+      <>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="8.5" cy="7" r="4" />
+        <line x1="20" x2="20" y1="8" y2="14" />
+        <line x1="23" x2="17" y1="11" y2="11" />
+      </>
+    ),
+    rotateCw: (
+      <>
+        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+        <path d="M21 3v5h-5" />
+      </>
+    ),
+    table: (
+      <>
+        <path d="M12 3v18" />
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M3 15h18" />
       </>
     ),
   };
@@ -230,5 +270,52 @@ export function Icon({
     </svg>
   );
 }
+
+// Named Icon helper exports
+export const CheckCircleIcon = (props) => <Icon name="checkCircle" {...props} />;
+export const AlertTriangleIcon = (props) => <Icon name="alertTriangle" {...props} />;
+export const AlertCircleIcon = (props) => <Icon name="alertCircle" {...props} />;
+export const InfoIcon = (props) => <Icon name="info" {...props} />;
+export const XIcon = (props) => <Icon name="close" {...props} />;
+export const CloseIcon = (props) => <Icon name="close" {...props} />;
+export const LayersIcon = (props) => <Icon name="layers" {...props} />;
+export const LayoutDashboardIcon = (props) => <Icon name="dashboard" {...props} />;
+export const DashboardIcon = (props) => <Icon name="dashboard" {...props} />;
+export const FolderIcon = (props) => <Icon name="projects" {...props} />;
+export const ProjectsIcon = (props) => <Icon name="projects" {...props} />;
+export const CheckSquareIcon = (props) => <Icon name="tasks" {...props} />;
+export const TasksIcon = (props) => <Icon name="tasks" {...props} />;
+export const UsersIcon = (props) => <Icon name="users" {...props} />;
+export const UserIcon = (props) => <Icon name="user" {...props} />;
+export const UserPlusIcon = (props) => <Icon name="userPlus" {...props} />;
+export const MailIcon = (props) => <Icon name="mail" {...props} />;
+export const LockIcon = (props) => <Icon name="lock" {...props} />;
+export const EyeIcon = (props) => <Icon name="eye" {...props} />;
+export const EyeOffIcon = (props) => <Icon name="eyeOff" {...props} />;
+export const ShieldIcon = (props) => <Icon name="shield" {...props} />;
+export const SearchIcon = (props) => <Icon name="search" {...props} />;
+export const PlusIcon = (props) => <Icon name="plus" {...props} />;
+export const BellIcon = (props) => <Icon name="bell" {...props} />;
+export const CalendarIcon = (props) => <Icon name="calendar" {...props} />;
+export const ClockIcon = (props) => <Icon name="clock" {...props} />;
+export const EditIcon = (props) => <Icon name="edit" {...props} />;
+export const TrashIcon = (props) => <Icon name="trash" {...props} />;
+export const KanbanIcon = (props) => <Icon name="kanban" {...props} />;
+export const ListIcon = (props) => <Icon name="list" {...props} />;
+export const TableIcon = (props) => <Icon name="table" {...props} />;
+export const GridIcon = (props) => <Icon name="grid" {...props} />;
+export const LogOutIcon = (props) => <Icon name="logout" {...props} />;
+export const LogoutIcon = (props) => <Icon name="logout" {...props} />;
+export const ChevronLeftIcon = (props) => <Icon name="chevronLeft" {...props} />;
+export const ChevronRightIcon = (props) => <Icon name="chevronRight" {...props} />;
+export const ChevronDownIcon = (props) => <Icon name="chevronDown" {...props} />;
+export const ChevronUpIcon = (props) => <Icon name="chevronUp" {...props} />;
+export const TrendingUpIcon = (props) => <Icon name="trendingUp" {...props} />;
+export const ZapIcon = (props) => <Icon name="sparkles" {...props} />;
+export const SparklesIcon = (props) => <Icon name="sparkles" {...props} />;
+export const MenuIcon = (props) => <Icon name="menu" {...props} />;
+export const ArrowLeftIcon = (props) => <Icon name="arrowLeft" {...props} />;
+export const ArrowRightIcon = (props) => <Icon name="arrowRight" {...props} />;
+export const RotateCwIcon = (props) => <Icon name="rotateCw" {...props} />;
 
 export default Icon;

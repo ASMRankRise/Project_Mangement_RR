@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../../services/api";
-import Avatar from "../common/Avatar";
+import { Avatar } from "../common/Avatar";
 import { RoleBadge } from "../common/Badge";
 import Alert from "../common/Alert";
-import Icon from "../common/Icons";
+import {
+  SearchIcon,
+  RotateCwIcon,
+} from "../common/Icons";
+import { useToast } from "../../context/ToastContext";
 
 export function ManageUsers() {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingEmail, setUpdatingEmail] = useState("");
@@ -40,7 +45,7 @@ export function ManageUsers() {
     if (!selectedUser) return;
 
     if (!["admin", "user"].includes(newRole)) {
-      setError("Invalid role selected.");
+      toastError("Invalid role selected.");
       return;
     }
 
@@ -67,17 +72,18 @@ export function ManageUsers() {
         ),
       );
 
-      setSuccess(
-        `${email} access permissions updated to ${
-          updatedRole === "admin" ? "Administrator" : "Member"
-        }.`,
-      );
+      const msg = `${email} role updated to ${
+        updatedRole === "admin" ? "Administrator" : "Member"
+      }.`;
+      setSuccess(msg);
+      toastSuccess(msg);
     } catch (err) {
-      setError(
+      const msg =
         err.response?.data?.message ||
-          err.message ||
-          "Could not update user role.",
-      );
+        err.message ||
+        "Could not update user role.";
+      setError(msg);
+      toastError(msg);
       await fetchUsers();
     } finally {
       setUpdatingEmail("");
@@ -102,14 +108,14 @@ export function ManageUsers() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-widest text-indigo-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
             Access Control
           </span>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
             User Directory & Roles
           </h1>
           <p className="mt-1 text-xs text-slate-400">
-            Oversee user accounts, verify access privileges, and manage administrator permissions.
+            Oversee user accounts, verify access privileges, and assign administration permissions.
           </p>
         </div>
 
@@ -117,9 +123,9 @@ export function ManageUsers() {
           type="button"
           onClick={fetchUsers}
           disabled={loading || Boolean(updatingEmail)}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-white/10 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#0E131F] px-4 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-white/5 transition disabled:opacity-50"
         >
-          <Icon name="sparkles" className="h-4 w-4 text-indigo-400" />
+          <RotateCwIcon className={`h-4 w-4 text-indigo-400 ${loading ? "animate-spin" : ""}`} />
           <span>{loading ? "Refreshing..." : "Refresh Directory"}</span>
         </button>
       </div>
@@ -129,19 +135,19 @@ export function ManageUsers() {
 
       {/* Directory Metrics Strip */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-md">
+        <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
             Total Users
           </p>
           <p className="mt-2 text-2xl font-bold text-white">{users.length}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-md">
+        <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4">
           <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
             Administrators
           </p>
           <p className="mt-2 text-2xl font-bold text-indigo-300">{adminCount}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-md">
+        <div className="rounded-xl border border-white/10 bg-[#0E131F] p-4">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
             Standard Members
           </p>
@@ -150,18 +156,15 @@ export function ManageUsers() {
       </div>
 
       {/* Search & Role Filter Toolbar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-white/10 bg-white/[0.02] p-4 backdrop-blur-md">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-white/10 bg-[#0E131F] p-3.5">
         <div className="relative flex-1 max-w-md">
-          <Icon
-            name="search"
-            className="absolute left-3.5 top-3 h-4 w-4 text-slate-500"
-          />
+          <SearchIcon className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search users by name or email address..."
-            className="w-full rounded-xl border border-white/10 bg-[#070a13] py-2 pl-10 pr-4 text-xs text-white outline-none placeholder:text-slate-500 focus:border-indigo-500 transition"
+            className="w-full rounded-lg border border-white/10 bg-[#070a13] py-2 pl-10 pr-4 text-xs text-white outline-none placeholder:text-slate-500 focus:border-indigo-500 transition"
           />
         </div>
 
@@ -169,7 +172,7 @@ export function ManageUsers() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="rounded-xl border border-white/10 bg-[#070a13] px-3.5 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500 transition cursor-pointer"
+            className="rounded-lg border border-white/10 bg-[#070a13] px-3.5 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500 transition cursor-pointer"
           >
             <option value="">All Roles</option>
             <option value="admin">Administrators Only</option>
@@ -183,8 +186,8 @@ export function ManageUsers() {
       </div>
 
       {/* User Directory Table */}
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#070a13] shadow-xl">
-        {loading ? (
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0E131F]">
+        {loading && users.length === 0 ? (
           <div className="p-12 text-center text-xs text-slate-400">
             <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
             <p className="mt-3">Loading registered accounts...</p>
@@ -196,7 +199,7 @@ export function ManageUsers() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-white/10 bg-white/[0.03] text-[11px] uppercase tracking-wider text-slate-400">
+              <thead className="border-b border-white/10 bg-white/[0.02] text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
                 <tr>
                   <th scope="col" className="py-3.5 pl-6 pr-3">User Profile</th>
                   <th scope="col" className="px-3 py-3.5">Assigned Role</th>
@@ -221,14 +224,14 @@ export function ManageUsers() {
                       className="transition hover:bg-white/[0.02]"
                     >
                       {/* Name & Email */}
-                      <td className="py-4 pl-6 pr-3">
+                      <td className="py-3.5 pl-6 pr-3">
                         <div className="flex items-center gap-3">
-                          <Avatar name={u.name} email={u.email} size="md" />
+                          <Avatar user={u} size="md" />
                           <div className="min-w-0">
-                            <p className="font-bold text-white truncate text-sm">
+                            <p className="font-semibold text-white truncate text-xs">
                               {u.name}
                             </p>
-                            <p className="text-slate-400 truncate text-xs mt-0.5">
+                            <p className="text-slate-400 truncate text-[11px] mt-0.5">
                               {u.email}
                             </p>
                           </div>
@@ -236,23 +239,23 @@ export function ManageUsers() {
                       </td>
 
                       {/* Current Role Badge */}
-                      <td className="px-3 py-4">
+                      <td className="px-3 py-3.5">
                         <RoleBadge role={u.role} size="md" />
                       </td>
 
                       {/* Joined Date */}
-                      <td className="px-3 py-4 text-slate-400">
+                      <td className="px-3 py-3.5 text-slate-400">
                         {formattedDate}
                       </td>
 
                       {/* Role Dropdown Selector */}
-                      <td className="py-4 pl-3 pr-6 text-right">
+                      <td className="py-3.5 pl-3 pr-6 text-right">
                         <select
                           aria-label={`Role selector for ${u.email}`}
                           value={u.role}
                           disabled={loading || isUpdating}
                           onChange={(e) => handleRoleChange(u.email, e.target.value)}
-                          className="rounded-xl border border-white/10 bg-[#0f1424] px-3 py-1.5 text-xs text-white outline-none focus:border-indigo-500 transition cursor-pointer disabled:opacity-50"
+                          className="rounded-lg border border-white/10 bg-[#070a13] px-3 py-1.5 text-xs text-white outline-none focus:border-indigo-500 transition cursor-pointer disabled:opacity-50"
                         >
                           <option value="user">Member</option>
                           <option value="admin">Administrator</option>

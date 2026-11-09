@@ -1,7 +1,17 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import Icon from "../common/Icons";
-import Avatar from "../common/Avatar";
+import { Avatar } from "../common/Avatar";
 import { RoleBadge } from "../common/Badge";
+import {
+  LayersIcon,
+  LayoutDashboardIcon,
+  FolderIcon,
+  CheckSquareIcon,
+  UsersIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  XIcon,
+  LogOutIcon,
+} from "../common/Icons";
 
 export function Sidebar({
   user,
@@ -16,34 +26,34 @@ export function Sidebar({
 
   const navigationItems = [
     {
-      label: "WORKSPACE",
+      label: "MAIN",
       items: [
         {
           to: isAdmin ? "/admin" : "/dashboard",
           label: isAdmin ? "Admin Overview" : "Dashboard",
-          icon: "dashboard",
+          icon: LayoutDashboardIcon,
         },
         {
           to: "/projects",
           label: "Projects",
-          icon: "projects",
+          icon: FolderIcon,
         },
         {
           to: "/tasks",
           label: "Tasks",
-          icon: "tasks",
+          icon: CheckSquareIcon,
         },
       ],
     },
     ...(isAdmin
       ? [
           {
-            label: "MANAGEMENT",
+            label: "ADMINISTRATION",
             items: [
               {
                 to: "/admin/users",
                 label: "Manage Users",
-                icon: "users",
+                icon: UsersIcon,
               },
             ],
           },
@@ -67,7 +77,7 @@ export function Sidebar({
 
       {/* Sidebar container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/10 bg-[#0a0e1c] text-slate-200 transition-all duration-300 ease-in-out lg:static ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/10 bg-[#0A0E1A] text-slate-200 transition-all duration-300 ease-in-out lg:static ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         } ${collapsed ? "lg:w-20" : "w-64"}`}
       >
@@ -77,16 +87,16 @@ export function Sidebar({
             onClick={() => navigate("/")}
             className="flex cursor-pointer items-center gap-3 overflow-hidden"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 shadow-md shadow-indigo-600/30">
-              <Icon name="sparkles" className="h-5 w-5 text-white" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-600 shadow-md text-white font-bold text-sm">
+              <LayersIcon className="w-4 h-4" />
             </div>
             {!collapsed && (
               <div className="flex flex-col">
-                <span className="text-base font-bold tracking-tight text-white">
-                  ProjectFlow
+                <span className="text-sm font-bold tracking-tight text-white leading-tight">
+                  ProjectHub
                 </span>
-                <span className="text-[10px] font-medium tracking-widest text-indigo-400 uppercase">
-                  Enterprise
+                <span className="text-[10px] font-medium tracking-wider text-indigo-400 uppercase">
+                  Workspace
                 </span>
               </div>
             )}
@@ -99,10 +109,11 @@ export function Sidebar({
             className="hidden rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white lg:block transition"
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <Icon
-              name={collapsed ? "chevronRight" : "chevronLeft"}
-              className="h-4 w-4"
-            />
+            {collapsed ? (
+              <ChevronRightIcon className="h-4 w-4" />
+            ) : (
+              <ChevronLeftIcon className="h-4 w-4" />
+            )}
           </button>
 
           {/* Mobile close button */}
@@ -111,7 +122,7 @@ export function Sidebar({
             onClick={() => setMobileOpen(false)}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden"
           >
-            <Icon name="close" className="h-5 w-5" />
+            <XIcon className="h-5 w-5" />
           </button>
         </div>
 
@@ -120,31 +131,31 @@ export function Sidebar({
           {navigationItems.map((group, gIdx) => (
             <div key={gIdx} className="space-y-1">
               {!collapsed && (
-                <div className="px-3 pb-2 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                <div className="px-3 pb-2 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
                   {group.label}
                 </div>
               )}
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={handleNavClick}
-                  className={({ isActive }) =>
-                    `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
-                      isActive
-                        ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/25 font-semibold"
-                        : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
-                    } ${collapsed ? "justify-center" : ""}`
-                  }
-                  title={collapsed ? item.label : undefined}
-                >
-                  <Icon
-                    name={item.icon}
-                    className="h-5 w-5 shrink-0 transition-transform group-hover:scale-110"
-                  />
-                  {!collapsed && <span className="truncate">{item.label}</span>}
-                </NavLink>
-              ))}
+              {group.items.map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={handleNavClick}
+                    className={({ isActive }) =>
+                      `group flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
+                        isActive
+                          ? "bg-indigo-600 text-white font-semibold shadow-sm"
+                          : "text-slate-400 hover:bg-white/[0.05] hover:text-white"
+                      } ${collapsed ? "justify-center" : ""}`
+                    }
+                    title={collapsed ? item.label : undefined}
+                  >
+                    <IconComponent className="h-4 w-4 shrink-0 transition-transform group-hover:scale-105" />
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                  </NavLink>
+                );
+              })}
             </div>
           ))}
         </div>
@@ -152,12 +163,12 @@ export function Sidebar({
         {/* User Card at Bottom */}
         <div className="border-t border-white/10 p-3">
           <div
-            className={`flex items-center gap-3 rounded-xl bg-white/[0.03] p-2.5 transition hover:bg-white/[0.06] ${
+            className={`flex items-center gap-3 rounded-lg bg-white/[0.02] p-2.5 transition hover:bg-white/[0.05] ${
               collapsed ? "justify-center" : "justify-between"
             }`}
           >
-            <div className="flex items-center gap-3 overflow-hidden">
-              <Avatar name={user?.name} email={user?.email} size="sm" />
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <Avatar user={user} size="sm" />
               {!collapsed && (
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-semibold text-white">
@@ -175,9 +186,9 @@ export function Sidebar({
                 type="button"
                 onClick={onLogout}
                 title="Log out"
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-300 transition"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-300 transition"
               >
-                <Icon name="logout" className="h-4 w-4" />
+                <LogOutIcon className="h-4 w-4" />
               </button>
             )}
           </div>

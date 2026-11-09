@@ -6,6 +6,7 @@ export function KanbanBoard({
   user,
   onUpdate,
   onDelete,
+  onTaskClick,
 }) {
   const columns = [
     {
@@ -80,6 +81,7 @@ export function KanbanBoard({
                     user={user}
                     onUpdate={onUpdate}
                     onDelete={onDelete}
+                    onClick={onTaskClick}
                   />
                 ))
               )}

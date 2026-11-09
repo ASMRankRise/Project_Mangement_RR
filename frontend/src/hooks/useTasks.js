@@ -1,15 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import api from "../services/api";
 
-function useTasks(user) {
+function useTasks(user, initialOptions = {}) {
   const userId = user?._id || user?.id || user?.userId;
+  const initialLimit = initialOptions.limit || 50;
 
   const [tasks, setTasks] = useState([]);
   const [search, setSearchValue] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilterValue] = useState("");
   const [priorityFilter, setPriorityFilterValue] = useState("");
+  const [projectFilter, setProjectFilterValue] = useState(initialOptions.projectId || "");
   const [page, setPageValue] = useState(1);
+  const [limit, setLimitValue] = useState(initialLimit);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -21,7 +24,7 @@ function useTasks(user) {
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedSearch(search);
-    }, 500);
+    }, 400);
 
     return () => clearTimeout(timeout);
   }, [search]);
@@ -41,6 +44,10 @@ function useTasks(user) {
     setPageValue(1);
   };
 
+  const setProjectFilter = (value) => {
+    setProjectFilterValue(value);
+  };
+
   const setPage = (value) => {
     setPageValue((currentPage) =>
       typeof value === "function" ? value(currentPage) : value,
@@ -53,7 +60,7 @@ function useTasks(user) {
     const currentRequestId = ++requestId.current;
     const targetPage = typeof customPage === "number" ? customPage : page;
 
-    const params = { page: targetPage, limit: 5 };
+    const params = { page: targetPage, limit };
 
     if (debouncedSearch.trim()) {
       params.search = debouncedSearch.trim();
@@ -88,20 +95,30 @@ function useTasks(user) {
         setLoading(false);
       }
     }
-  }, [userId, page, debouncedSearch, statusFilter, priorityFilter]);
+  }, [userId, page, limit, debouncedSearch, statusFilter, priorityFilter]);
+
+  // Tasks optionally filtered by project in memory
+  const displayedTasks = useMemo(() => {
+    if (!projectFilter) return tasks;
+    return tasks.filter((t) => {
+      const pId = t.project?._id || t.project;
+      return String(pId) === String(projectFilter);
+    });
+  }, [tasks, projectFilter]);
 
   const createTask = async (payload) => {
     setError("");
     setSuccess("");
 
     try {
-      await api.post("/tasks", payload);
+      const response = await api.post("/tasks", payload);
       setSuccess("Task created successfully!");
       await fetchTasks();
-      return true;
+      return { success: true, task: response.data?.task };
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create task.");
-      return false;
+      const msg = err.response?.data?.message || "Failed to create task.";
+      setError(msg);
+      return { success: false, error: msg };
     }
   };
 
@@ -110,13 +127,14 @@ function useTasks(user) {
     setSuccess("");
 
     try {
-      await api.patch(`/tasks/${taskId}`, changes);
+      const response = await api.patch(`/tasks/${taskId}`, changes);
       setSuccess("Task updated successfully!");
       await fetchTasks();
-      return true;
+      return { success: true, task: response.data?.task };
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update task.");
-      return false;
+      const msg = err.response?.data?.message || "Failed to update task.";
+      setError(msg);
+      return { success: false, error: msg };
     }
   };
 
@@ -136,23 +154,29 @@ function useTasks(user) {
         await fetchTasks();
       }
 
-      return true;
+      return { success: true };
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to delete task.");
-      return false;
+      const msg = err.response?.data?.message || "Failed to delete task.";
+      setError(msg);
+      return { success: false, error: msg };
     }
   };
 
   return {
-    tasks,
+    tasks: displayedTasks,
+    allTasks: tasks,
     search,
     setSearch,
     statusFilter,
     setStatusFilter,
     priorityFilter,
     setPriorityFilter,
+    projectFilter,
+    setProjectFilter,
     page,
     setPage,
+    limit,
+    setLimit: setLimitValue,
     totalPages,
     total,
     loading,

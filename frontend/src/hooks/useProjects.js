@@ -30,49 +30,126 @@ function useProjects() {
 
       if (typeof name !== "string" || !name.trim()) {
         setError("Project name is required.");
-        return false;
+        return { success: false, error: "Project name is required." };
       }
 
       const trimmedName = name.trim();
 
       if (trimmedName.length < 3 || trimmedName.length > 50) {
-        setError("Project name must be between 3 and 50 characters.");
-        return false;
+        const msg = "Project name must be between 3 and 50 characters.";
+        setError(msg);
+        return { success: false, error: msg };
       }
 
       if (!/^[\p{L}\p{N}][\p{L}\p{N}\s_-]*$/u.test(trimmedName)) {
-        setError("Project name contains invalid characters.");
-        return false;
+        const msg = "Project name contains invalid characters.";
+        setError(msg);
+        return { success: false, error: msg };
       }
 
       if (typeof description !== "string") {
-        setError("Project description must be text.");
-        return false;
+        const msg = "Project description must be text.";
+        setError(msg);
+        return { success: false, error: msg };
       }
 
       if (description.trim().length > 500) {
-        setError("Description cannot exceed 500 characters.");
-        return false;
+        const msg = "Description cannot exceed 500 characters.";
+        setError(msg);
+        return { success: false, error: msg };
       }
 
       try {
-        await api.post("/projects", {
-          name: name.trim(),
+        const response = await api.post("/projects", {
+          name: trimmedName,
           description: description.trim(),
         });
 
-        const refreshed = await fetchProjects();
-
-        if (!refreshed) {
-          setSuccess("Project created, but refreshing the list failed.");
-          return true;
-        }
-
+        await fetchProjects();
         setSuccess("Project created successfully!");
-        return true;
+        return { success: true, project: response.data?.project };
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to create project.");
-        return false;
+        const msg = err.response?.data?.message || "Failed to create project.";
+        setError(msg);
+        return { success: false, error: msg };
+      }
+    },
+    [fetchProjects],
+  );
+
+  const updateProject = useCallback(
+    async (projectId, payload) => {
+      setError("");
+      setSuccess("");
+
+      try {
+        const response = await api.patch(`/projects/${projectId}`, payload);
+        await fetchProjects();
+        setSuccess("Project updated successfully!");
+        return { success: true, project: response.data?.project };
+      } catch (err) {
+        const msg = err.response?.data?.message || "Failed to update project.";
+        setError(msg);
+        return { success: false, error: msg };
+      }
+    },
+    [fetchProjects],
+  );
+
+  const deleteProject = useCallback(
+    async (projectId) => {
+      setError("");
+      setSuccess("");
+
+      try {
+        await api.delete(`/projects/${projectId}`);
+        await fetchProjects();
+        setSuccess("Project deleted successfully!");
+        return { success: true };
+      } catch (err) {
+        const msg = err.response?.data?.message || "Failed to delete project.";
+        setError(msg);
+        return { success: false, error: msg };
+      }
+    },
+    [fetchProjects],
+  );
+
+  const addMember = useCallback(
+    async (projectId, email) => {
+      setError("");
+      setSuccess("");
+
+      try {
+        const response = await api.post(`/projects/${projectId}/members`, {
+          email: email.trim().toLowerCase(),
+        });
+        await fetchProjects();
+        setSuccess("Member added successfully!");
+        return { success: true, project: response.data?.project };
+      } catch (err) {
+        const msg = err.response?.data?.message || "Failed to add member.";
+        setError(msg);
+        return { success: false, error: msg };
+      }
+    },
+    [fetchProjects],
+  );
+
+  const removeMember = useCallback(
+    async (projectId, memberId) => {
+      setError("");
+      setSuccess("");
+
+      try {
+        const response = await api.delete(`/projects/${projectId}/members/${memberId}`);
+        await fetchProjects();
+        setSuccess("Member removed successfully!");
+        return { success: true, project: response.data?.project };
+      } catch (err) {
+        const msg = err.response?.data?.message || "Failed to remove member.";
+        setError(msg);
+        return { success: false, error: msg };
       }
     },
     [fetchProjects],
@@ -87,6 +164,10 @@ function useProjects() {
     setSuccess,
     fetchProjects,
     createProject,
+    updateProject,
+    deleteProject,
+    addMember,
+    removeMember,
   };
 }
 
