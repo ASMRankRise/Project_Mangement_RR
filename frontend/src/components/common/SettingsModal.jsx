@@ -2,7 +2,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { Modal } from "./Modal";
 import { RoleBadge } from "./Badge";
 import { Avatar } from "./Avatar";
-import { SunIcon, MoonIcon, ShieldIcon, CheckCircleIcon } from "./Icons";
+import { SunIcon, MoonIcon, CheckCircleIcon } from "./Icons";
 
 export function SettingsModal({ isOpen, onClose, user }) {
   const { theme, setTheme } = useTheme();
@@ -10,23 +10,23 @@ export function SettingsModal({ isOpen, onClose, user }) {
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Workspace Preferences & Account" size="md">
-      <div className="space-y-6 text-slate-800 dark:text-slate-200">
+    <Modal isOpen={isOpen} onClose={onClose} title="Workspace Preferences" size="md">
+      <div className="space-y-4 text-slate-800 dark:text-slate-200">
         {/* Account Info */}
         <div>
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-            User Profile
+          <h4 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+            User Account
           </h4>
-          <div className="flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+          <div className="flex items-center gap-3 p-3 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
             <Avatar user={user} size="md" />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                <span className="font-semibold text-xs text-slate-900 dark:text-white truncate">
                   {user?.name || "User"}
                 </span>
                 <RoleBadge role={user?.role} size="xs" />
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                 {user?.email}
               </p>
             </div>
@@ -35,78 +35,81 @@ export function SettingsModal({ isOpen, onClose, user }) {
 
         {/* Theme Settings */}
         <div>
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+          <h4 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
             Appearance
           </h4>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            Choose how ProjectHub looks to you. Select a theme or switch anytime.
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2.5">
+            Select your preferred display theme for this browser session.
           </p>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             <button
               type="button"
               onClick={() => setTheme("light")}
-              className={`flex items-center gap-3 p-3 rounded-xl border text-left transition ${
+              className={`flex items-center gap-2.5 p-2.5 rounded-md border text-left transition cursor-pointer ${
                 theme === "light"
-                  ? "border-indigo-600 bg-indigo-50/70 text-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200 shadow-sm"
-                  : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300"
+                  ? "border-indigo-600 bg-indigo-50/70 text-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200 shadow-2xs font-semibold"
+                  : "border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
               }`}
             >
-              <div className="p-2 rounded-lg bg-white dark:bg-slate-800 text-amber-500 shadow-xs border border-slate-200 dark:border-slate-700">
-                <SunIcon className="w-4 h-4" />
+              <div className="p-1.5 rounded bg-white dark:bg-slate-800 text-amber-500 border border-slate-200 dark:border-slate-700">
+                <SunIcon className="w-3.5 h-3.5" />
               </div>
               <div>
-                <span className="text-xs font-bold block">Light Mode</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">Crisp & clear</span>
+                <span className="text-xs font-semibold block">Light</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">Default clean</span>
               </div>
             </button>
 
             <button
               type="button"
               onClick={() => setTheme("dark")}
-              className={`flex items-center gap-3 p-3 rounded-xl border text-left transition ${
+              className={`flex items-center gap-2.5 p-2.5 rounded-md border text-left transition cursor-pointer ${
                 theme === "dark"
-                  ? "border-indigo-600 bg-indigo-50/70 text-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200 shadow-sm"
-                  : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300"
+                  ? "border-indigo-600 bg-indigo-50/70 text-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200 shadow-2xs font-semibold"
+                  : "border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
               }`}
             >
-              <div className="p-2 rounded-lg bg-white dark:bg-slate-800 text-indigo-400 shadow-xs border border-slate-200 dark:border-slate-700">
-                <MoonIcon className="w-4 h-4" />
+              <div className="p-1.5 rounded bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700">
+                <MoonIcon className="w-3.5 h-3.5" />
               </div>
               <div>
-                <span className="text-xs font-bold block">Dark Mode</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">Obsidian focus</span>
+                <span className="text-xs font-semibold block">Dark</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">Low light</span>
               </div>
             </button>
           </div>
         </div>
 
-        {/* Security & System Info */}
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 text-xs">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 py-1.5">
-            <span className="flex items-center gap-1.5">
-              <ShieldIcon className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Authentication</span>
-            </span>
-            <span className="font-medium text-slate-700 dark:text-slate-300">JWT Cookie-Protected</span>
-          </div>
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 py-1.5">
-            <span className="flex items-center gap-1.5">
-              <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Status</span>
-            </span>
-            <span className="font-medium text-emerald-600 dark:text-emerald-400">Connected & Synced</span>
+        {/* Security Summary */}
+        <div>
+          <h4 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+            Security & Session
+          </h4>
+          <div className="p-3 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600 dark:text-slate-400">Authentication</span>
+              <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                <CheckCircleIcon className="w-3.5 h-3.5" />
+                <span>JWT Secure Cookie</span>
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-600 dark:text-slate-400">Access Privilege</span>
+              <span className="font-medium text-slate-900 dark:text-white capitalize">
+                {user?.role || "user"}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Action */}
-        <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
+        <div className="pt-2 flex justify-end border-t border-slate-200 dark:border-slate-800">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 transition shadow-xs"
+            className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition"
           >
-            Done
+            Close
           </button>
         </div>
       </div>
@@ -115,4 +118,3 @@ export function SettingsModal({ isOpen, onClose, user }) {
 }
 
 export default SettingsModal;
-

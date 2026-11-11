@@ -24,29 +24,29 @@ export function UpcomingDeadlines({ tasks = [], onTaskClick }) {
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-5 shadow-xs">
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3 mb-3">
+    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 text-left">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2.5 mb-2.5">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+          <h3 className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <CalendarIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span>Upcoming Deadlines</span>
           </h3>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
             Active milestones requiring prompt attention
           </p>
         </div>
-        <span className="rounded-full border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
+        <span className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
           {activeTasksWithDueDate.length} upcoming
         </span>
       </div>
 
       {topDeadlines.length === 0 ? (
-        <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-          <CheckCircleIcon className="w-6 h-6 text-emerald-500 mx-auto mb-2 opacity-80" />
+        <div className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+          <CheckCircleIcon className="w-5 h-5 text-emerald-500 mx-auto mb-1.5 opacity-80" />
           No upcoming deadlines. All active work is on schedule!
         </div>
       ) : (
-        <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {topDeadlines.map((task) => {
             const daysDiff = getDaysDiff(task.dueDate);
             const isOverdue = daysDiff < 0;
@@ -56,7 +56,7 @@ export function UpcomingDeadlines({ tasks = [], onTaskClick }) {
               <div
                 key={task._id || task.id}
                 onClick={() => onTaskClick && onTaskClick(task)}
-                className="py-2.5 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded-lg px-2 -mx-2 transition cursor-pointer group"
+                className="py-2 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded px-2 -mx-2 transition cursor-pointer group"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -76,11 +76,11 @@ export function UpcomingDeadlines({ tasks = [], onTaskClick }) {
 
                 <div className="text-right shrink-0">
                   <span
-                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold border ${
+                    className={`inline-flex items-center gap-1 rounded px-1.5 py-0.2 text-[10px] font-medium border ${
                       isOverdue
-                        ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30"
+                        ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60 font-semibold"
                         : isToday
-                        ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30"
+                        ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 font-semibold"
                         : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
                     }`}
                   >
@@ -91,12 +91,6 @@ export function UpcomingDeadlines({ tasks = [], onTaskClick }) {
                       ? "Due today"
                       : `${daysDiff}d left`}
                   </span>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
-                    {new Date(task.dueDate).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </div>
                 </div>
               </div>
             );

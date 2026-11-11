@@ -43,7 +43,7 @@ export function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900 dark:bg-[#090D16] dark:text-slate-100 antialiased selection:bg-indigo-600 selection:text-white transition-colors">
+    <div className="flex min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0D1117] dark:text-slate-100 antialiased selection:bg-indigo-600 selection:text-white transition-colors">
       {/* Sidebar Navigation */}
       <Sidebar
         user={user}
@@ -67,8 +67,8 @@ export function DashboardLayout({ children }) {
         />
 
         {/* Page Content Viewport */}
-        <main className="relative flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl animate-in fade-in duration-200">
+        <main className="relative flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
+          <div className="mx-auto max-w-7xl">
             {children}
           </div>
         </main>

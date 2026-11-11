@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+                  import { useEffect } from "react";
 import { XIcon } from "./Icons";
 
 export function Modal({
@@ -43,39 +43,42 @@ export function Modal({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-slate-900/50 dark:bg-black/70 transition-opacity"
       />
 
       {/* Dialog container */}
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative w-full ${sizeClass} overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-5 sm:p-6 text-slate-900 dark:text-slate-100 shadow-2xl transition-all my-8`}
+        className={`relative w-full ${sizeClass} overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-5 sm:p-6 text-slate-900 dark:text-slate-100 shadow-xl transition-all my-8`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-4">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-3 mb-4">
           <div>
             {title && (
-              <h3 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+              <h3 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                 {title}
               </h3>
             )}
             {subtitle && (
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                {subtitle}
+              </p>
             )}
           </div>
+
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white transition"
-            aria-label="Close modal"
+            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition"
+            aria-label="Close dialog"
           >
             <XIcon className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="mt-4">{children}</div>
+        {/* Content body */}
+        <div className="text-xs">{children}</div>
       </div>
     </div>
   );

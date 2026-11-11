@@ -6,7 +6,6 @@ import {
   CalendarIcon,
   TrashIcon,
   ClockIcon,
-  UserIcon,
   FolderIcon,
   AlertTriangleIcon,
 } from "../common/Icons";
@@ -18,10 +17,16 @@ export function TaskDetailModal({
   task,
   projects = [],
   currentUser,
+  user,
   onUpdateTask,
+  onUpdate,
   onDeleteTask,
+  onDelete,
 }) {
   const { success, error: toastError } = useToast();
+  const effectiveUser = currentUser || user;
+  const updateHandler = onUpdateTask || onUpdate;
+  const deleteHandler = onDeleteTask || onDelete;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -46,8 +51,8 @@ export function TaskDetailModal({
   if (!task) return null;
 
   const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
-  const currentUserId = String(getId(currentUser) || "");
-  const isAdmin = currentUser?.role === "admin";
+  const currentUserId = String(getId(effectiveUser) || "");
+  const isAdmin = effectiveUser?.role === "admin";
 
   const assignedUsers = Array.isArray(task.assignedTo)
     ? task.assignedTo
@@ -100,7 +105,7 @@ export function TaskDetailModal({
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
       };
 
-      const res = await onUpdateTask(task._id || task.id, payload);
+      const res = await updateHandler?.(task._id || task.id, payload);
       setSubmitting(false);
 
       if (res?.success !== false) {
@@ -111,9 +116,8 @@ export function TaskDetailModal({
         toastError(res?.error || "Failed to update task");
       }
     } else if (canUpdateStatus) {
-      // Member can only update status
       setSubmitting(true);
-      const res = await onUpdateTask(task._id || task.id, { status });
+      const res = await updateHandler?.(task._id || task.id, { status });
       setSubmitting(false);
 
       if (res?.success !== false) {
@@ -131,7 +135,7 @@ export function TaskDetailModal({
     if (!confirmed) return;
 
     setDeleting(true);
-    const res = await onDeleteTask(task._id || task.id);
+    const res = await deleteHandler?.(task._id || task.id);
     setDeleting(false);
 
     if (res?.success !== false) {
@@ -149,27 +153,27 @@ export function TaskDetailModal({
       title={isEditing ? "Edit Task" : "Task Details"}
       size="lg"
     >
-      <div className="space-y-5 text-slate-800 dark:text-slate-200">
+      <div className="space-y-4 text-slate-800 dark:text-slate-200">
         {/* Workspace / Project Badge */}
-        <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/80">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-1.5">
             <FolderIcon className="w-4 h-4 text-slate-400" />
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               {project?.name || task.project?.name || "Workspace Task"}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <StatusBadge status={status} size="sm" />
-            <PriorityBadge priority={priority} size="sm" />
+          <div className="flex items-center gap-1.5">
+            <StatusBadge status={status} size="xs" />
+            <PriorityBadge priority={priority} size="xs" />
           </div>
         </div>
 
         {/* Task Form or View */}
         {isEditing && canManageAll ? (
-          <form onSubmit={handleSave} className="space-y-4">
+          <form onSubmit={handleSave} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Task Title *
               </label>
               <input
@@ -178,12 +182,12 @@ export function TaskDetailModal({
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={150}
                 required
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B0E14] px-3.5 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-500 transition shadow-xs"
+                className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition shadow-2xs"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Description
               </label>
               <textarea
@@ -192,19 +196,19 @@ export function TaskDetailModal({
                 maxLength={1000}
                 rows={3}
                 placeholder="Add additional context or requirements..."
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B0E14] px-3.5 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-500 transition resize-none shadow-xs"
+                className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition resize-none shadow-2xs"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Status
                 </label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B0E14] px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 cursor-pointer shadow-xs"
+                  className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 cursor-pointer shadow-2xs"
                 >
                   <option value="todo">To Do</option>
                   <option value="in-progress">In Progress</option>
@@ -215,13 +219,13 @@ export function TaskDetailModal({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Priority
                 </label>
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B0E14] px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 cursor-pointer shadow-xs"
+                  className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 cursor-pointer shadow-2xs"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -230,27 +234,27 @@ export function TaskDetailModal({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Due Date
                 </label>
                 <input
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B0E14] px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 shadow-xs"
+                  className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 shadow-2xs"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting || submitting}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition disabled:opacity-50"
+                className="h-8 inline-flex items-center gap-1.5 px-3 rounded-md text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition disabled:opacity-50"
               >
                 <TrashIcon className="w-3.5 h-3.5" />
-                <span>{deleting ? "Deleting..." : "Delete Task"}</span>
+                <span>{deleting ? "Deleting..." : "Delete"}</span>
               </button>
 
               <div className="flex items-center gap-2">
@@ -258,14 +262,14 @@ export function TaskDetailModal({
                   type="button"
                   onClick={() => setIsEditing(false)}
                   disabled={submitting}
-                  className="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  className="h-8 px-3 rounded-md text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition shadow-xs disabled:opacity-50"
+                  className="h-8 px-3 rounded-md text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-2xs disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? "Saving..." : "Save Changes"}
                 </button>
@@ -273,17 +277,17 @@ export function TaskDetailModal({
             </div>
           </form>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight leading-snug">
                 {task.title}
               </h3>
               {task.description ? (
-                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
                   {task.description}
                 </p>
               ) : (
-                <p className="mt-2 text-xs text-slate-400 italic">
+                <p className="mt-1.5 text-xs text-slate-400 italic">
                   No detailed description provided.
                 </p>
               )}
@@ -291,7 +295,7 @@ export function TaskDetailModal({
 
             {/* Overdue alert if applicable */}
             {isOverdue && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 border border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-medium">
+              <div className="flex items-center gap-2 p-2.5 rounded-md bg-rose-50 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-medium">
                 <AlertTriangleIcon className="w-4 h-4 text-rose-500 shrink-0" />
                 <span>
                   This task is overdue! The due date was{" "}
@@ -301,14 +305,14 @@ export function TaskDetailModal({
             )}
 
             {/* Metadata Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-md bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
               <div>
                 <span className="text-slate-400 block mb-1 font-semibold uppercase tracking-wider text-[10px]">
                   Assigned Members
                 </span>
                 {assignedUsers.length > 0 ? (
                   <div className="flex items-center gap-2 flex-wrap">
-                    <AvatarGroup users={assignedUsers} size="sm" max={4} />
+                    <AvatarGroup users={assignedUsers} size="xs" max={4} />
                     <span className="text-slate-700 dark:text-slate-300 text-xs">
                       {assignedUsers.map((u) => u.name || u.email).join(", ")}
                     </span>
@@ -332,55 +336,37 @@ export function TaskDetailModal({
                           month: "short",
                           day: "numeric",
                         })
-                      : "No deadline set"}
+                      : "No deadline specified"}
                   </span>
                 </div>
               </div>
 
               <div>
                 <span className="text-slate-400 block mb-1 font-semibold uppercase tracking-wider text-[10px]">
-                  Created By
-                </span>
-                <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                  <UserIcon className="w-3.5 h-3.5 text-slate-400" />
-                  <span>
-                    {task.createdBy?.name || task.createdBy?.email || "System"}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-slate-400 block mb-1 font-semibold uppercase tracking-wider text-[10px]">
-                  Created Date
+                  Created On
                 </span>
                 <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
                   <ClockIcon className="w-3.5 h-3.5 text-slate-400" />
                   <span>
                     {task.createdAt
                       ? new Date(task.createdAt).toLocaleDateString()
-                      : "N/A"}
+                      : "Unknown"}
                   </span>
                 </div>
               </div>
-            </div>
 
-            {/* Quick Status Update for Assignee */}
-            {canUpdateStatus && (
-              <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-between gap-3">
-                <div className="text-xs">
-                  <span className="font-semibold text-slate-900 dark:text-white block">Task Status</span>
-                  <span className="text-slate-500 dark:text-slate-400 text-[11px]">
-                    {canManageAll
-                      ? "Update current progress state"
-                      : "You can update the progress of tasks assigned to you"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
+              <div>
+                <span className="text-slate-400 block mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  Workflow State
+                </span>
+                {canUpdateStatus && !canManageAll ? (
                   <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    disabled={submitting}
-                    className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B0E14] px-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 cursor-pointer shadow-xs"
+                    onChange={(e) => {
+                      setStatus(e.target.value);
+                      updateHandler?.(task._id || task.id, { status: e.target.value });
+                    }}
+                    className="rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2 py-1 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 cursor-pointer"
                   >
                     <option value="todo">To Do</option>
                     <option value="in-progress">In Progress</option>
@@ -388,52 +374,46 @@ export function TaskDetailModal({
                     <option value="completed">Completed</option>
                     <option value="done">Done</option>
                   </select>
-                  {status !== task.status && (
-                    <button
-                      type="button"
-                      onClick={handleSave}
-                      disabled={submitting}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition shadow-xs disabled:opacity-50"
-                    >
-                      {submitting ? "Saving..." : "Apply"}
-                    </button>
-                  )}
-                </div>
+                ) : (
+                  <StatusBadge status={status} size="xs" />
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Modal Footer Controls */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
               {canManageAll ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(true)}
-                    className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-                  >
-                    Edit Task
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition"
-                    title="Delete task"
-                  >
-                    <TrashIcon className="w-4 h-4" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="h-8 inline-flex items-center gap-1.5 px-2.5 rounded-md text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition disabled:opacity-50"
+                >
+                  <TrashIcon className="w-3.5 h-3.5" />
+                  <span>{deleting ? "Deleting..." : "Delete"}</span>
+                </button>
               ) : (
                 <div />
               )}
 
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-2">
+                {canManageAll && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    className="h-8 px-3 rounded-md text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-2xs"
+                  >
+                    Edit Task
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="h-8 px-3 rounded-md text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

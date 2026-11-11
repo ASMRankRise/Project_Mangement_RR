@@ -102,7 +102,7 @@ export function ProjectList({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search workspaces by name, description, owner..."
-            className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] py-2 pl-9 pr-4 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-500 transition shadow-xs"
+            className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] py-1.5 pl-9 pr-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition shadow-2xs"
           />
         </div>
 
@@ -117,26 +117,26 @@ export function ProjectList({
 
       {/* Grid or Empty State */}
       {loading && projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-16 text-center">
-          <div className="h-7 w-7 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Loading workspaces...</p>
+        <div className="flex flex-col items-center justify-center p-14 text-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Loading workspaces...</p>
         </div>
       ) : filteredProjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/30 p-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-            <FolderIcon className="h-6 w-6" />
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-[#161B22] p-10 text-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+            <FolderIcon className="h-5 w-5" />
           </div>
-          <h3 className="mt-3 text-sm font-bold text-slate-900 dark:text-white">
+          <h3 className="mt-2.5 text-xs font-semibold text-slate-900 dark:text-white">
             {search ? "No matching workspaces" : "No active workspaces"}
           </h3>
-          <p className="mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 max-w-sm text-[11px] text-slate-500 dark:text-slate-400">
             {search
               ? "Try adjusting your search query."
               : "Create a project workspace to begin tracking tasks and organizing team workloads."}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => {
             const pId = getId(project);
             const owner = project.owner;
@@ -156,17 +156,17 @@ export function ProjectList({
               <article
                 key={pId}
                 onClick={() => onSelectProject?.(project)}
-                className="group relative flex flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-5 shadow-xs transition-all hover:border-indigo-400 dark:hover:border-indigo-500/40 hover:shadow-md cursor-pointer text-left"
+                className="group relative flex flex-col justify-between rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 shadow-2xs transition hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer text-left"
               >
                 <div>
                   {/* Top Bar: Icon, Name & Badges */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20 transition">
-                        <FolderIcon className="h-4.5 w-4.5" />
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        <FolderIcon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition truncate">
+                        <h3 className="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition truncate">
                           {project.name}
                         </h3>
                         <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
@@ -181,45 +181,45 @@ export function ProjectList({
                     </div>
 
                     {isOwner ? (
-                      <span className="shrink-0 rounded-full border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+                      <span className="shrink-0 rounded border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.2 text-[10px] font-medium text-amber-700 dark:text-amber-400">
                         Owner
                       </span>
                     ) : (
-                      <span className="shrink-0 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-400">
+                      <span className="shrink-0 rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-medium text-slate-600 dark:text-slate-400">
                         Member
                       </span>
                     )}
                   </div>
 
                   {/* Description */}
-                  <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400 min-h-[32px]">
+                  <p className="mt-2.5 line-clamp-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400 min-h-[30px]">
                     {project.description || "No project description provided."}
                   </p>
                 </div>
 
                 {/* Progress & Team Details */}
-                <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3.5 space-y-3">
+                <div className="mt-3.5 border-t border-slate-100 dark:border-slate-800/80 pt-3 space-y-2.5">
                   {/* Progress Bar */}
                   <div>
                     <div className="flex items-center justify-between text-[11px] mb-1">
                       <span className="text-slate-500 dark:text-slate-400">
                         {totalProjTasks > 0
-                          ? `${doneProjTasks} of ${totalProjTasks} tasks done`
+                          ? `${doneProjTasks} of ${totalProjTasks} done`
                           : "No tasks registered"}
                       </span>
-                      <span className="font-semibold text-indigo-600 dark:text-indigo-400">{progress}%</span>
+                      <span className="font-semibold text-slate-900 dark:text-white">{progress}%</span>
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-indigo-600 dark:bg-indigo-500 transition-all duration-300"
+                        className="h-full rounded-full bg-indigo-600 dark:bg-indigo-500"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
                   </div>
 
                   {/* Team Roster & Lead */}
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between pt-0.5">
+                    <div className="flex items-center gap-1.5">
                       <AvatarGroup users={members} max={3} size="xs" />
                       <span className="text-[11px] text-slate-500 dark:text-slate-400">
                         {members.length} {members.length === 1 ? "member" : "members"}
@@ -227,7 +227,7 @@ export function ProjectList({
                     </div>
 
                     <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Lead:</span>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium">Lead:</span>
                       <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate max-w-[80px]">
                         {owner?.name?.split(" ")[0] || owner?.email?.split("@")[0] || "User"}
                       </span>
@@ -236,9 +236,9 @@ export function ProjectList({
 
                   {/* Actions Bar */}
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 group-hover:underline">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
                       <span>Open Workspace</span>
-                      <ArrowRightIcon className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      <ArrowRightIcon className="w-3.5 h-3.5" />
                     </span>
 
                     <div
@@ -249,7 +249,7 @@ export function ProjectList({
                         <button
                           type="button"
                           onClick={(e) => handleEditClick(e, project)}
-                          className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition"
+                          className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition"
                           title="Edit Project"
                         >
                           <EditIcon className="h-3.5 w-3.5" />
@@ -259,22 +259,30 @@ export function ProjectList({
                       {canEdit && (
                         <button
                           type="button"
-                          onClick={() => setManageMembersProject(project)}
-                          className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setManageMembersProject(project);
+                          }}
+                          className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition"
                           title="Manage Members"
                         >
                           <UsersIcon className="h-3.5 w-3.5" />
                         </button>
                       )}
 
-                      {isAdmin && onDeleteProject && (
+                      {canEdit && (
                         <button
                           type="button"
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            onDeleteProject(pId);
+                            const confirmed = window.confirm(
+                              `Delete project "${project.name}" and all associated tasks?`
+                            );
+                            if (confirmed) {
+                              await onDeleteProject?.(pId);
+                            }
                           }}
-                          className="rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition"
+                          className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
                           title="Delete Project"
                         >
                           <TrashIcon className="h-3.5 w-3.5" />
@@ -294,55 +302,48 @@ export function ProjectList({
         <Modal
           isOpen={Boolean(editingProject)}
           onClose={() => setEditingProject(null)}
-          title="Edit Project Workspace"
+          title="Edit Workspace"
+          subtitle="Modify project title and mission statement"
         >
           <form onSubmit={handleUpdate} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-                Project Name *
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Project Name
               </label>
               <input
                 type="text"
-                value={editForm.name}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, name: e.target.value }))
-                }
-                maxLength={50}
                 required
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3.5 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-500 transition"
+                maxLength={50}
+                value={editForm.name}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Description
               </label>
               <textarea
-                value={editForm.description}
-                onChange={(e) =>
-                  setEditForm((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                maxLength={500}
                 rows={3}
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3.5 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-500 transition resize-none"
+                value={editForm.description}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setEditingProject(null)}
-                className="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                className="h-8 rounded-md border border-slate-300 dark:border-slate-700 px-3 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={updating}
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition shadow-xs disabled:opacity-50"
+                className="h-8 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 text-xs font-medium text-white disabled:opacity-50"
               >
                 {updating ? "Saving..." : "Save Changes"}
               </button>
@@ -351,12 +352,13 @@ export function ProjectList({
         </Modal>
       )}
 
-      {/* Manage Members Modal */}
+      {/* Member Management Modal */}
       {manageMembersProject && (
         <MemberManagementModal
           isOpen={Boolean(manageMembersProject)}
           onClose={() => setManageMembersProject(null)}
           project={manageMembersProject}
+          currentUser={user}
           onAddMember={onAddMember}
           onRemoveMember={onRemoveMember}
         />

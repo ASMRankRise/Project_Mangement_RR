@@ -11,7 +11,6 @@ import { PlusIcon } from "../common/Icons";
 export function TasksPage({ user }) {
   const {
     projects,
-    loading: projectsLoading,
     error: projectError,
     fetchProjects,
   } = useProjects();
@@ -39,15 +38,15 @@ export function TasksPage({ user }) {
     );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Page Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
             Workspaces & Tasks
           </span>
-          <h1 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            My Tasks & Delivery Pipeline
+          <h1 className="mt-1 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Tasks Directory
           </h1>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
             Track tasks across statuses, progress workloads, and meet team milestones.
@@ -62,7 +61,7 @@ export function TasksPage({ user }) {
                 aria-label="Filter by project"
                 value={taskState.projectFilter}
                 onChange={(e) => taskState.setProjectFilter(e.target.value)}
-                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F1420] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-500 cursor-pointer transition shadow-xs"
+                className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-600 cursor-pointer transition shadow-2xs"
               >
                 <option value="">All Projects ({projects.length})</option>
                 {projects.map((p) => (
@@ -78,9 +77,9 @@ export function TasksPage({ user }) {
             <button
               type="button"
               onClick={() => setCreateModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 transition"
+              className="h-8 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white shadow-2xs transition cursor-pointer"
             >
-              <PlusIcon className="h-4 w-4" />
+              <PlusIcon className="h-3.5 w-3.5" />
               <span>New Task</span>
             </button>
           )}
@@ -103,41 +102,50 @@ export function TasksPage({ user }) {
         setViewMode={setViewMode}
       />
 
-      {/* Tasks View: Kanban, List, or Table */}
-      <TaskList
-        tasks={taskState.tasks}
-        projects={projects}
-        user={user}
-        page={taskState.page}
-        totalPages={taskState.totalPages}
-        total={taskState.total}
-        loading={taskState.loading}
-        onPageChange={taskState.setPage}
-        onUpdate={taskState.updateTask}
-        onDelete={taskState.deleteTask}
-        onTaskClick={(task) => setSelectedTask(task)}
-        viewMode={viewMode}
-      />
+      {/* Task List Workspace */}
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4">
+        <TaskList
+          tasks={taskState.tasks}
+          projects={projects}
+          user={user}
+          page={taskState.page}
+          totalPages={taskState.totalPages}
+          total={taskState.total}
+          loading={taskState.loading}
+          onPageChange={taskState.setPage}
+          onUpdate={taskState.updateTask}
+          onDelete={taskState.deleteTask}
+          onTaskClick={(t) => setSelectedTask(t)}
+          viewMode={viewMode}
+        />
+      </div>
 
-      {/* Create Task Modal */}
-      <CreateTaskModal
-        isOpen={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        projects={projects}
-        onCreate={taskState.createTask}
-        loading={taskState.loading || projectsLoading}
-      />
+      {/* Modals */}
+      {createModalOpen && (
+        <CreateTaskModal
+          isOpen={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          projects={projects}
+          onSubmit={async (payload) => {
+            const res = await taskState.createTask(payload);
+            if (res?.success !== false) {
+              setCreateModalOpen(false);
+            }
+          }}
+        />
+      )}
 
-      {/* Task Detail Modal */}
-      <TaskDetailModal
-        isOpen={Boolean(selectedTask)}
-        onClose={() => setSelectedTask(null)}
-        task={selectedTask}
-        projects={projects}
-        currentUser={user}
-        onUpdateTask={taskState.updateTask}
-        onDeleteTask={taskState.deleteTask}
-      />
+      {selectedTask && (
+        <TaskDetailModal
+          isOpen={Boolean(selectedTask)}
+          onClose={() => setSelectedTask(null)}
+          task={selectedTask}
+          projects={projects}
+          user={user}
+          onUpdate={taskState.updateTask}
+          onDelete={taskState.deleteTask}
+        />
+      )}
     </div>
   );
 }

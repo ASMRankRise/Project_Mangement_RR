@@ -64,7 +64,7 @@ export function ProjectsPage({ user }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* If a project is selected, render the full Project Workspace */}
       {selectedProject ? (
         <ProjectWorkspace
@@ -89,7 +89,7 @@ export function ProjectsPage({ user }) {
               <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                 Workspaces & Teams
               </span>
-              <h1 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <h1 className="mt-1 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                 Projects
               </h1>
               <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -101,9 +101,9 @@ export function ProjectsPage({ user }) {
               <button
                 type="button"
                 onClick={() => setCreateModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 transition"
+                className="h-8 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white shadow-2xs transition cursor-pointer"
               >
-                <PlusIcon className="h-4 w-4" />
+                <PlusIcon className="h-3.5 w-3.5" />
                 <span>New Project</span>
               </button>
             )}
@@ -112,14 +112,14 @@ export function ProjectsPage({ user }) {
           {projectError && <Alert type="error" message={projectError} />}
           {projectSuccess && <Alert type="success" message={projectSuccess} />}
 
-          {/* Projects Gallery */}
+          {/* Project Cards List */}
           <ProjectList
             projects={projects}
             tasks={taskState.allTasks}
             user={user}
             loading={projectsLoading}
             onRefresh={fetchProjects}
-            onSelectProject={(project) => setSelectedProjectId(project._id || project.id)}
+            onSelectProject={(p) => setSelectedProjectId(p._id || p.id)}
             onUpdateProject={updateProject}
             onDeleteProject={handleDeleteProject}
             onAddMember={addMember}
@@ -127,12 +127,13 @@ export function ProjectsPage({ user }) {
           />
 
           {/* Create Project Modal */}
-          <CreateProjectModal
-            isOpen={createModalOpen}
-            onClose={() => setCreateModalOpen(false)}
-            onCreate={handleCreateProject}
-            loading={projectsLoading}
-          />
+          {createModalOpen && (
+            <CreateProjectModal
+              isOpen={createModalOpen}
+              onClose={() => setCreateModalOpen(false)}
+              onSubmit={handleCreateProject}
+            />
+          )}
         </>
       )}
     </div>

@@ -15,19 +15,22 @@ export function CreateTaskModal({
   isOpen,
   onClose,
   projects = [],
+  onSubmit,
   onCreate,
   loading = false,
 }) {
+  const submitAction = onSubmit || onCreate;
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [project, setProject] = useState("");
+  const [project, setProject] = useState(projects.length === 1 ? (projects[0]._id || projects[0].id) : "");
   const [priority, setPriority] = useState("low");
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState(getTodayDate());
   const [validationError, setValidationError] = useState("");
 
   const selectedProject = projects.find(
-    (item) => String(item._id) === String(project),
+    (item) => String(item._id || item.id) === String(project),
   );
 
   const projectMembers = [
@@ -68,7 +71,7 @@ export function CreateTaskModal({
       return;
     }
 
-    if (!onCreate || loading) return;
+    if (!submitAction || loading) return;
 
     const payload = {
       title: title.trim(),
@@ -83,7 +86,7 @@ export function CreateTaskModal({
     };
 
     try {
-      const created = await onCreate(payload);
+      const created = await submitAction(payload);
       if (created?.success !== false) {
         setTitle("");
         setDescription("");
@@ -103,24 +106,24 @@ export function CreateTaskModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Create New Task"
+      title="Create Task"
       subtitle="Define actionable work, schedule deadlines, and assign team ownership."
       size="lg"
     >
       {projects.length === 0 ? (
-        <div className="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-5 text-center text-xs text-amber-800 dark:text-amber-200">
-          <p className="font-semibold">No active workspaces available.</p>
+        <div className="rounded-md border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-4 text-center text-xs text-amber-800 dark:text-amber-300">
+          <p className="font-medium">No active workspaces available.</p>
           <p className="mt-1 text-slate-500 dark:text-slate-400">
             Please create or join a project workspace first before creating tasks.
           </p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           {validationError && <Alert message={validationError} type="error" />}
 
           {/* Project Workspace Selector */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
               Workspace / Project <span className="text-rose-500">*</span>
             </label>
             <select
@@ -130,11 +133,11 @@ export function CreateTaskModal({
                 setAssignedTo("");
               }}
               required
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition cursor-pointer shadow-xs"
+              className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer shadow-2xs"
             >
               <option value="">Select project workspace...</option>
               {projects.map((item) => (
-                <option key={item._id} value={item._id}>
+                <option key={item._id || item.id} value={item._id || item.id}>
                   {item.name}
                 </option>
               ))}
@@ -143,45 +146,45 @@ export function CreateTaskModal({
 
           {/* Title */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
               Task Title <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
+              required
+              maxLength={100}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Implement OAuth2 Refresh Interceptor"
-              maxLength={150}
-              required
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 focus:border-indigo-500 transition shadow-xs"
+              placeholder="e.g. Implement OAuth2 session refresh"
+              className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition shadow-2xs"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              Description <span className="text-slate-400 font-normal lowercase">(optional)</span>
+            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+              Description <span className="text-slate-400 font-normal">(optional)</span>
             </label>
             <textarea
+              rows={3}
+              maxLength={500}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Context, specifications, acceptance criteria..."
-              rows={3}
-              maxLength={1000}
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 focus:border-indigo-500 transition resize-none shadow-xs"
+              placeholder="Provide delivery context, acceptance criteria, or technical details..."
+              className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] p-2.5 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition resize-none shadow-2xs"
             />
           </div>
 
           {/* Priority & Assignee Grid */}
-          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
                 Priority
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition cursor-pointer shadow-xs"
+                className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer shadow-2xs"
               >
                 <option value="low">Low Priority</option>
                 <option value="medium">Medium Priority</option>
@@ -190,68 +193,63 @@ export function CreateTaskModal({
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                Target Due Date
+              <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                Assigned Team Member <span className="text-rose-500">*</span>
               </label>
-              <input
-                type="date"
-                value={dueDate}
-                min={getTodayDate()}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition cursor-pointer shadow-xs"
-              />
+              <select
+                value={assignedTo}
+                onChange={(e) => setAssignedTo(e.target.value)}
+                disabled={!project}
+                required
+                className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer shadow-2xs disabled:opacity-50"
+              >
+                <option value="">
+                  {project ? "Select assignee..." : "Choose a workspace first..."}
+                </option>
+                {projectMembers.length > 1 && (
+                  <option value="ALL">All Project Members ({projectMembers.length})</option>
+                )}
+                {projectMembers.map((m) => (
+                  <option key={m._id || m.email} value={m.email}>
+                    {m.name || m.email} ({m.email})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {/* Assignee */}
+          {/* Due Date */}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              Assignee <span className="text-rose-500">*</span>
+            <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+              Due Date
             </label>
-            <select
-              value={assignedTo}
-              onChange={(e) => setAssignedTo(e.target.value)}
-              disabled={!project || projectMembers.length === 0}
-              required
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070a13] px-3.5 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition cursor-pointer disabled:opacity-50 shadow-xs"
-            >
-              <option value="">
-                {!project
-                  ? "Select a project first"
-                  : projectMembers.length === 0
-                    ? "No project members available"
-                    : "Select team member..."}
-              </option>
-              {projectMembers.map((member) => (
-                <option key={member._id} value={member.email}>
-                  {member.name || member.email} ({member.email})
-                </option>
-              ))}
-              {projectMembers.length > 0 && (
-                <option value="ALL">Assign to All Project Members</option>
-              )}
-            </select>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition shadow-2xs"
+            />
           </div>
 
-          {/* Modal Footer */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-2 pt-2.5 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="rounded-lg border border-slate-200 dark:border-slate-700 px-3.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition"
             >
               Cancel
             </button>
+
             <button
               type="submit"
               disabled={loading || !title.trim() || !project || !assignedTo}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-8 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 text-xs font-medium text-white shadow-2xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? (
                 <>
-                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  <span>Creating Task...</span>
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span>Creating...</span>
                 </>
               ) : (
                 <>

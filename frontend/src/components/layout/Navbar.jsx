@@ -102,6 +102,8 @@ export function Navbar({
 
   useEffect(() => {
     fetchLiveNotices();
+    const interval = setInterval(fetchLiveNotices, 60000);
+    return () => clearInterval(interval);
   }, [fetchLiveNotices]);
 
   const activeNotices = notifications.filter((n) => !dismissedIds.has(n.id));
@@ -112,14 +114,14 @@ export function Navbar({
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0B0F19]/95 px-4 backdrop-blur-md transition-colors sm:px-6">
-      {/* Left: Mobile Toggle & Breadcrumbs */}
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] px-4 transition-colors">
+      {/* Left: Mobile hamburger & breadcrumbs */}
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="rounded-lg border border-slate-200 dark:border-slate-800 p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden transition"
-          aria-label="Open navigation menu"
+          className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:hidden"
+          aria-label="Open navigation sidebar"
         >
           <MenuIcon className="h-5 w-5" />
         </button>
@@ -129,42 +131,29 @@ export function Navbar({
         </div>
       </div>
 
-      {/* Center/Search trigger */}
-      <div className="flex-1 max-w-xs mx-4 hidden md:block">
+      {/* Right: Quick actions, Search, Theme toggle, Notifications & Profile */}
+      <div className="flex items-center gap-2">
+        {/* Global Command Search Button */}
         <button
           type="button"
           onClick={onOpenSearch}
-          className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-900 text-xs text-slate-400 transition"
+          className="group flex h-8 items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-2.5 text-xs text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600 hover:text-slate-900 dark:hover:text-slate-100 transition shadow-2xs"
+          title="Search tasks, projects, and workspaces (Ctrl+K)"
         >
-          <span className="flex items-center gap-2">
-            <SearchIcon className="w-3.5 h-3.5" />
-            <span>Search workspaces, tasks...</span>
-          </span>
-          <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-            Ctrl K
+          <SearchIcon className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
+          <span className="hidden md:inline font-normal">Search workspace...</span>
+          <kbd className="hidden rounded bg-white dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 sm:inline-block">
+            ⌘K
           </kbd>
-        </button>
-      </div>
-
-      {/* Right Controls */}
-      <div className="flex items-center gap-2 sm:gap-2.5">
-        {/* Mobile Search Button */}
-        <button
-          type="button"
-          onClick={onOpenSearch}
-          className="md:hidden rounded-lg border border-slate-200 dark:border-slate-800 p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition"
-          title="Search"
-        >
-          <SearchIcon className="h-4 w-4" />
         </button>
 
         {/* Theme Switcher Toggle */}
         <button
           type="button"
           onClick={toggleTheme}
-          className="rounded-lg border border-slate-200 dark:border-slate-800 p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition"
-          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          aria-label="Toggle color theme"
+          aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition"
+          title={isDark ? "Switch to Light Theme" : "Switch to Dark Theme"}
         >
           {isDark ? (
             <SunIcon className="h-4 w-4 text-amber-400" />
@@ -173,55 +162,70 @@ export function Navbar({
           )}
         </button>
 
-        {/* Real Notification Bell */}
+        {/* Notifications Dropdown */}
         <div className="relative" ref={notifRef}>
           <button
             type="button"
             onClick={() => setNotificationOpen(!notificationOpen)}
-            className="relative rounded-lg border border-slate-200 dark:border-slate-800 p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition"
-            title="Notifications"
+            className="relative flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition"
+            aria-label="View notifications"
           >
             <BellIcon className="h-4 w-4" />
             {activeNotices.length > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-bold text-white shadow-xs">
-                {activeNotices.length}
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-600 px-1 text-[9px] font-bold text-white ring-1 ring-white dark:ring-[#161B22]">
+                {activeNotices.length > 9 ? "9+" : activeNotices.length}
               </span>
             )}
           </button>
 
           {/* Notifications Flyout */}
           {notificationOpen && (
-            <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-slate-900 dark:text-white shadow-xl z-50">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Live Notifications
-                </h4>
-                <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-500/20">
-                  {activeNotices.length} Active
-                </span>
+            <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] text-slate-900 dark:text-white shadow-lg z-50">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-3.5 py-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                    Notifications
+                  </span>
+                  <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                    {activeNotices.length}
+                  </span>
+                </div>
+                {activeNotices.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDismissedIds(new Set(notifications.map((n) => n.id)));
+                    }}
+                    className="text-[11px] font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
+                  >
+                    Clear all
+                  </button>
+                )}
               </div>
 
-              <div className="mt-3 max-h-72 overflow-y-auto space-y-2">
+              <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
                 {activeNotices.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
-                    <CheckCircleIcon className="w-5 h-5 text-emerald-500 mx-auto mb-1.5" />
-                    All caught up! No urgent task notices.
+                  <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                    <CheckCircleIcon className="mx-auto mb-2 h-6 w-6 text-emerald-500 opacity-80" />
+                    <p className="font-medium">No pending task alerts</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      You are all caught up across your workspace!
+                    </p>
                   </div>
                 ) : (
                   activeNotices.map((notif) => {
                     const isOverdue = notif.type === "overdue";
-
                     return (
                       <div
                         key={notif.id}
                         onClick={() => {
-                          navigate(notif.link);
                           setNotificationOpen(false);
+                          navigate(notif.link);
                         }}
-                        className={`flex items-start justify-between gap-2.5 p-2.5 rounded-lg border transition cursor-pointer ${
+                        className={`flex items-start gap-2.5 p-3 transition cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
                           isOverdue
-                            ? "bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20 text-rose-900 dark:text-rose-200 hover:opacity-90"
-                            : "bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20 text-amber-900 dark:text-amber-200 hover:opacity-90"
+                            ? "bg-rose-50/40 dark:bg-rose-950/20"
+                            : "bg-amber-50/40 dark:bg-amber-950/20"
                         }`}
                       >
                         <div className="shrink-0 mt-0.5">
@@ -236,7 +240,7 @@ export function Navbar({
                           <p className="text-xs font-semibold truncate">
                             {notif.title}
                           </p>
-                          <p className="text-[11px] opacity-90 mt-0.5 leading-snug">
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 leading-snug">
                             {notif.desc}
                           </p>
                         </div>
@@ -244,7 +248,7 @@ export function Navbar({
                         <button
                           type="button"
                           onClick={(e) => handleDismissNotice(e, notif.id)}
-                          className="shrink-0 opacity-70 hover:opacity-100 p-0.5 rounded"
+                          className="shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 rounded"
                           title="Dismiss notice"
                         >
                           <XIcon className="w-3.5 h-3.5" />
@@ -263,7 +267,7 @@ export function Navbar({
           <button
             type="button"
             onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 p-1 pr-2.5 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="flex items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-1 pr-2 text-left transition hover:bg-slate-50 dark:hover:bg-slate-750"
           >
             <Avatar user={user} size="sm" />
             <div className="hidden text-left md:block">
@@ -279,27 +283,27 @@ export function Navbar({
 
           {/* Dropdown Menu */}
           {profileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-2 text-slate-900 dark:text-white shadow-xl z-50">
-              <div className="border-b border-slate-100 dark:border-slate-800/80 p-2.5">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+            <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-1.5 text-slate-900 dark:text-white shadow-lg z-50">
+              <div className="border-b border-slate-100 dark:border-slate-800 p-2">
+                <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                   {user?.name || "User"}
                 </p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                   {user?.email || ""}
                 </p>
-                <div className="mt-2">
+                <div className="mt-1.5">
                   <RoleBadge role={user?.role} size="xs" />
                 </div>
               </div>
 
-              <div className="py-1.5 space-y-0.5 text-xs">
+              <div className="py-1 space-y-0.5 text-xs">
                 <button
                   type="button"
                   onClick={() => {
                     navigate("/projects");
                     setProfileDropdownOpen(false);
                   }}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                 >
                   <FolderIcon className="h-3.5 w-3.5 text-slate-400" />
                   <span>Projects</span>
@@ -311,7 +315,7 @@ export function Navbar({
                     navigate("/tasks");
                     setProfileDropdownOpen(false);
                   }}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                 >
                   <CheckSquareIcon className="h-3.5 w-3.5 text-slate-400" />
                   <span>My Tasks</span>
@@ -324,7 +328,7 @@ export function Navbar({
                       navigate("/admin/users");
                       setProfileDropdownOpen(false);
                     }}
-                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                   >
                     <UsersIcon className="h-3.5 w-3.5 text-slate-400" />
                     <span>Manage Users</span>
@@ -337,21 +341,21 @@ export function Navbar({
                     setProfileDropdownOpen(false);
                     if (onOpenSettings) onOpenSettings();
                   }}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                 >
                   <SunIcon className="h-3.5 w-3.5 text-slate-400" />
                   <span>Preferences</span>
                 </button>
               </div>
 
-              <div className="border-t border-slate-100 dark:border-slate-800/80 pt-1.5 mt-1">
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-1 mt-1">
                 <button
                   type="button"
                   onClick={() => {
                     setProfileDropdownOpen(false);
                     onLogout?.();
                   }}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition"
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
                 >
                   <LogOutIcon className="h-3.5 w-3.5" />
                   <span>Sign out</span>

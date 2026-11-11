@@ -1,19 +1,13 @@
-import Icon from "./Icons";
-
-export function Loading({ message = "Loading workspace..." }) {
+export function Loading({ message = "Loading..." }) {
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center bg-slate-50 dark:bg-[#090D16] text-slate-900 dark:text-white transition-colors duration-200"
+      className="flex min-h-screen flex-col items-center justify-center bg-slate-50 text-slate-900 dark:bg-[#0D1117] dark:text-slate-100 transition-colors"
       role="status"
       aria-live="polite"
     >
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 shadow-xl shadow-indigo-600/30">
-          <Icon name="sparkles" className="h-7 w-7 text-white animate-pulse" />
-          <span className="absolute -inset-1 rounded-2xl border-2 border-indigo-500/40 animate-ping opacity-30" />
-        </div>
-
-        <p className="text-xs font-semibold tracking-wider text-slate-500 dark:text-slate-400 uppercase animate-pulse">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-7 w-7 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent dark:border-indigo-400 dark:border-t-transparent" />
+        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
           {message}
         </p>
       </div>

@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import api from "../services/api";
 import useProjects from "../hooks/useProjects";
 import useTasks from "../hooks/useTasks";
-import TaskDistribution from "./dashboard/TaskDistribution";
-import UpcomingDeadlines from "./dashboard/UpcomingDeadlines";
-import ProjectList from "./projects/ProjectList";
+import { TaskDistribution } from "./dashboard/TaskDistribution";
+import { UpcomingDeadlines } from "./dashboard/UpcomingDeadlines";
 import ProjectWorkspace from "./projects/ProjectWorkspace";
-import TaskFilters from "./tasks/TaskFilters";
+import KanbanBoard from "./tasks/KanbanBoard";
 import TaskList from "./tasks/TaskList";
 import TaskDetailModal from "./tasks/TaskDetailModal";
 import Alert from "./common/Alert";
@@ -25,8 +24,6 @@ export function UserDashboard({ user }) {
 
   const {
     projects,
-    loading: projectsLoading,
-    error: projectError,
     fetchProjects,
     updateProject,
     deleteProject,
@@ -38,11 +35,11 @@ export function UserDashboard({ user }) {
   const { fetchTasks } = taskState;
 
   const fetchDashboard = useCallback(async () => {
+    setDashboardLoading(true);
+    setDashboardError("");
     try {
-      setDashboardLoading(true);
-      setDashboardError("");
-      const response = await api.get("/dashboard");
-      setDashboardData(response.data);
+      const res = await api.get("/dashboard");
+      setDashboardData(res.data);
     } catch (err) {
       setDashboardError(
         err.response?.data?.message || "Failed to load dashboard metrics.",
@@ -76,7 +73,7 @@ export function UserDashboard({ user }) {
 
   const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
   const userId = String(getId(user) || "");
-  const firstName = user?.name?.trim()?.split(/\s+/)[0] || "User";
+  const firstName = user?.name ? user.name.split(" ")[0] : "Member";
 
   // Real SaaS metrics
   const ownedProjectsCount = useMemo(() => {
@@ -122,7 +119,7 @@ export function UserDashboard({ user }) {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* If a project workspace was opened from dashboard */}
       {selectedProject ? (
         <ProjectWorkspace
@@ -141,16 +138,16 @@ export function UserDashboard({ user }) {
         />
       ) : (
         <>
-          {/* Welcome & Pulse Header */}
-          <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-5 sm:p-6 shadow-xs transition-colors">
+          {/* Welcome & Context Header */}
+          <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 sm:p-5 transition-colors">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Personal Workspace</span>
+                <div className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span>Workspace Active</span>
                 </div>
 
-                <h1 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="mt-1.5 text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
                   Welcome back, {firstName}
                 </h1>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -159,22 +156,22 @@ export function UserDashboard({ user }) {
               </div>
 
               {/* Progress Summary Pill */}
-              <div className="flex items-center gap-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-4 py-2 text-xs">
+              <div className="flex items-center gap-4 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-3.5 py-1.5 text-xs">
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">
+                  <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-semibold">
                     Completion
                   </span>
-                  <span className="text-base font-bold text-slate-900 dark:text-white">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">
                     {completionRate}%
                   </span>
                 </div>
-                <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800" />
+                <div className="h-5 w-[1px] bg-slate-200 dark:bg-slate-800" />
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold">
+                  <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-semibold">
                     Overdue
                   </span>
                   <span
-                    className={`text-base font-bold ${
+                    className={`text-sm font-bold ${
                       overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
                     }`}
                   >
@@ -185,186 +182,249 @@ export function UserDashboard({ user }) {
             </div>
 
             {dashboardError && (
-              <div className="mt-4">
+              <div className="mt-3">
                 <Alert message={dashboardError} type="error" />
               </div>
             )}
           </section>
 
-          {/* 6 Real Metric Cards Grid */}
+          {/* 6 Practical Enterprise Metric Cards */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
                 Projects Owned
               </span>
-              <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+              <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {dashboardLoading ? "..." : ownedProjectsCount}
               </div>
-              <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 mt-0.5 block">Project lead</span>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Project lead</span>
             </div>
 
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
                 Team Workspaces
               </span>
-              <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+              <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {dashboardLoading ? "..." : assignedProjectsCount}
               </div>
-              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Participant</span>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Participant</span>
             </div>
 
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
                 Total Tasks
               </span>
-              <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+              <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {dashboardLoading ? "..." : totalTasksCount}
               </div>
-              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">All pipelines</span>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">All pipelines</span>
             </div>
 
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
                 In Progress
               </span>
-              <div className="mt-1 text-2xl font-bold text-sky-600 dark:text-sky-400">
+              <div className="mt-1 text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
                 {dashboardLoading ? "..." : inProgressTasksCount}
               </div>
-              <span className="text-[10px] font-medium text-sky-600 dark:text-sky-400/80 mt-0.5 block">Underway</span>
+              <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 mt-0.5 block">Underway</span>
             </div>
 
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
                 Completed
               </span>
-              <div className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              <div className="mt-1 text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
                 {dashboardLoading ? "..." : completedTasksCount}
               </div>
-              <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400/80 mt-0.5 block">Delivered</span>
+              <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mt-0.5 block">{completionRate}% finished</span>
             </div>
 
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0E131F] p-4 text-left shadow-xs">
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Overdue Tasks
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
+                Overdue
               </span>
               <div
-                className={`mt-1 text-2xl font-bold ${
-                  overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-slate-200"
+                className={`mt-1 text-2xl font-bold tracking-tight ${
+                  overdueTasksCount > 0
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-slate-900 dark:text-white"
                 }`}
               >
                 {dashboardLoading ? "..." : overdueTasksCount}
               </div>
               <span
-                className={`text-[10px] font-medium mt-0.5 block ${
-                  overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
+                className={`text-[11px] font-medium mt-0.5 block ${
+                  overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
-                {overdueTasksCount > 0 ? "Requires action" : "On schedule"}
+                {overdueTasksCount > 0 ? "Action required" : "On schedule"}
               </span>
             </div>
           </div>
 
-          {/* Real Analytics: Distribution & Upcoming Deadlines */}
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              {dashboardData?.taskStats && (
-                <TaskDistribution taskStats={dashboardData.taskStats} />
-              )}
-            </div>
-
-            <div className="lg:col-span-1">
-              <UpcomingDeadlines
-                tasks={taskState.allTasks}
-                onTaskClick={(task) => setSelectedTask(task)}
-              />
-            </div>
+          {/* Practical Status Distribution & Upcoming Deadlines */}
+          <div className="space-y-5">
+            <TaskDistribution taskStats={dashboardData?.taskStats || {}} />
+            <UpcomingDeadlines
+              tasks={taskState.allTasks}
+              onTaskClick={(t) => setSelectedTask(t)}
+            />
           </div>
 
-          {/* Project Workspaces Gallery */}
-          <section className="space-y-3 pt-2">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+          {/* Quick Workspaces Section */}
+          <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 sm:p-5">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-3">
               <div>
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <FolderIcon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>Active Project Workspaces</span>
-                </h2>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                  <FolderIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span>Your Projects</span>
+                </h3>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                  Select a workspace to manage its tasks, roster, and timelines
+                  Select a workspace to open its dedicated Kanban pipeline, task table, and team roster
                 </p>
+              </div>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {projects.length} accessible
+              </span>
+            </div>
+
+            {projects.length === 0 ? (
+              <div className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                You are not currently enrolled in any project workspaces.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {projects.map((proj) => {
+                  const pId = String(getId(proj));
+                  const isOwner = String(getId(proj.owner)) === userId;
+                  const projTasks = taskState.allTasks.filter(
+                    (t) => String(getId(t.project)) === pId,
+                  );
+                  const completed = projTasks.filter(
+                    (t) => t.status === "completed" || t.status === "done",
+                  ).length;
+                  const pct =
+                    projTasks.length > 0
+                      ? Math.round((completed / projTasks.length) * 100)
+                      : 0;
+
+                  return (
+                    <div
+                      key={pId}
+                      onClick={() => setSelectedProjectId(pId)}
+                      className="group flex flex-col justify-between rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-3 hover:border-slate-300 dark:hover:border-slate-700 transition cursor-pointer text-left"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition truncate">
+                            {proj.name}
+                          </h4>
+                          <span
+                            className={`rounded px-1.5 py-0.2 text-[10px] font-medium border ${
+                              isOwner
+                                ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50"
+                                : "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                            }`}
+                          >
+                            {isOwner ? "Lead" : "Member"}
+                          </span>
+                        </div>
+                        <p className="mt-1 line-clamp-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          {proj.description || "No description"}
+                        </p>
+                      </div>
+
+                      <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {completed}/{projTasks.length} tasks
+                        </span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">
+                          {pct}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* Task Pipeline Section */}
+          <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                  <CheckSquareIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span>My Assigned Tasks</span>
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  Switch between Kanban Board and Table View
+                </p>
+              </div>
+
+              {/* View Switcher Tabs */}
+              <div className="inline-flex rounded-md border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("kanban")}
+                  className={`rounded px-3 py-1 font-medium transition ${
+                    viewMode === "kanban"
+                      ? "bg-white text-slate-900 shadow-xs dark:bg-[#161B22] dark:text-white"
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  }`}
+                >
+                  Kanban Board
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("table")}
+                  className={`rounded px-3 py-1 font-medium transition ${
+                    viewMode === "table"
+                      ? "bg-white text-slate-900 shadow-xs dark:bg-[#161B22] dark:text-white"
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  }`}
+                >
+                  Table View
+                </button>
               </div>
             </div>
 
-            {projectError && <Alert message={projectError} type="error" />}
-
-            <ProjectList
-              projects={projects}
-              tasks={taskState.allTasks}
-              user={user}
-              loading={projectsLoading}
-              onRefresh={fetchProjects}
-              onSelectProject={(project) => setSelectedProjectId(project._id || project.id)}
-              onUpdateProject={updateProject}
-              onDeleteProject={deleteProject}
-              onAddMember={addMember}
-              onRemoveMember={removeMember}
-            />
+            {viewMode === "kanban" ? (
+              <KanbanBoard
+                tasks={taskState.allTasks}
+                projects={projects}
+                user={user}
+                onUpdateTask={handleUpdateTask}
+                onDeleteTask={handleDeleteTask}
+                onSelectTask={(t) => setSelectedTask(t)}
+              />
+            ) : (
+              <TaskList
+                tasks={taskState.allTasks}
+                projects={projects}
+                user={user}
+                loading={taskState.loading}
+                onUpdateTask={handleUpdateTask}
+                onDeleteTask={handleDeleteTask}
+                onSelectTask={(t) => setSelectedTask(t)}
+              />
+            )}
           </section>
-
-          {/* Tasks Pipeline Section */}
-          <section className="space-y-3 pt-4">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div>
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <CheckSquareIcon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>Tasks Delivery Pipeline</span>
-                </h2>
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                  Filter and progress work items across your workspaces
-                </p>
-              </div>
-            </div>
-
-            {taskState.error && <Alert message={taskState.error} type="error" />}
-            {taskState.success && <Alert message={taskState.success} type="success" />}
-
-            <TaskFilters
-              search={taskState.search}
-              setSearch={taskState.setSearch}
-              statusFilter={taskState.statusFilter}
-              setStatusFilter={taskState.setStatusFilter}
-              priorityFilter={taskState.priorityFilter}
-              setPriorityFilter={taskState.setPriorityFilter}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-            />
-
-            <TaskList
-              tasks={taskState.tasks}
-              projects={projects}
-              user={user}
-              page={taskState.page}
-              totalPages={taskState.totalPages}
-              total={taskState.total}
-              loading={taskState.loading}
-              onPageChange={taskState.setPage}
-              onUpdate={handleUpdateTask}
-              onDelete={handleDeleteTask}
-              onTaskClick={(task) => setSelectedTask(task)}
-              viewMode={viewMode}
-            />
-          </section>
-
-          {/* Task Detail Modal */}
-          <TaskDetailModal
-            isOpen={Boolean(selectedTask)}
-            onClose={() => setSelectedTask(null)}
-            task={selectedTask}
-            projects={projects}
-            currentUser={user}
-            onUpdateTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-          />
         </>
+      )}
+
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <TaskDetailModal
+          isOpen={Boolean(selectedTask)}
+          onClose={() => setSelectedTask(null)}
+          task={selectedTask}
+          projects={projects}
+          user={user}
+          onUpdate={handleUpdateTask}
+          onDelete={handleDeleteTask}
+        />
       )}
     </div>
   );
