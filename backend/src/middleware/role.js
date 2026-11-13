@@ -6,8 +6,13 @@ const requireRole = (...allowedRoles) => {
       });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      //get from the auth middleware req.user.role
+    const { role } = req.user;
+    const hasRole =
+      allowedRoles.includes(role) ||
+      (role === "superadmin" && allowedRoles.includes("admin"));
+
+    if (!hasRole) {
+      // get from the auth middleware req.user.role
       return res.status(403).json({
         message: "You are not allowed to access this resource",
       });

@@ -19,6 +19,12 @@ const getUsers = async (req, res) => {
 // Change a user's role
 const updateUserRole = async (req, res) => {
   try {
+    if (req.user.role !== "superadmin") {
+      return res.status(403).json({
+        message: "Only Super Admin can change user roles",
+      });
+    }
+
     const { email, role } = req.body;
 
     if (
@@ -48,9 +54,15 @@ const updateUserRole = async (req, res) => {
       });
     }
 
-    if (user._id.toString() === req.user.userId && role === "user") {
+    if (user.role === "superadmin") {
+      return res.status(403).json({
+        message: "Super Admin accounts cannot be modified or demoted",
+      });
+    }
+
+    if (user._id.toString() === req.user.userId) {
       return res.status(400).json({
-        message: "You cannot demote your own account",
+        message: "You cannot modify your own role",
       });
     }
 
@@ -65,6 +77,7 @@ const updateUserRole = async (req, res) => {
     }
 
     user.role = role;
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
     await user.save();
 
     return res.status(200).json({

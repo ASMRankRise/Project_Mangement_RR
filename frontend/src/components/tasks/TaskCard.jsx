@@ -17,7 +17,7 @@ export function TaskCard({
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
   const getId = (v) =>
     typeof v === "object" && v !== null ? v._id || v.id : v;
 

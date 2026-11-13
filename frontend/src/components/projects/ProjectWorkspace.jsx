@@ -49,7 +49,8 @@ export function ProjectWorkspace({
 
   const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
   const currentUserId = String(getId(currentUser) || "");
-  const isAdmin = currentUser?.role === "admin";
+  const isAdmin =
+    currentUser?.role === "admin" || currentUser?.role === "superadmin";
   const pId = String(getId(project) || "");
   const ownerId = String(getId(project.owner) || "");
   const isOwner = currentUserId !== "" && ownerId === currentUserId;

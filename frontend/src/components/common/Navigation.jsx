@@ -3,10 +3,10 @@
   function Navigation({ user }) {
     const links = [
       { to: "/dashboard", label: "Dashboard", roles: ["user"] },
-      { to: "/admin", label: "Admin", roles: ["admin"] },
-      { to: "/admin/users", label: "Manage Users", roles: ["admin"] },
-      { to: "/projects", label: "Projects", roles: ["user", "admin"] },
-      { to: "/tasks", label: "Tasks", roles: ["user", "admin"] },
+      { to: "/admin", label: "Admin", roles: ["admin", "superadmin"] },
+      { to: "/admin/users", label: "Manage Users", roles: ["admin", "superadmin"] },
+      { to: "/projects", label: "Projects", roles: ["user", "admin", "superadmin"] },
+      { to: "/tasks", label: "Tasks", roles: ["user", "admin", "superadmin"] },
     ];
 
     return (

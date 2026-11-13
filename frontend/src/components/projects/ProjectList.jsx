@@ -33,7 +33,7 @@ export function ProjectList({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
   const userId = user?._id || user?.id;
 
   const getId = (v) =>

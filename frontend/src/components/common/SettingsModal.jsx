@@ -97,7 +97,11 @@ export function SettingsModal({ isOpen, onClose, user }) {
             <div className="flex items-center justify-between">
               <span className="text-slate-600 dark:text-slate-400">Access Privilege</span>
               <span className="font-medium text-slate-900 dark:text-white">
-                {user?.role === "admin" ? "Administrator" : "Employee"}
+                {user?.role === "superadmin"
+                  ? "Super Administrator"
+                  : user?.role === "admin"
+                  ? "Administrator"
+                  : "Employee"}
               </span>
             </div>
           </div>

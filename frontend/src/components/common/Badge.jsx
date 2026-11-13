@@ -71,6 +71,19 @@ export function PriorityBadge({ priority, size = "md" }) {
 }
 
 export function RoleBadge({ role, size = "sm" }) {
+  if (role === "superadmin") {
+    return (
+      <Badge
+        variant="purple"
+        size={size}
+        icon="shield"
+        className="font-semibold"
+      >
+        Super Admin
+      </Badge>
+    );
+  }
+
   const isAdmin = role === "admin";
   return (
     <Badge

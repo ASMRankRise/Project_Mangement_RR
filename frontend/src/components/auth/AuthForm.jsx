@@ -43,8 +43,9 @@ export function AuthForm({ mode = "login" }) {
   const [clientErrors, setClientErrors] = useState({});
 
   if (user) {
+    const isElevated = user.role === "admin" || user.role === "superadmin";
     return (
-      <Navigate to={user.role === "admin" ? "/admin" : "/dashboard"} replace />
+      <Navigate to={isElevated ? "/admin" : "/dashboard"} replace />
     );
   }
 
@@ -100,7 +101,9 @@ export function AuthForm({ mode = "login" }) {
     setShowPassword(false);
 
     if (isLogin) {
-      navigate(result.role === "admin" ? "/admin" : "/dashboard", {
+      const isElevated =
+        result.role === "admin" || result.role === "superadmin";
+      navigate(isElevated ? "/admin" : "/dashboard", {
         replace: true,
       });
     }

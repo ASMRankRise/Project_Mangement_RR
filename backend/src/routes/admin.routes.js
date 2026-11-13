@@ -10,7 +10,7 @@ router.get("/users", authMiddleware, requireRole("admin"), getUsers);
 router.patch(
   "/users/role",
   authMiddleware,
-  requireRole("admin"),
+  requireRole("superadmin"),
   updateUserRole,
 );
 

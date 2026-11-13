@@ -112,12 +112,14 @@ const getProjects = async (req, res) => {
       console.error("Redis cache read error:", redisError);
     }
 
-    const filter =
-      req.user.role === "admin"
-        ? {}
-        : {
-            $or: [{ owner: req.user.userId }, { members: req.user.userId }],
-          };
+    const isAdmin =
+      req.user.role === "admin" || req.user.role === "superadmin";
+
+    const filter = isAdmin
+      ? {}
+      : {
+          $or: [{ owner: req.user.userId }, { members: req.user.userId }],
+        };
 
     const projects = await Project.find(filter)
       .populate("owner", "name email")
@@ -225,9 +227,12 @@ const updateProject = async (req, res) => {
 // Delete Project
 const deleteProject = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
+    const isAdmin =
+      req.user.role === "admin" || req.user.role === "superadmin";
+
+    if (!isAdmin) {
       return res.status(403).json({
-        message: "Only Admin can delete projects",
+        message: "Only Admin or Super Admin can delete projects",
       });
     }
 

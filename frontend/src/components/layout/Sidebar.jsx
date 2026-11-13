@@ -24,7 +24,7 @@ export function Sidebar({
   onOpenSettings,
 }) {
   const navigate = useNavigate();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
 
   const navigationItems = [
     {

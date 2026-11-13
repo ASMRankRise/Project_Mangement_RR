@@ -1,5 +1,5 @@
 function DashboardHeader({ user, onLogout, loading = false }) {
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
 
   return (
     <>
@@ -35,7 +35,7 @@ function DashboardHeader({ user, onLogout, loading = false }) {
         </p>
 
         <span className="mt-4 inline-block rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-medium capitalize text-indigo-300">
-          {user?.role || "user"}
+          {user?.role === "superadmin" ? "Super Admin" : user?.role || "user"}
         </span>
       </section>
     </>

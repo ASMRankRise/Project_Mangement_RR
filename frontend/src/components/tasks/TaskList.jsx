@@ -21,7 +21,7 @@ export function TaskList({
 }) {
   const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
   const currentUserId = String(getId(user) || "");
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
 
   return (
     <div className="space-y-3.5">

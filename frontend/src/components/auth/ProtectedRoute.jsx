@@ -13,10 +13,15 @@ function ProtectedRoute({ role, children }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (role && user.role !== role) {
-    return (
-      <Navigate to={user.role === "admin" ? "/admin" : "/dashboard"} replace />
-    );
+  if (role) {
+    const isElevated = user.role === "admin" || user.role === "superadmin";
+    const hasAccess = user.role === role || (role === "admin" && isElevated);
+
+    if (!hasAccess) {
+      return (
+        <Navigate to={isElevated ? "/admin" : "/dashboard"} replace />
+      );
+    }
   }
 
   return children;

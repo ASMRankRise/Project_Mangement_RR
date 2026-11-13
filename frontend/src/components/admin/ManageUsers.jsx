@@ -17,8 +17,12 @@ import {
   UserIcon,
 } from "../common/Icons";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/AuthContext";
 
 export function ManageUsers() {
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.role === "superadmin";
+
   const { success: toastSuccess, error: toastError } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,11 +57,26 @@ export function ManageUsers() {
   }, [fetchUsers]);
 
   const handleRoleChange = async (email, newRole) => {
+    if (!isSuperAdmin) {
+      toastError("Only Super Admin can change user roles.");
+      return;
+    }
+
     const targetUser = users.find((user) => user.email === email);
     if (!targetUser) return;
 
+    if (targetUser.role === "superadmin") {
+      toastError("Super Admin accounts cannot be modified.");
+      return;
+    }
+
+    if (targetUser.email === currentUser?.email) {
+      toastError("You cannot modify your own role.");
+      return;
+    }
+
     if (!["admin", "user"].includes(newRole)) {
-      toastError("Invalid role selected.");
+      toastError("Invalid role selected. Only Admin or Employee can be assigned.");
       return;
     }
 
@@ -124,6 +143,7 @@ export function ManageUsers() {
     return matchSearch && matchRole;
   });
 
+  const superAdminCount = users.filter((u) => u.role === "superadmin").length;
   const adminCount = users.filter((u) => u.role === "admin").length;
   const employeeCount = users.filter((u) => u.role === "user").length;
 
@@ -210,9 +230,11 @@ export function ManageUsers() {
           </p>
           <div className="mt-1 flex items-baseline justify-between">
             <span className="text-2xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400">
-              {adminCount}
+              {superAdminCount + adminCount}
             </span>
-            <span className="text-xs text-indigo-600/70 dark:text-indigo-400/70 font-medium">Elevated permissions</span>
+            <span className="text-xs text-indigo-600/70 dark:text-indigo-400/70 font-medium">
+              {superAdminCount > 0 ? `${superAdminCount} Super · ` : ""}{adminCount} Admin
+            </span>
           </div>
         </div>
 
@@ -249,6 +271,9 @@ export function ManageUsers() {
             className="h-9 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-600 transition cursor-pointer shadow-2xs"
           >
             <option value="">All Roles ({users.length})</option>
+            {superAdminCount > 0 && (
+              <option value="superadmin">Super Admins ({superAdminCount})</option>
+            )}
             <option value="admin">Administrators ({adminCount})</option>
             <option value="user">Employees ({employeeCount})</option>
           </select>
@@ -340,16 +365,39 @@ export function ManageUsers() {
 
                       {/* Role Dropdown Selector */}
                       <td className="px-3 py-3">
-                        <select
-                          aria-label={`Role selector for ${u.email}`}
-                          value={u.role}
-                          disabled={loading || isUpdating}
-                          onChange={(e) => handleRoleChange(u.email, e.target.value)}
-                          className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 py-1 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer disabled:opacity-50"
-                        >
-                          <option value="user">Employee</option>
-                          <option value="admin">Administrator</option>
-                        </select>
+                        {!isSuperAdmin ? (
+                          <div className="flex items-center gap-1.5">
+                            <RoleBadge role={u.role} size="xs" />
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                              (Protected)
+                            </span>
+                          </div>
+                        ) : u.role === "superadmin" ? (
+                          <div className="flex items-center gap-1.5">
+                            <RoleBadge role="superadmin" size="xs" />
+                            <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400">
+                              Root
+                            </span>
+                          </div>
+                        ) : u.email === currentUser?.email ? (
+                          <div className="flex items-center gap-1.5">
+                            <RoleBadge role={u.role} size="xs" />
+                            <span className="text-[10px] text-slate-400 italic">
+                              (You)
+                            </span>
+                          </div>
+                        ) : (
+                          <select
+                            aria-label={`Role selector for ${u.email}`}
+                            value={u.role}
+                            disabled={loading || isUpdating}
+                            onChange={(e) => handleRoleChange(u.email, e.target.value)}
+                            className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 py-1 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer disabled:opacity-50"
+                          >
+                            <option value="user">Employee</option>
+                            <option value="admin">Administrator</option>
+                          </select>
+                        )}
                       </td>
 
                       {/* Actions */}
@@ -425,16 +473,28 @@ export function ManageUsers() {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                  <select
-                    aria-label={`Role selector for ${u.email}`}
-                    value={u.role}
-                    disabled={loading || isUpdating}
-                    onChange={(e) => handleRoleChange(u.email, e.target.value)}
-                    className="h-7 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 text-[11px] text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer disabled:opacity-50"
-                  >
-                    <option value="user">Employee</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                  {!isSuperAdmin ? (
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                      Managed by Super Admin
+                    </span>
+                  ) : u.role === "superadmin" ? (
+                    <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400">
+                      Super Admin (Root)
+                    </span>
+                  ) : u.email === currentUser?.email ? (
+                    <span className="text-[10px] text-slate-400 italic">Your Account</span>
+                  ) : (
+                    <select
+                      aria-label={`Role selector for ${u.email}`}
+                      value={u.role}
+                      disabled={loading || isUpdating}
+                      onChange={(e) => handleRoleChange(u.email, e.target.value)}
+                      className="h-7 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 text-[11px] text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="user">Employee</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  )}
 
                   <button
                     type="button"
@@ -526,8 +586,10 @@ export function ManageUsers() {
                     <span>Access Permissions</span>
                   </h4>
                   <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                    {selectedUser.role === "admin"
-                      ? "Full administrative control: oversee employee directory, manage roles, create team projects, and review company deliverables."
+                    {selectedUser.role === "superadmin"
+                      ? "Root governance control: system-wide authority to manage roles, elevate administrators, and oversee all organizational operations."
+                      : selectedUser.role === "admin"
+                      ? "Full administrative control: oversee employee directory, create team projects, and review company deliverables."
                       : "Standard employee access: collaborate on assigned team projects, update task statuses, and view organizational deliverables."}
                   </p>
                 </div>
@@ -535,18 +597,33 @@ export function ManageUsers() {
 
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Update System Role
+                  System Role Status
                 </span>
-                <select
-                  aria-label="Update Role in Profile Modal"
-                  value={selectedUser.role}
-                  disabled={loading || updatingEmail === selectedUser.email}
-                  onChange={(e) => handleRoleChange(selectedUser.email, e.target.value)}
-                  className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 py-1 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer"
-                >
-                  <option value="user">Standard Employee</option>
-                  <option value="admin">System Administrator</option>
-                </select>
+                {isSuperAdmin &&
+                selectedUser.role !== "superadmin" &&
+                selectedUser.email !== currentUser?.email ? (
+                  <select
+                    aria-label="Update Role in Profile Modal"
+                    value={selectedUser.role}
+                    disabled={loading || updatingEmail === selectedUser.email}
+                    onChange={(e) => handleRoleChange(selectedUser.email, e.target.value)}
+                    className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 py-1 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer"
+                  >
+                    <option value="user">Standard Employee</option>
+                    <option value="admin">System Administrator</option>
+                  </select>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <RoleBadge role={selectedUser.role} size="xs" />
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                      {selectedUser.role === "superadmin"
+                        ? "(Root Account)"
+                        : selectedUser.email === currentUser?.email
+                        ? "(Your Account)"
+                        : "(Managed by Super Admin)"}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -52,7 +52,8 @@ export function TaskDetailModal({
 
   const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
   const currentUserId = String(getId(effectiveUser) || "");
-  const isAdmin = effectiveUser?.role === "admin";
+  const isAdmin =
+    effectiveUser?.role === "admin" || effectiveUser?.role === "superadmin";
 
   const assignedUsers = Array.isArray(task.assignedTo)
     ? task.assignedTo

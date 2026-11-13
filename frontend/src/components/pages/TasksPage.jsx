@@ -31,6 +31,7 @@ export function TasksPage({ user }) {
 
   const canCreateTask =
     user?.role === "admin" ||
+    user?.role === "superadmin" ||
     projects.some(
       (project) =>
         String(project.owner?._id || project.owner) ===

@@ -48,7 +48,10 @@ const getDashboard = async (req, res) => {
     let projectFilter = {};
     let taskFilter = {};
 
-    if (currentUser.role !== "admin") {
+    const isAdmin =
+      currentUser.role === "admin" || currentUser.role === "superadmin";
+
+    if (!isAdmin) {
       const projects = await Project.find({
         $or: [{ owner: userId }, { members: userId }],
       }).select("_id");
@@ -112,7 +115,10 @@ const getDashboard = async (req, res) => {
       totalTasks,
     };
 
-    if (currentUser.role === "admin") {
+    if (
+      currentUser.role === "admin" ||
+      currentUser.role === "superadmin"
+    ) {
       summary.totalUsers = await User.countDocuments();
     } else {
       const [assignedTasks, createdTasks] = await Promise.all([

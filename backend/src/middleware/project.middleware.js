@@ -19,7 +19,8 @@ const requireProjectOwner = async (req, res, next) => {
       });
     }
 
-    const isAdmin = req.user.role === "admin";
+    const isAdmin =
+      req.user.role === "admin" || req.user.role === "superadmin";
     const isOwner = project.owner.toString() === req.user.userId;
 
     if (!isAdmin && !isOwner) {

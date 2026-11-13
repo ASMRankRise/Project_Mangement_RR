@@ -78,7 +78,7 @@ const createTask = async (req, res) => {
       });
     }
 
-    const isAdmin = role === "admin";
+    const isAdmin = role === "admin" || role === "superadmin";
     const isOwner = foundProject.owner.toString() === userId.toString();
 
     if (!isAdmin && !isOwner) {
@@ -277,7 +277,9 @@ const getTasks = async (req, res) => {
 
     const filter = {};
 
-    if (role !== "admin") {
+    const isAdmin = role === "admin" || role === "superadmin";
+
+    if (!isAdmin) {
       const projects = await Project.find({
         $or: [{ owner: userId }, { members: userId }],
       }).select("_id");
@@ -468,7 +470,7 @@ const updateTask = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    const isAdmin = role === "admin";
+    const isAdmin = role === "admin" || role === "superadmin";
     const isProjectOwner = project.owner.toString() === userId.toString();
 
     const isAssignedUser = task.assignedTo.some(
@@ -658,7 +660,8 @@ const deleteTask = async (req, res) => {
     }
 
     const project = await Project.findById(task.project);
-    const isAdmin = req.user.role === "admin";
+    const isAdmin =
+      req.user.role === "admin" || req.user.role === "superadmin";
     const isProjectOwner =
       project && project.owner.toString() === req.user.userId;
 

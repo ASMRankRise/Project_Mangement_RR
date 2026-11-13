@@ -275,7 +275,9 @@ export function Navbar({
                 {user?.name || "User"}
               </p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize">
-                {user?.role || "user"}
+                {user?.role === "superadmin"
+                  ? "Super Admin"
+                  : user?.role || "user"}
               </p>
             </div>
             <ChevronDownIcon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -321,7 +323,7 @@ export function Navbar({
                   <span>Deliverables & Tasks</span>
                 </button>
 
-                {user?.role === "admin" && (
+                {(user?.role === "admin" || user?.role === "superadmin") && (
                   <button
                     type="button"
                     onClick={() => {

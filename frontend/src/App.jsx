@@ -20,8 +20,9 @@ function App() {
     return <Loading message="Checking your session..." />;
   }
 
+  const isElevated = user?.role === "admin" || user?.role === "superadmin";
   const homePath = user
-    ? user.role === "admin"
+    ? isElevated
       ? "/admin"
       : "/dashboard"
     : "/login";
