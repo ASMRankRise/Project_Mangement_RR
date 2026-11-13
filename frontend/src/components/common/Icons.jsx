@@ -242,6 +242,39 @@ export function Icon({
         <path d="M21 3v5h-5" />
       </>
     ),
+    briefcase: (
+      <>
+        <rect width="20" height="14" x="2" y="7" rx="2" ry="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      </>
+    ),
+    building: (
+      <>
+        <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
+        <path d="M9 22v-4h6v4" />
+        <path d="M8 6h.01" />
+        <path d="M16 6h.01" />
+        <path d="M12 6h.01" />
+        <path d="M12 10h.01" />
+        <path d="M12 14h.01" />
+        <path d="M16 10h.01" />
+        <path d="M16 14h.01" />
+        <path d="M8 10h.01" />
+        <path d="M8 14h.01" />
+      </>
+    ),
+    copy: (
+      <>
+        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+      </>
+    ),
+    badgeCheck: (
+      <>
+        <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+        <path d="m9 12 2 2 4-4" />
+      </>
+    ),
     table: (
       <>
         <path d="M12 3v18" />
@@ -333,6 +366,10 @@ export const MenuIcon = (props) => <Icon name="menu" {...props} />;
 export const ArrowLeftIcon = (props) => <Icon name="arrowLeft" {...props} />;
 export const ArrowRightIcon = (props) => <Icon name="arrowRight" {...props} />;
 export const RotateCwIcon = (props) => <Icon name="rotateCw" {...props} />;
+export const BriefcaseIcon = (props) => <Icon name="briefcase" {...props} />;
+export const BuildingIcon = (props) => <Icon name="building" {...props} />;
+export const CopyIcon = (props) => <Icon name="copy" {...props} />;
+export const BadgeCheckIcon = (props) => <Icon name="badgeCheck" {...props} />;
 export const SunIcon = (props) => <Icon name="sun" {...props} />;
 export const MoonIcon = (props) => <Icon name="moon" {...props} />;
 

@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { Avatar } from "../common/Avatar";
 import { RoleBadge } from "../common/Badge";
 import {
-  LayersIcon,
+  BriefcaseIcon,
   LayoutDashboardIcon,
   FolderIcon,
   CheckSquareIcon,
@@ -28,39 +28,34 @@ export function Sidebar({
 
   const navigationItems = [
     {
-      label: "WORKSPACE",
+      label: "WORKFORCE & OPERATIONS",
       items: [
         {
           to: isAdmin ? "/admin" : "/dashboard",
           label: "Overview",
           icon: LayoutDashboardIcon,
         },
-        {
-          to: "/tasks",
-          label: "My Tasks",
-          icon: CheckSquareIcon,
-        },
+        ...(isAdmin
+          ? [
+            {
+              to: "/admin/users",
+              label: "Employee Directory",
+              icon: UsersIcon,
+            },
+          ]
+          : []),
         {
           to: "/projects",
-          label: "Projects",
+          label: "Team Projects",
           icon: FolderIcon,
+        },
+        {
+          to: "/tasks",
+          label: isAdmin ? "All Deliverables" : "My Deliverables",
+          icon: CheckSquareIcon,
         },
       ],
     },
-    ...(isAdmin
-      ? [
-          {
-            label: "ADMINISTRATION",
-            items: [
-              {
-                to: "/admin/users",
-                label: "Team Directory",
-                icon: UsersIcon,
-              },
-            ],
-          },
-        ]
-      : []),
   ];
 
   const handleNavClick = () => {
@@ -79,9 +74,8 @@ export function Sidebar({
 
       {/* Sidebar container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] text-slate-800 dark:text-slate-200 transition-all duration-150 ease-in-out lg:static ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        } ${collapsed ? "lg:w-16" : "w-60"}`}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] text-slate-800 dark:text-slate-200 transition-all duration-150 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:z-auto ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          } ${collapsed ? "lg:w-16" : "w-60"}`}
       >
         {/* Brand Header */}
         <div className="flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-800 px-3.5">
@@ -90,15 +84,15 @@ export function Sidebar({
             className="flex cursor-pointer items-center gap-2.5 overflow-hidden"
           >
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white font-bold text-xs shadow-xs">
-              <LayersIcon className="w-4 h-4" />
+              <BriefcaseIcon className="w-4 h-4" />
             </div>
             {!collapsed && (
               <div className="flex flex-col">
                 <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-white leading-none">
-                  ProjectHub
+                  RankRise
                 </span>
                 <span className="text-[10px] font-medium tracking-wider text-slate-500 dark:text-slate-400 uppercase mt-0.5">
-                  Workspace
+                  Workforce OS
                 </span>
               </div>
             )}
@@ -145,10 +139,9 @@ export function Sidebar({
                     to={item.to}
                     onClick={handleNavClick}
                     className={({ isActive }) =>
-                      `flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
-                        isActive
-                          ? "bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/50 dark:text-indigo-300"
-                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
+                      `flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${isActive
+                        ? "bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/50 dark:text-indigo-300"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
                       } ${collapsed ? "justify-center px-0" : ""}`
                     }
                     title={collapsed ? item.label : undefined}
@@ -174,9 +167,8 @@ export function Sidebar({
                 handleNavClick();
                 if (onOpenSettings) onOpenSettings();
               }}
-              className={`w-full flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition ${
-                collapsed ? "justify-center px-0" : ""
-              }`}
+              className={`w-full flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition ${collapsed ? "justify-center px-0" : ""
+                }`}
               title={collapsed ? "Preferences" : undefined}
             >
               <SunIcon className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
@@ -188,9 +180,8 @@ export function Sidebar({
         {/* User Card at Bottom */}
         <div className="border-t border-slate-200 dark:border-slate-800 p-2.5">
           <div
-            className={`flex items-center gap-2 rounded-md bg-slate-50 dark:bg-slate-900/70 p-2 border border-slate-200 dark:border-slate-800 ${
-              collapsed ? "justify-center p-1.5" : "justify-between"
-            }`}
+            className={`flex items-center gap-2 rounded-md bg-slate-50 dark:bg-slate-900/70 p-2 border border-slate-200 dark:border-slate-800 ${collapsed ? "justify-center p-1.5" : "justify-between"
+              }`}
           >
             <div className="flex items-center gap-2 overflow-hidden">
               <Avatar user={user} size="sm" />

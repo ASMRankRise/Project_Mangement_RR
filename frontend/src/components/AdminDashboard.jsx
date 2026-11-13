@@ -191,29 +191,29 @@ export function AdminDashboard({ user }) {
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
                 <ShieldIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                <span>Admin Console</span>
+                <span>Workforce Operations Console</span>
               </div>
-              <h1 className="mt-1.5 text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
+              <h1 className="mt-1.5 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                 Executive Overview
               </h1>
               <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                Organization-wide operations, team directory, workloads, and deliverables.
+                Organization-wide employee management, team workspaces, workloads, and deliverables.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 to="/admin/users"
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-2xs"
               >
-                <UsersIcon className="w-3.5 h-3.5 text-slate-400" />
-                <span>Team Directory ({totalUsersCount})</span>
+                <UsersIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                <span>Employee Directory ({totalUsersCount})</span>
               </Link>
 
               <button
                 type="button"
                 onClick={() => setCreateProjectOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer shadow-2xs"
               >
                 <PlusIcon className="w-3.5 h-3.5 text-slate-400" />
                 <span>New Project</span>
@@ -222,10 +222,10 @@ export function AdminDashboard({ user }) {
               <button
                 type="button"
                 onClick={() => setCreateTaskOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white shadow-xs transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white shadow-2xs transition cursor-pointer"
               >
                 <PlusIcon className="w-3.5 h-3.5" />
-                <span>New Task</span>
+                <span>New Deliverable</span>
               </button>
             </div>
           </div>
@@ -238,27 +238,27 @@ export function AdminDashboard({ user }) {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Total Projects
-              </span>
-              <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {dashboardLoading ? "..." : totalProjectsCount}
-              </div>
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Active workspaces</span>
-            </div>
-
-            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Registered Users
+                Total Workforce
               </span>
               <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {dashboardLoading ? "..." : totalUsersCount}
               </div>
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Accounts</span>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Employees</span>
             </div>
 
             <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Total Tasks
+                Team Workspaces
+              </span>
+              <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                {dashboardLoading ? "..." : totalProjectsCount}
+              </div>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Active projects</span>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
+                Deliverables
               </span>
               <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {dashboardLoading ? "..." : totalTasksCount}
@@ -288,7 +288,7 @@ export function AdminDashboard({ user }) {
 
             <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Overdue Tasks
+                Overdue Items
               </span>
               <div
                 className={`mt-1 text-2xl font-bold tracking-tight ${
@@ -304,7 +304,7 @@ export function AdminDashboard({ user }) {
                   overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
-                {overdueTasksCount > 0 ? "Requires review" : "On schedule"}
+                {overdueTasksCount > 0 ? "Attention required" : "On schedule"}
               </span>
             </div>
           </div>
@@ -324,7 +324,7 @@ export function AdminDashboard({ user }) {
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                   <FolderIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>All Organization Workspaces</span>
+                  <span>Team Project Workspaces</span>
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                   Select a project workspace to inspect deliverables, members, and Kanban boards
@@ -395,10 +395,10 @@ export function AdminDashboard({ user }) {
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                   <CheckSquareIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>Master Task Directory</span>
+                  <span>Master Deliverables Pipeline</span>
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                  Inspect and update tasks across all organization projects
+                  Inspect and update deliverables across all organizational project teams
                 </p>
               </div>
 
@@ -434,9 +434,9 @@ export function AdminDashboard({ user }) {
                 tasks={taskState.allTasks}
                 projects={projects}
                 user={user}
-                onUpdateTask={handleUpdateTask}
-                onDeleteTask={handleDeleteTask}
-                onSelectTask={(t) => setSelectedTask(t)}
+                onUpdate={handleUpdateTask}
+                onDelete={handleDeleteTask}
+                onClick={(t) => setSelectedTask(t)}
               />
             ) : (
               <TaskList
@@ -444,9 +444,9 @@ export function AdminDashboard({ user }) {
                 projects={projects}
                 user={user}
                 loading={taskState.loading}
-                onUpdateTask={handleUpdateTask}
-                onDeleteTask={handleDeleteTask}
-                onSelectTask={(t) => setSelectedTask(t)}
+                onUpdate={handleUpdateTask}
+                onDelete={handleDeleteTask}
+                onTaskClick={(t) => setSelectedTask(t)}
               />
             )}
           </section>

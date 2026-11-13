@@ -359,6 +359,7 @@ export function ProjectList({
           onClose={() => setManageMembersProject(null)}
           project={manageMembersProject}
           currentUser={user}
+          canManage={canManage(manageMembersProject)}
           onAddMember={onAddMember}
           onRemoveMember={onRemoveMember}
         />

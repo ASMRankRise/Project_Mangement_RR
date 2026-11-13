@@ -90,10 +90,10 @@ export function ProjectsPage({ user }) {
                 Workspaces & Teams
               </span>
               <h1 className="mt-1 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Projects
+                Team Projects
               </h1>
               <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                Manage project workspaces, invite collaborators, and oversee delivery progress.
+                Manage team project initiatives, assign employee collaborators, and oversee delivery progress.
               </p>
             </div>
 

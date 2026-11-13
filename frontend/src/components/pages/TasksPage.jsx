@@ -43,13 +43,13 @@ export function TasksPage({ user }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            Workspaces & Tasks
+            Workforce Deliverables
           </span>
           <h1 className="mt-1 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Tasks Directory
+            Deliverables & Tasks
           </h1>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            Track tasks across statuses, progress workloads, and meet team milestones.
+            Track deliverables across status stages, manage employee assignments, and meet team milestones.
           </p>
         </div>
 
@@ -80,7 +80,7 @@ export function TasksPage({ user }) {
               className="h-8 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white shadow-2xs transition cursor-pointer"
             >
               <PlusIcon className="h-3.5 w-3.5" />
-              <span>New Task</span>
+              <span>New Deliverable</span>
             </button>
           )}
         </div>

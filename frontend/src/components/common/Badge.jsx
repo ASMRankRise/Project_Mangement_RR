@@ -78,7 +78,7 @@ export function RoleBadge({ role, size = "sm" }) {
       size={size}
       icon={isAdmin ? "shield" : "user"}
     >
-      {isAdmin ? "Admin" : "Member"}
+      {isAdmin ? "Administrator" : "Employee"}
     </Badge>
   );
 }

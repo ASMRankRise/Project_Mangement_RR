@@ -43,7 +43,7 @@ export function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0D1117] dark:text-slate-100 antialiased selection:bg-indigo-600 selection:text-white transition-colors">
+    <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-[#0D1117] dark:text-slate-100 antialiased selection:bg-indigo-600 selection:text-white transition-colors">
       {/* Sidebar Navigation */}
       <Sidebar
         user={user}
@@ -55,9 +55,9 @@ export function DashboardLayout({ children }) {
         onOpenSettings={() => setSettingsOpen(true)}
       />
 
-      {/* Main Container */}
+      {/* Main Container: flex-col, fills remaining width, clips overflow */}
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
-        {/* Top Navbar */}
+        {/* Top Navbar — sticky inside this column */}
         <Navbar
           user={user}
           onLogout={handleLogout}
@@ -66,8 +66,8 @@ export function DashboardLayout({ children }) {
           onOpenSettings={() => setSettingsOpen(true)}
         />
 
-        {/* Page Content Viewport */}
-        <main className="relative flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
+        {/* Page Content — only this area scrolls */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-7">
           <div className="mx-auto max-w-7xl">
             {children}
           </div>

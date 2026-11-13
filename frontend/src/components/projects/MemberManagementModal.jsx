@@ -73,8 +73,8 @@ export function MemberManagementModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`${project.name} • Team Roster`}
-      subtitle="Manage collaborators, assignees, and project access permissions."
+      title={`${project.name} • Project Team Roster`}
+      subtitle="Assign employees to this project workspace and manage collaboration privileges."
       size="md"
     >
       <div className="space-y-4 text-slate-800 dark:text-slate-200">
@@ -91,7 +91,7 @@ export function MemberManagementModal({
               htmlFor="memberEmail"
               className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300"
             >
-              Add Team Member
+              Assign Employee by Email
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -100,7 +100,7 @@ export function MemberManagementModal({
                   id="memberEmail"
                   type="email"
                   required
-                  placeholder="name@company.com"
+                  placeholder="employee@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] py-1 pl-8 pr-2.5 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 focus:border-indigo-600 transition shadow-2xs"
@@ -111,7 +111,7 @@ export function MemberManagementModal({
                 disabled={addingMember || !email.trim()}
                 className="h-8 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 text-xs font-medium text-white shadow-2xs disabled:opacity-50 transition cursor-pointer"
               >
-                {addingMember ? "Adding..." : "+ Add"}
+                {addingMember ? "Assigning..." : "+ Assign"}
               </button>
             </div>
           </form>
@@ -120,7 +120,7 @@ export function MemberManagementModal({
         {/* Member Directory */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-            <span>Project Collaborators ({members.length})</span>
+            <span>Assigned Employees ({members.length})</span>
           </div>
 
           <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0D1117]">
@@ -131,7 +131,7 @@ export function MemberManagementModal({
                   <Avatar user={owner} size="sm" />
                   <div className="min-w-0">
                     <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
-                      {owner?.name || owner?.email || "Project Owner"}
+                      {owner?.name || owner?.email || "Project Lead"}
                     </p>
                     <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">
                       {owner?.email}
@@ -140,7 +140,7 @@ export function MemberManagementModal({
                 </div>
 
                 <span className="rounded border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.2 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-                  Owner
+                  Lead
                 </span>
               </div>
             )}
@@ -160,7 +160,7 @@ export function MemberManagementModal({
                     <Avatar user={member} size="sm" />
                     <div className="min-w-0">
                       <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
-                        {member?.name || member?.email || "Team Member"}
+                        {member?.name || member?.email || "Team Employee"}
                       </p>
                       <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">
                         {member?.email}
@@ -170,7 +170,7 @@ export function MemberManagementModal({
 
                   <div className="flex items-center gap-2">
                     <span className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-medium text-slate-600 dark:text-slate-400">
-                      Member
+                      Employee
                     </span>
 
                     {canManage && (
@@ -179,7 +179,7 @@ export function MemberManagementModal({
                         disabled={removingMember}
                         onClick={() => handleRemove(member)}
                         className="rounded p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 text-xs transition"
-                        title="Remove member"
+                        title="Remove employee from project"
                       >
                         Remove
                       </button>
@@ -191,7 +191,7 @@ export function MemberManagementModal({
 
             {members.length === 0 && (
               <div className="p-6 text-center text-xs text-slate-400 dark:text-slate-500">
-                No collaborators have been added to this workspace yet.
+                No employees have been assigned to this project team yet.
               </div>
             )}
           </div>

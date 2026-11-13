@@ -144,14 +144,14 @@ export function UserDashboard({ user }) {
               <div>
                 <div className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span>Workspace Active</span>
+                  <span>Employee Portal Active</span>
                 </div>
 
-                <h1 className="mt-1.5 text-lg sm:text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="mt-1.5 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                   Welcome back, {firstName}
                 </h1>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                  Tracking {projects.length} accessible project workspaces and active deliverables.
+                  Tracking {projects.length} accessible project teams and assigned work deliverables.
                 </p>
               </div>
 
@@ -192,7 +192,7 @@ export function UserDashboard({ user }) {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Projects Owned
+                Projects Led
               </span>
               <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {dashboardLoading ? "..." : ownedProjectsCount}
@@ -212,12 +212,12 @@ export function UserDashboard({ user }) {
 
             <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Total Tasks
+                Deliverables
               </span>
               <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {dashboardLoading ? "..." : totalTasksCount}
               </div>
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">All pipelines</span>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Assignments</span>
             </div>
 
             <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
@@ -278,7 +278,7 @@ export function UserDashboard({ user }) {
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                   <FolderIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>Your Projects</span>
+                  <span>Assigned Project Workspaces</span>
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                   Select a workspace to open its dedicated Kanban pipeline, task table, and team roster
@@ -356,7 +356,7 @@ export function UserDashboard({ user }) {
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                   <CheckSquareIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>My Assigned Tasks</span>
+                  <span>My Assigned Deliverables</span>
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                   Switch between Kanban Board and Table View
@@ -395,9 +395,9 @@ export function UserDashboard({ user }) {
                 tasks={taskState.allTasks}
                 projects={projects}
                 user={user}
-                onUpdateTask={handleUpdateTask}
-                onDeleteTask={handleDeleteTask}
-                onSelectTask={(t) => setSelectedTask(t)}
+                onUpdate={handleUpdateTask}
+                onDelete={handleDeleteTask}
+                onClick={(t) => setSelectedTask(t)}
               />
             ) : (
               <TaskList
@@ -405,9 +405,9 @@ export function UserDashboard({ user }) {
                 projects={projects}
                 user={user}
                 loading={taskState.loading}
-                onUpdateTask={handleUpdateTask}
-                onDeleteTask={handleDeleteTask}
-                onSelectTask={(t) => setSelectedTask(t)}
+                onUpdate={handleUpdateTask}
+                onDelete={handleDeleteTask}
+                onTaskClick={(t) => setSelectedTask(t)}
               />
             )}
           </section>

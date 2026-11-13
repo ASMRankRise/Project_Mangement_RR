@@ -10,12 +10,12 @@ export function SettingsModal({ isOpen, onClose, user }) {
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Workspace Preferences" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Workforce Preferences" size="md">
       <div className="space-y-4 text-slate-800 dark:text-slate-200">
         {/* Account Info */}
         <div>
           <h4 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-            User Account
+            Employee Account
           </h4>
           <div className="flex items-center gap-3 p-3 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
             <Avatar user={user} size="md" />
@@ -96,8 +96,8 @@ export function SettingsModal({ isOpen, onClose, user }) {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-600 dark:text-slate-400">Access Privilege</span>
-              <span className="font-medium text-slate-900 dark:text-white capitalize">
-                {user?.role || "user"}
+              <span className="font-medium text-slate-900 dark:text-white">
+                {user?.role === "admin" ? "Administrator" : "Employee"}
               </span>
             </div>
           </div>

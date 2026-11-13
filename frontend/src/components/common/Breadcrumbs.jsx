@@ -6,11 +6,11 @@ export function Breadcrumbs({ customCrumbs }) {
   const location = useLocation();
 
   const pathMap = {
-    dashboard: "Overview",
-    admin: "Admin Console",
-    users: "Team Directory",
-    projects: "Projects",
-    tasks: "My Tasks",
+    dashboard: "Employee Portal",
+    admin: "Executive Hub",
+    users: "Employee Directory",
+    projects: "Team Projects",
+    tasks: "Deliverables",
   };
 
   const segments = location.pathname.split("/").filter(Boolean);
@@ -35,7 +35,7 @@ export function Breadcrumbs({ customCrumbs }) {
         className="flex items-center gap-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition"
       >
         <LayoutDashboardIcon className="h-3.5 w-3.5" />
-        <span className="hidden md:inline">Workspace</span>
+        <span className="hidden md:inline">Workforce</span>
       </Link>
 
       {crumbs.map((crumb, idx) => (

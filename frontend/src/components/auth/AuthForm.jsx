@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import Alert from "../common/Alert";
 import {
-  LayersIcon,
+  BriefcaseIcon,
   UserIcon,
   MailIcon,
   LockIcon,
@@ -136,15 +136,15 @@ export function AuthForm({ mode = "login" }) {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-600 text-white shadow-xs">
-              <LayersIcon className="h-4 w-4" />
+              <BriefcaseIcon className="h-4 w-4" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
-                  ProjectHub
+                  StaffSync
                 </span>
                 <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                  Workspace
+                  Workforce OS
                 </span>
               </div>
             </div>
@@ -156,12 +156,12 @@ export function AuthForm({ mode = "login" }) {
           {/* Welcome Heading */}
           <div className="space-y-1">
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
-              {isLogin ? "Sign in to your account" : "Create your account"}
+              {isLogin ? "Sign in to Employee Portal" : "Register Employee Account"}
             </h1>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               {isLogin
-                ? "Enter your credentials to access your organization workspaces and tasks."
-                : "Join your delivery team to manage projects with real-time tracking."}
+                ? "Enter your corporate credentials to access employee resources, team projects, and deliverables."
+                : "Join your company workforce workspace with real-time project collaboration."}
             </p>
           </div>
 
@@ -327,7 +327,7 @@ export function AuthForm({ mode = "login" }) {
             <ShieldIcon className="h-3.5 w-3.5 text-slate-400" />
             <span>Enterprise JWT Session Security</span>
           </div>
-          <span className="mt-1 sm:mt-0">© {new Date().getFullYear()} ProjectHub</span>
+          <span className="mt-1 sm:mt-0">© {new Date().getFullYear()} StaffSync Workforce Platform</span>
         </div>
       </div>
 
