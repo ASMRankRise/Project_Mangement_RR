@@ -43,7 +43,7 @@ export function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-[#0D1117] dark:text-slate-100 antialiased selection:bg-indigo-600 selection:text-white transition-colors">
+    <div className="flex h-screen overflow-hidden bg-canvas text-text-primary antialiased selection:bg-brand/15 selection:text-brand transition-colors">
       {/* Sidebar Navigation */}
       <Sidebar
         user={user}

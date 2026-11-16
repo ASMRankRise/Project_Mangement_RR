@@ -6,11 +6,11 @@ export function Breadcrumbs({ customCrumbs }) {
   const location = useLocation();
 
   const pathMap = {
-    dashboard: "Employee Portal",
-    admin: "Executive Hub",
-    users: "Employee Directory",
-    projects: "Team Projects",
-    tasks: "Deliverables",
+    dashboard: "Overview",
+    admin: "Admin",
+    users: "Team directory",
+    projects: "Projects",
+    tasks: "Tasks",
   };
 
   const segments = location.pathname.split("/").filter(Boolean);
@@ -29,26 +29,26 @@ export function Breadcrumbs({ customCrumbs }) {
   if (crumbs.length === 0) return null;
 
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[13px] text-text-secondary">
       <Link
         to="/"
-        className="flex items-center gap-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition"
+        className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors"
       >
         <LayoutDashboardIcon className="h-3.5 w-3.5" />
-        <span className="hidden md:inline">Workforce</span>
+        <span className="hidden md:inline">Workspace</span>
       </Link>
 
       {crumbs.map((crumb, idx) => (
         <Fragment key={crumb.url || idx}>
-          <ChevronRightIcon className="h-3 w-3 text-slate-400 dark:text-slate-600 shrink-0" />
+          <ChevronRightIcon className="h-3 w-3 text-text-tertiary shrink-0" />
           {crumb.isLast ? (
-            <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[150px]">
+            <span className="font-semibold text-text-primary truncate max-w-[180px]">
               {crumb.label}
             </span>
           ) : (
             <Link
               to={crumb.url}
-              className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition truncate max-w-[120px]"
+              className="text-text-secondary hover:text-text-primary transition-colors truncate max-w-[140px]"
             >
               {crumb.label}
             </Link>

@@ -12,12 +12,10 @@ import CreateProjectModal from "./projects/CreateProjectModal";
 import CreateTaskModal from "./tasks/CreateTaskModal";
 import TaskDetailModal from "./tasks/TaskDetailModal";
 import Alert from "./common/Alert";
+import Button from "./common/Button";
 import {
   UsersIcon,
   PlusIcon,
-  ShieldIcon,
-  FolderIcon,
-  CheckSquareIcon,
 } from "./common/Icons";
 import { useToast } from "../context/ToastContext";
 
@@ -131,7 +129,7 @@ export function AdminDashboard({ user }) {
 
   const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
 
-  // Real Metric computations
+  // Metric computations (unchanged)
   const summary = dashboardData?.summary || {};
   const totalProjectsCount = summary.totalProjects ?? projects.length;
   const totalTasksCount = summary.totalTasks ?? taskState.total ?? 0;
@@ -167,7 +165,7 @@ export function AdminDashboard({ user }) {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* If a project workspace is opened */}
       {selectedProject ? (
         <ProjectWorkspace
@@ -187,46 +185,42 @@ export function AdminDashboard({ user }) {
       ) : (
         <>
           {/* Header & Quick Action Buttons */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
-                <ShieldIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                <span>Workforce Operations Console</span>
-              </div>
-              <h1 className="mt-1.5 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Executive Overview
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-primary font-heading">
+                Overview
               </h1>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                Organization-wide employee management, team workspaces, workloads, and deliverables.
+              <p className="mt-1 text-sm text-text-secondary">
+                Projects, tasks and team at a glance.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2.5">
               <Link
                 to="/admin/users"
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-2xs"
+                className="inline-flex items-center justify-center gap-2 h-9 px-3.5 text-sm font-medium rounded-md border border-border bg-surface text-text-primary hover:bg-surface-subtle transition-colors shadow-subtle"
               >
-                <UsersIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                <span>Employee Directory ({totalUsersCount})</span>
+                <UsersIcon className="w-4 h-4 text-text-secondary" />
+                <span>Team directory ({totalUsersCount})</span>
               </Link>
 
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="md"
+                icon={PlusIcon}
                 onClick={() => setCreateProjectOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer shadow-2xs"
               >
-                <PlusIcon className="w-3.5 h-3.5 text-slate-400" />
-                <span>New Project</span>
-              </button>
+                New project
+              </Button>
 
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="md"
+                icon={PlusIcon}
                 onClick={() => setCreateTaskOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white shadow-2xs transition cursor-pointer"
               >
-                <PlusIcon className="w-3.5 h-3.5" />
-                <span>New Deliverable</span>
-              </button>
+                New task
+              </Button>
             </div>
           </div>
 
@@ -234,83 +228,112 @@ export function AdminDashboard({ user }) {
           {projectError && <Alert message={projectError} type="error" />}
           {projectSuccess && <Alert message={projectSuccess} type="success" />}
 
-          {/* 6 Practical Enterprise Metric Cards */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Total Workforce
-              </span>
-              <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {dashboardLoading ? "..." : totalUsersCount}
+          {/* Stat Cards with Varied Hierarchy */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 sm:gap-4">
+            {/* Primary Metric: Tasks & Completion (Spans 5 cols on lg) */}
+            <div className="sm:col-span-2 lg:col-span-5 rounded-lg border border-border bg-surface p-4 sm:p-5 shadow-subtle flex flex-col justify-between text-left">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-medium text-text-secondary">
+                    Tasks
+                  </span>
+                  <span className="inline-flex items-center rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
+                    {completionRate}% completed
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary font-heading">
+                    {dashboardLoading ? "..." : totalTasksCount}
+                  </span>
+                  <span className="text-sm text-text-tertiary">total tasks</span>
+                </div>
               </div>
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Employees</span>
+
+              {/* Progress Bar & Breakdown */}
+              <div className="mt-4 pt-3 border-t border-border-subtle">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-subtle">
+                  <div
+                    className="h-full bg-brand transition-all duration-300"
+                    style={{ width: `${completionRate}%` }}
+                  />
+                </div>
+                <div className="mt-2.5 flex items-center justify-between text-[12px] text-text-secondary">
+                  <span>{completedTasksCount} finished</span>
+                  <span>•</span>
+                  <span>{inProgressTasksCount} in progress</span>
+                  <span>•</span>
+                  <span>{Math.max(0, totalTasksCount - completedTasksCount - inProgressTasksCount)} pending</span>
+                </div>
+              </div>
             </div>
 
-            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Team Workspaces
-              </span>
-              <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {dashboardLoading ? "..." : totalProjectsCount}
+            {/* Supporting Metric 1: Projects (Spans 2 cols on lg) */}
+            <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 shadow-subtle flex flex-col justify-between text-left lg:col-span-2">
+              <div>
+                <span className="text-[13px] font-medium text-text-secondary block">
+                  Projects
+                </span>
+                <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-text-primary font-heading">
+                  {dashboardLoading ? "..." : totalProjectsCount}
+                </div>
               </div>
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Active projects</span>
+              <div className="mt-3 text-[12px] text-text-tertiary">
+                Active workspaces
+              </div>
             </div>
 
-            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Deliverables
-              </span>
-              <div className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {dashboardLoading ? "..." : totalTasksCount}
+            {/* Supporting Metric 2: Employees (Spans 2 cols on lg) */}
+            <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 shadow-subtle flex flex-col justify-between text-left lg:col-span-2">
+              <div>
+                <span className="text-[13px] font-medium text-text-secondary block">
+                  Employees
+                </span>
+                <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-text-primary font-heading">
+                  {dashboardLoading ? "..." : totalUsersCount}
+                </div>
               </div>
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 block">Work items</span>
+              <div className="mt-3 text-[12px] text-text-tertiary">
+                Team members
+              </div>
             </div>
 
-            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                In Progress
-              </span>
-              <div className="mt-1 text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
-                {dashboardLoading ? "..." : inProgressTasksCount}
+            {/* Supporting Metric 3: Overdue (Spans 3 cols on lg, rust accent only when overdue > 0) */}
+            <div
+              className={`rounded-lg border p-4 sm:p-5 shadow-subtle flex flex-col justify-between text-left lg:col-span-3 transition-colors ${
+                overdueTasksCount > 0
+                  ? "border-accent/40 bg-accent-subtle/20"
+                  : "border-border bg-surface"
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-medium text-text-secondary">
+                    Overdue
+                  </span>
+                  {overdueTasksCount > 0 && (
+                    <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+                  )}
+                </div>
+                <div
+                  className={`mt-2 text-2xl sm:text-3xl font-bold tracking-tight font-heading ${
+                    overdueTasksCount > 0 ? "text-accent" : "text-text-primary"
+                  }`}
+                >
+                  {dashboardLoading ? "..." : overdueTasksCount}
+                </div>
               </div>
-              <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 mt-0.5 block">Underway</span>
-            </div>
-
-            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Completed
-              </span>
-              <div className="mt-1 text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-                {dashboardLoading ? "..." : completedTasksCount}
-              </div>
-              <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mt-0.5 block">{completionRate}% finished</span>
-            </div>
-
-            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5 text-left">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
-                Overdue Items
-              </span>
               <div
-                className={`mt-1 text-2xl font-bold tracking-tight ${
-                  overdueTasksCount > 0
-                    ? "text-rose-600 dark:text-rose-400"
-                    : "text-slate-900 dark:text-white"
+                className={`mt-3 text-[12px] font-medium ${
+                  overdueTasksCount > 0 ? "text-accent" : "text-text-tertiary"
                 }`}
               >
-                {dashboardLoading ? "..." : overdueTasksCount}
+                {overdueTasksCount > 0 ? "Requires attention" : "All on schedule"}
               </div>
-              <span
-                className={`text-[11px] font-medium mt-0.5 block ${
-                  overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"
-                }`}
-              >
-                {overdueTasksCount > 0 ? "Attention required" : "On schedule"}
-              </span>
             </div>
           </div>
 
           {/* Status Distribution & Upcoming Deadlines */}
-          <div className="space-y-5">
+          <div className="space-y-6">
             <TaskDistribution taskStats={dashboardData?.taskStats || {}} />
             <UpcomingDeadlines
               tasks={taskState.allTasks}
@@ -318,29 +341,28 @@ export function AdminDashboard({ user }) {
             />
           </div>
 
-          {/* All Project Workspaces Directory */}
-          <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 sm:p-5">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-3">
+          {/* Projects Directory Section */}
+          <section className="rounded-lg border border-border bg-surface p-4 sm:p-5 shadow-subtle">
+            <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
               <div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                  <FolderIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>Team Project Workspaces</span>
+                <h3 className="text-sm font-semibold text-text-primary">
+                  Projects
                 </h3>
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                  Select a project workspace to inspect deliverables, members, and Kanban boards
+                <p className="mt-0.5 text-[12px] text-text-secondary">
+                  Select a project to view tasks, members, and details
                 </p>
               </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {projects.length} workspaces
+              <span className="text-[12px] text-text-secondary font-medium">
+                {projects.length} {projects.length === 1 ? "project" : "projects"}
               </span>
             </div>
 
             {projects.length === 0 ? (
-              <div className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
-                No projects created yet. Click &quot;New Project&quot; above to create one.
+              <div className="py-8 text-center text-sm text-text-secondary">
+                No projects created yet. Click &quot;New project&quot; above to create one.
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
                 {projects.map((proj) => {
                   const pId = String(getId(proj));
                   const projTasks = taskState.allTasks.filter(
@@ -358,27 +380,27 @@ export function AdminDashboard({ user }) {
                     <div
                       key={pId}
                       onClick={() => setSelectedProjectId(pId)}
-                      className="group flex flex-col justify-between rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-3 hover:border-slate-300 dark:hover:border-slate-700 transition cursor-pointer text-left"
+                      className="group flex flex-col justify-between rounded-md border border-border bg-surface-subtle/40 p-3.5 hover:border-brand/40 hover:bg-surface-subtle transition-colors cursor-pointer text-left"
                     >
                       <div>
                         <div className="flex items-center justify-between gap-2">
-                          <h4 className="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition truncate">
+                          <h4 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors truncate">
                             {proj.name}
                           </h4>
-                          <span className="rounded px-1.5 py-0.2 text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/50">
-                            Admin Access
+                          <span className="rounded-md px-2 py-0.5 text-[12px] font-medium bg-surface text-text-secondary border border-border">
+                            Admin
                           </span>
                         </div>
-                        <p className="mt-1 line-clamp-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 line-clamp-1 text-[13px] text-text-secondary">
                           {proj.description || "No description provided."}
                         </p>
                       </div>
 
-                      <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-500 dark:text-slate-400">
+                      <div className="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-between text-[12px]">
+                        <span className="text-text-secondary">
                           {completed}/{projTasks.length} tasks
                         </span>
-                        <span className="font-semibold text-slate-700 dark:text-slate-300">
+                        <span className="font-mono font-medium text-text-primary">
                           {pct}%
                         </span>
                       </div>
@@ -389,42 +411,41 @@ export function AdminDashboard({ user }) {
             )}
           </section>
 
-          {/* Full Task Workspace Section */}
-          <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-4">
+          {/* Tasks Workspace Section */}
+          <section className="rounded-lg border border-border bg-surface p-4 sm:p-5 shadow-subtle">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-3 mb-4">
               <div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                  <CheckSquareIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>Master Deliverables Pipeline</span>
+                <h3 className="text-sm font-semibold text-text-primary">
+                  Tasks
                 </h3>
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                  Inspect and update deliverables across all organizational project teams
+                <p className="mt-0.5 text-[12px] text-text-secondary">
+                  Inspect and manage tasks across all projects
                 </p>
               </div>
 
               {/* View Switcher Tabs */}
-              <div className="inline-flex rounded-md border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-xs">
+              <div className="inline-flex rounded-md border border-border bg-surface-subtle p-0.5 text-[13px]">
                 <button
                   type="button"
                   onClick={() => setViewMode("kanban")}
-                  className={`rounded px-3 py-1 font-medium transition ${
+                  className={`rounded px-3 py-1 font-medium transition-colors cursor-pointer ${
                     viewMode === "kanban"
-                      ? "bg-white text-slate-900 shadow-xs dark:bg-[#161B22] dark:text-white"
-                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      ? "bg-surface text-text-primary shadow-subtle"
+                      : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  Kanban Board
+                  Board
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode("table")}
-                  className={`rounded px-3 py-1 font-medium transition ${
+                  className={`rounded px-3 py-1 font-medium transition-colors cursor-pointer ${
                     viewMode === "table"
-                      ? "bg-white text-slate-900 shadow-xs dark:bg-[#161B22] dark:text-white"
-                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      ? "bg-surface text-text-primary shadow-subtle"
+                      : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  Table View
+                  Table
                 </button>
               </div>
             </div>

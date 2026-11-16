@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import api from "../services/api";
 
 function useTasks(user, initialOptions = {}) {
@@ -46,6 +46,12 @@ function useTasks(user, initialOptions = {}) {
 
   const setProjectFilter = (value) => {
     setProjectFilterValue(value);
+    setPageValue(1);
+  };
+
+  const setLimit = (value) => {
+    setLimitValue(value);
+    setPageValue(1);
   };
 
   const setPage = (value) => {
@@ -54,13 +60,14 @@ function useTasks(user, initialOptions = {}) {
     );
   };
 
-  const fetchTasks = useCallback(async (customPage) => {
+  const fetchTasks = useCallback(async (customPage, customLimit) => {
     if (!userId) return false;
 
     const currentRequestId = ++requestId.current;
     const targetPage = typeof customPage === "number" ? customPage : page;
+    const targetLimit = typeof customLimit === "number" ? customLimit : limit;
 
-    const params = { page: targetPage, limit };
+    const params = { page: targetPage, limit: targetLimit };
 
     if (debouncedSearch.trim()) {
       params.search = debouncedSearch.trim();
@@ -68,6 +75,7 @@ function useTasks(user, initialOptions = {}) {
 
     if (statusFilter) params.status = statusFilter;
     if (priorityFilter) params.priority = priorityFilter;
+    if (projectFilter) params.project = projectFilter;
 
     setLoading(true);
     setError("");
@@ -78,10 +86,27 @@ function useTasks(user, initialOptions = {}) {
       if (currentRequestId !== requestId.current) return false;
 
       const data = response.data;
+      const fetchedTasks = data.tasks || [];
+      const fetchedTotal = data.totalTasks ?? data.total ?? 0;
+      const fetchedTotalPages = Math.max(1, data.totalPages || Math.ceil(fetchedTotal / targetLimit) || 1);
 
-      setTasks(data.tasks || []);
-      setTotal(data.totalTasks ?? data.total ?? 0);
-      setTotalPages(data.totalPages ?? 1);
+      // If current page is past total pages (e.g. after deletion on last page), fall back to previous page
+      if (targetPage > fetchedTotalPages && fetchedTotal > 0) {
+        setPageValue(fetchedTotalPages);
+        const fallbackRes = await api.get("/tasks", {
+          params: { ...params, page: fetchedTotalPages },
+        });
+        if (currentRequestId !== requestId.current) return false;
+        const fallbackData = fallbackRes.data;
+        setTasks(fallbackData.tasks || []);
+        setTotal(fallbackData.totalTasks ?? fallbackData.total ?? fetchedTotal);
+        setTotalPages(fallbackData.totalPages ?? fetchedTotalPages);
+        return true;
+      }
+
+      setTasks(fetchedTasks);
+      setTotal(fetchedTotal);
+      setTotalPages(fetchedTotalPages);
 
       return true;
     } catch (err) {
@@ -95,16 +120,7 @@ function useTasks(user, initialOptions = {}) {
         setLoading(false);
       }
     }
-  }, [userId, page, limit, debouncedSearch, statusFilter, priorityFilter]);
-
-  // Tasks optionally filtered by project in memory
-  const displayedTasks = useMemo(() => {
-    if (!projectFilter) return tasks;
-    return tasks.filter((t) => {
-      const pId = t.project?._id || t.project;
-      return String(pId) === String(projectFilter);
-    });
-  }, [tasks, projectFilter]);
+  }, [userId, page, limit, debouncedSearch, statusFilter, priorityFilter, projectFilter]);
 
   const createTask = async (payload) => {
     setError("");
@@ -163,7 +179,7 @@ function useTasks(user, initialOptions = {}) {
   };
 
   return {
-    tasks: displayedTasks,
+    tasks,
     allTasks: tasks,
     search,
     setSearch,
@@ -176,7 +192,7 @@ function useTasks(user, initialOptions = {}) {
     page,
     setPage,
     limit,
-    setLimit: setLimitValue,
+    setLimit,
     totalPages,
     total,
     loading,

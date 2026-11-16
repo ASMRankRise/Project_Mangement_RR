@@ -58,19 +58,19 @@ export function CreateProjectModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Create Workspace"
-      subtitle="Establish a new workspace for your team and track project milestones."
+      title="New project"
+      subtitle="Create a project to organize tasks and collaborate with team members."
       size="md"
     >
-      <form onSubmit={handleSubmit} className="space-y-3.5">
+      <form onSubmit={handleSubmit} className="space-y-4 text-left">
         {validationError && <Alert message={validationError} type="error" />}
 
         <div>
           <label
             htmlFor="projectName"
-            className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300"
+            className="mb-1 block text-[13px] font-medium text-text-secondary"
           >
-            Project Name <span className="text-rose-500">*</span>
+            Project name <span className="text-accent">*</span>
           </label>
           <input
             id="projectName"
@@ -80,10 +80,10 @@ export function CreateProjectModal({
             maxLength={50}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Core Banking Platform"
-            className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition shadow-2xs"
+            placeholder="e.g. Design System Overhaul"
+            className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand transition-colors shadow-subtle"
           />
-          <p className="mt-1 text-right text-[10px] text-slate-400">
+          <p className="mt-1 text-right text-[12px] text-text-tertiary">
             {name.length}/50 characters
           </p>
         </div>
@@ -91,9 +91,9 @@ export function CreateProjectModal({
         <div>
           <label
             htmlFor="projectDesc"
-            className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300"
+            className="mb-1 block text-[13px] font-medium text-text-secondary"
           >
-            Description <span className="text-slate-400 font-normal">(optional)</span>
+            Description <span className="text-text-tertiary font-normal">(optional)</span>
           </label>
           <textarea
             id="projectDesc"
@@ -102,19 +102,19 @@ export function CreateProjectModal({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Outline objectives, scope, or target timeline..."
-            className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] p-2.5 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition resize-none shadow-2xs"
+            className="w-full rounded-md border border-border bg-surface p-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand transition-colors resize-none shadow-subtle"
           />
-          <p className="mt-1 text-right text-[10px] text-slate-400">
+          <p className="mt-1 text-right text-[12px] text-text-tertiary">
             {description.length}/500 characters
           </p>
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-2.5 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition"
+            className="h-9 rounded-md border border-border bg-surface px-3.5 text-[13px] font-medium text-text-primary hover:bg-surface-subtle transition-colors shadow-subtle cursor-pointer"
           >
             Cancel
           </button>
@@ -122,17 +122,17 @@ export function CreateProjectModal({
           <button
             type="submit"
             disabled={loading || !name.trim()}
-            className="h-8 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 text-xs font-medium text-white shadow-2xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="h-9 inline-flex items-center gap-1.5 rounded-md bg-brand hover:bg-brand-hover px-4 text-[13px] font-medium text-brand-text shadow-subtle transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {loading ? (
               <>
-                <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-text border-t-transparent" />
                 <span>Creating...</span>
               </>
             ) : (
               <>
-                <PlusIcon className="h-3.5 w-3.5" />
-                <span>Create Workspace</span>
+                <PlusIcon className="h-4 w-4" />
+                <span>Create project</span>
               </>
             )}
           </button>

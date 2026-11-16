@@ -24,29 +24,29 @@ export function UpcomingDeadlines({ tasks = [], onTaskClick }) {
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 text-left">
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2.5 mb-2.5">
+    <div className="rounded-lg border border-border bg-surface p-4 text-left shadow-subtle">
+      <div className="flex items-center justify-between border-b border-border pb-3 mb-3">
         <div>
-          <h3 className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
-            <CalendarIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+          <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+            <CalendarIcon className="w-4 h-4 text-text-secondary" />
             <span>Upcoming Deadlines</span>
           </h3>
-          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-[12px] text-text-secondary">
             Active milestones requiring prompt attention
           </p>
         </div>
-        <span className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
+        <span className="rounded-md border border-border bg-surface-subtle px-2.5 py-0.5 text-[12px] font-medium text-text-secondary">
           {activeTasksWithDueDate.length} upcoming
         </span>
       </div>
 
       {topDeadlines.length === 0 ? (
-        <div className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
-          <CheckCircleIcon className="w-5 h-5 text-emerald-500 mx-auto mb-1.5 opacity-80" />
+        <div className="py-6 text-center text-sm text-text-secondary">
+          <CheckCircleIcon className="w-5 h-5 text-done mx-auto mb-1.5 opacity-90" />
           No upcoming deadlines. All active work is on schedule!
         </div>
       ) : (
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="divide-y divide-border-subtle">
           {topDeadlines.map((task) => {
             const daysDiff = getDaysDiff(task.dueDate);
             const isOverdue = daysDiff < 0;
@@ -56,17 +56,17 @@ export function UpcomingDeadlines({ tasks = [], onTaskClick }) {
               <div
                 key={task._id || task.id}
                 onClick={() => onTaskClick && onTaskClick(task)}
-                className="py-2 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded px-2 -mx-2 transition cursor-pointer group"
+                className="py-2.5 flex items-center justify-between gap-3 hover:bg-surface-subtle rounded-md px-2.5 -mx-2.5 transition-colors cursor-pointer group"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition truncate">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-medium text-text-primary group-hover:text-brand transition-colors truncate">
                       {task.title}
                     </span>
                     <PriorityBadge priority={task.priority} size="xs" />
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
-                    <span className="truncate max-w-[120px]">
+                  <div className="text-[12px] text-text-secondary flex items-center gap-2 mt-0.5">
+                    <span className="truncate max-w-[140px]">
                       {task.project?.name || "Workspace"}
                     </span>
                     <span>•</span>
@@ -76,15 +76,15 @@ export function UpcomingDeadlines({ tasks = [], onTaskClick }) {
 
                 <div className="text-right shrink-0">
                   <span
-                    className={`inline-flex items-center gap-1 rounded px-1.5 py-0.2 text-[10px] font-medium border ${
+                    className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-medium border ${
                       isOverdue
-                        ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60 font-semibold"
+                        ? "bg-accent-subtle text-accent-text border-accent/20 font-semibold"
                         : isToday
-                        ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 font-semibold"
-                        : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                        ? "bg-[#FFF4EC] text-[#9A3412] border-[#FBD6BA] dark:bg-[#341708] dark:text-[#FB923C] dark:border-[#5C2A10] font-semibold"
+                        : "bg-surface-subtle text-text-secondary border-border"
                     }`}
                   >
-                    {isOverdue && <AlertTriangleIcon className="w-3 h-3 text-rose-500" />}
+                    {isOverdue && <AlertTriangleIcon className="w-3.5 h-3.5 text-accent" />}
                     {isOverdue
                       ? `${Math.abs(daysDiff)}d overdue`
                       : isToday

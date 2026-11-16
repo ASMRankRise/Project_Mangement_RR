@@ -6,6 +6,7 @@ import TaskList from "../tasks/TaskList";
 import CreateTaskModal from "../tasks/CreateTaskModal";
 import TaskDetailModal from "../tasks/TaskDetailModal";
 import Alert from "../common/Alert";
+import Button from "../common/Button";
 import { PlusIcon } from "../common/Icons";
 
 export function TasksPage({ user }) {
@@ -15,11 +16,19 @@ export function TasksPage({ user }) {
     fetchProjects,
   } = useProjects();
 
-  const taskState = useTasks(user, { limit: 50 });
+  const taskState = useTasks(user, { limit: 100 });
   const { fetchTasks } = taskState;
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [viewMode, setViewMode] = useState("kanban"); // "kanban" | "list" | "table"
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    const targetLimit = mode === "kanban" ? 100 : 10;
+    if (taskState.limit !== targetLimit) {
+      taskState.setLimit(targetLimit);
+    }
+  };
 
   useEffect(() => {
     fetchProjects();
@@ -39,22 +48,19 @@ export function TasksPage({ user }) {
     );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 text-left">
       {/* Page Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            Workforce Deliverables
-          </span>
-          <h1 className="mt-1 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Deliverables & Tasks
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-primary font-heading">
+            Tasks
           </h1>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            Track deliverables across status stages, manage employee assignments, and meet team milestones.
+          <p className="mt-1 text-sm text-text-secondary">
+            Track and manage tasks across projects and team members.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Project Filter Selector */}
           {projects.length > 0 && (
             <div className="relative">
@@ -62,11 +68,11 @@ export function TasksPage({ user }) {
                 aria-label="Filter by project"
                 value={taskState.projectFilter}
                 onChange={(e) => taskState.setProjectFilter(e.target.value)}
-                className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-600 cursor-pointer transition shadow-2xs"
+                className="h-9 rounded-md border border-border bg-surface px-3 text-[13px] font-medium text-text-secondary outline-none focus:border-brand cursor-pointer transition-colors shadow-subtle"
               >
-                <option value="">All Projects ({projects.length})</option>
+                <option value="">All projects ({projects.length})</option>
                 {projects.map((p) => (
-                  <option key={p._id} value={p._id}>
+                  <option key={p._id || p.id} value={p._id || p.id}>
                     {p.name}
                   </option>
                 ))}
@@ -75,14 +81,14 @@ export function TasksPage({ user }) {
           )}
 
           {canCreateTask && (
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="md"
+              icon={PlusIcon}
               onClick={() => setCreateModalOpen(true)}
-              className="h-8 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white shadow-2xs transition cursor-pointer"
             >
-              <PlusIcon className="h-3.5 w-3.5" />
-              <span>New Deliverable</span>
-            </button>
+              New task
+            </Button>
           )}
         </div>
       </div>
@@ -100,11 +106,11 @@ export function TasksPage({ user }) {
         priorityFilter={taskState.priorityFilter}
         setPriorityFilter={taskState.setPriorityFilter}
         viewMode={viewMode}
-        setViewMode={setViewMode}
+        setViewMode={handleViewModeChange}
       />
 
       {/* Task List Workspace */}
-      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4">
+      <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 shadow-subtle">
         <TaskList
           tasks={taskState.tasks}
           projects={projects}
@@ -112,6 +118,7 @@ export function TasksPage({ user }) {
           page={taskState.page}
           totalPages={taskState.totalPages}
           total={taskState.total}
+          limit={taskState.limit}
           loading={taskState.loading}
           onPageChange={taskState.setPage}
           onUpdate={taskState.updateTask}

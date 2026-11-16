@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AvatarGroup } from "../common/Avatar";
-import { StatusBadge, PriorityBadge } from "../common/Badge";
+import { PriorityBadge } from "../common/Badge";
 import {
   CalendarIcon,
   TrashIcon,
@@ -87,13 +87,12 @@ export function TaskCard({
   return (
     <article
       onClick={() => onClick && onClick(task)}
-      className="group relative flex flex-col justify-between rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] hover:bg-slate-50/70 dark:hover:bg-slate-800/50 p-3 shadow-2xs transition hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer text-left"
+      className="group relative flex flex-col justify-between rounded-lg border border-border bg-surface hover:bg-surface-subtle/50 p-3.5 shadow-subtle transition-colors hover:border-brand/40 cursor-pointer text-left"
     >
       <div>
-        {/* Top Meta: Badges & Actions */}
+        {/* Top Header: Compact Inline Priority + Delete Action (Status pill removed per column context) */}
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <StatusBadge status={task.status} size="xs" />
+          <div className="inline-flex items-center">
             {canManageTask ? (
               <select
                 aria-label="Change priority"
@@ -101,7 +100,7 @@ export function TaskCard({
                 disabled={updating}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => handlePriorityChange(e, e.target.value)}
-                className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-medium text-slate-700 dark:text-slate-300 outline-none focus:border-indigo-500 cursor-pointer disabled:opacity-50"
+                className="h-6 rounded border border-border bg-surface-subtle px-2 text-[12px] font-medium text-text-secondary outline-none focus:border-brand cursor-pointer disabled:opacity-50 transition-colors"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -117,34 +116,34 @@ export function TaskCard({
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition opacity-0 group-hover:opacity-100 disabled:opacity-50"
+              className="rounded p-1 text-text-tertiary hover:bg-[#FEF2F2] hover:text-[#991B1B] dark:hover:bg-[#3B0D0D] dark:hover:text-[#F87171] transition opacity-0 group-hover:opacity-100 disabled:opacity-50 cursor-pointer"
               title="Delete task"
             >
-              <TrashIcon className="h-3 w-3" />
+              <TrashIcon className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
 
         {/* Task Title */}
-        <h4 className="mt-2 text-xs font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2 leading-snug">
+        <h4 className="mt-2 text-sm font-semibold text-text-primary group-hover:text-brand transition-colors line-clamp-2 leading-snug">
           {task.title}
         </h4>
 
         {/* Task Description */}
         {task.description && (
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+          <p className="mt-1 text-[13px] text-text-secondary line-clamp-2 leading-relaxed">
             {task.description}
           </p>
         )}
       </div>
 
-      {/* Bottom Footer Meta */}
-      <div className="mt-3 border-t border-slate-100 dark:border-slate-800/80 pt-2">
-        <div className="flex items-center justify-between gap-2 text-xs">
-          {/* Project Name & Due Date */}
-          <div className="flex items-center gap-1.5 min-w-0">
+      {/* Bottom Footer Meta: Project Chip & Due Date stay on one line */}
+      <div className="mt-3 border-t border-border-subtle pt-2.5">
+        <div className="flex items-center justify-between gap-2">
+          {/* Project Name (with ellipsis) & Due Date on single line */}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <span
-              className="truncate rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 max-w-[95px]"
+              className="truncate rounded-md bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary border border-border max-w-[125px]"
               title={project?.name || task.project?.name}
             >
               {project?.name || task.project?.name || "Workspace"}
@@ -152,12 +151,14 @@ export function TaskCard({
 
             {formattedDueDate && (
               <span
-                className={`flex items-center gap-1 text-[10px] font-medium ${
-                  isOverdue ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-slate-500 dark:text-slate-400"
+                className={`flex items-center gap-1 text-[12px] font-medium shrink-0 ${
+                  isOverdue
+                    ? "text-accent font-semibold"
+                    : "text-text-tertiary"
                 }`}
                 title={`Due: ${formattedDueDate}`}
               >
-                <CalendarIcon className="h-3 w-3" />
+                <CalendarIcon className="h-3.5 w-3.5" />
                 <span>{formattedDueDate}</span>
               </span>
             )}

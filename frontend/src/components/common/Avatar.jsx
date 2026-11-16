@@ -1,11 +1,10 @@
 const ENTERPRISE_AVATAR_COLORS = [
-  "bg-slate-700 text-slate-100 dark:bg-slate-600 dark:text-slate-100",
-  "bg-indigo-700 text-indigo-50 dark:bg-indigo-800 dark:text-indigo-100",
-  "bg-blue-700 text-blue-50 dark:bg-blue-800 dark:text-blue-100",
-  "bg-emerald-700 text-emerald-50 dark:bg-emerald-800 dark:text-emerald-100",
-  "bg-amber-700 text-amber-50 dark:bg-amber-800 dark:text-amber-100",
-  "bg-violet-700 text-violet-50 dark:bg-violet-800 dark:text-violet-100",
-  "bg-teal-700 text-teal-50 dark:bg-teal-800 dark:text-teal-100",
+  "bg-[#292524] text-[#FAF8F5]",
+  "bg-[#154336] text-[#FAF8F5]",
+  "bg-[#78350F] text-[#FAF8F5]",
+  "bg-[#1E3A5F] text-[#FAF8F5]",
+  "bg-[#9A3412] text-[#FAF8F5]",
+  "bg-[#44403C] text-[#FAF8F5]",
 ];
 
 function getAvatarColor(str = "") {
@@ -29,11 +28,11 @@ export function Avatar({
   const userEmail = user?.email || email || "";
 
   const sizeClasses = {
-    xs: "h-5 w-5 text-[10px]",
-    sm: "h-6 w-6 text-[11px] font-medium",
-    md: "h-7 w-7 text-xs font-medium",
-    lg: "h-8 w-8 text-xs font-semibold",
-    xl: "h-10 w-10 text-sm font-semibold",
+    xs: "h-6 w-6 text-[12px] font-medium",
+    sm: "h-7 w-7 text-[12px] font-medium",
+    md: "h-8 w-8 text-[13px] font-medium",
+    lg: "h-9 w-9 text-sm font-semibold",
+    xl: "h-11 w-11 text-base font-semibold",
   };
 
   const initial = (userName || userEmail || "U").trim().charAt(0).toUpperCase();
@@ -42,7 +41,7 @@ export function Avatar({
   return (
     <div
       title={showTooltip ? `${userName}${userEmail ? ` (${userEmail})` : ""}` : undefined}
-      className={`relative inline-flex shrink-0 select-none items-center justify-center rounded-full ${colorClass} ring-1 ring-slate-200 dark:ring-slate-700 ${sizeClasses[size] || sizeClasses.md} ${className}`}
+      className={`relative inline-flex shrink-0 select-none items-center justify-center rounded-full ${colorClass} ring-1 ring-border ${sizeClasses[size] || sizeClasses.md} ${className}`}
     >
       <span>{initial}</span>
     </div>
@@ -61,13 +60,13 @@ export function AvatarGroup({ users = [], max = 3, size = "sm" }) {
           key={u?._id || u?.id || u?.email || i}
           user={u}
           size={size}
-          className="ring-2 ring-white dark:ring-[#161B22]"
+          className="ring-2 ring-surface"
         />
       ))}
       {remaining > 0 && (
         <div
           title={`${remaining} more team members`}
-          className="relative inline-flex shrink-0 select-none items-center justify-center rounded-full bg-slate-100 text-[10px] font-medium text-slate-700 ring-2 ring-white dark:bg-slate-800 dark:text-slate-300 dark:ring-[#161B22] h-6 w-6"
+          className="relative inline-flex shrink-0 select-none items-center justify-center rounded-full bg-surface-subtle text-[12px] font-medium text-text-secondary ring-2 ring-surface h-7 w-7"
         >
           +{remaining}
         </div>

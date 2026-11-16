@@ -1,18 +1,16 @@
 import { useState, useMemo } from "react";
 import { Avatar, AvatarGroup } from "../common/Avatar";
 import { StatusBadge, PriorityBadge } from "../common/Badge";
+import Button from "../common/Button";
 import {
-  FolderIcon,
-  UsersIcon,
-  CheckSquareIcon,
-  PlusIcon,
   CalendarIcon,
   TrashIcon,
-  EditIcon,
   ArrowLeftIcon,
   KanbanIcon,
   TableIcon,
   UserPlusIcon,
+  PlusIcon,
+  UsersIcon,
 } from "../common/Icons";
 import KanbanBoard from "../tasks/KanbanBoard";
 import CreateTaskModal from "../tasks/CreateTaskModal";
@@ -35,7 +33,8 @@ export function ProjectWorkspace({
   onRefresh,
 }) {
   const { success, error: toastError } = useToast();
-  const [activeTab, setActiveTab] = useState("board"); // "board" | "table" | "members" | "settings"
+  const [activeTab, setActiveTab] = useState("tasks"); // "tasks" | "members" | "settings"
+  const [taskViewMode, setTaskViewMode] = useState("board"); // "board" | "table"
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
@@ -72,7 +71,6 @@ export function ProjectWorkspace({
   const inProgressTasks = projectTasks.filter(
     (t) => t.status === "in-progress" || t.status === "testing"
   ).length;
-  const todoTasks = projectTasks.filter((t) => t.status === "todo").length;
   const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const members = Array.isArray(project.members) ? project.members : [];
@@ -156,194 +154,209 @@ export function ProjectWorkspace({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Top Breadcrumb / Back Bar */}
+    <div className="space-y-5 text-left">
+      {/* Top Back Navigation & Action Buttons */}
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="h-8 inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-2xs"
+          className="h-9 inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition-colors shadow-subtle cursor-pointer"
         >
-          <ArrowLeftIcon className="w-3.5 h-3.5" />
-          <span>Back to Projects</span>
+          <ArrowLeftIcon className="w-4 h-4" />
+          <span>Projects</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {canManage && (
-            <button
-              type="button"
-              onClick={() => setCreateTaskModalOpen(true)}
-              className="h-8 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1 text-xs font-medium text-white shadow-2xs transition cursor-pointer"
+            <Button
+              variant="secondary"
+              size="md"
+              icon={UsersIcon}
+              onClick={() => setMemberModalOpen(true)}
             >
-              <PlusIcon className="w-3.5 h-3.5" />
-              <span>New Task</span>
-            </button>
+              Add member
+            </Button>
           )}
 
           {canManage && (
-            <button
-              type="button"
-              onClick={() => setMemberModalOpen(true)}
-              className="h-8 inline-flex items-center gap-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-2xs cursor-pointer"
+            <Button
+              variant="primary"
+              size="md"
+              icon={PlusIcon}
+              onClick={() => setCreateTaskModalOpen(true)}
             >
-              <UsersIcon className="w-3.5 h-3.5" />
-              <span>Manage Team</span>
-            </button>
+              New task
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Project Header Banner */}
-      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 sm:p-5">
+      {/* Project Header Banner: Clear Header, Short Meta Line */}
+      <div className="rounded-lg border border-border bg-surface p-5 shadow-subtle">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
-          <div className="space-y-2.5 max-w-2xl">
+          <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                <FolderIcon className="w-4 h-4" />
-              </div>
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-primary font-heading">
                 {project.name}
               </h1>
               {isOwner && (
-                <span className="rounded border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.2 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                <span className="rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
                   Owner
                 </span>
               )}
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p className="text-sm text-text-secondary leading-relaxed">
               {project.description || "No project description specified."}
             </p>
 
             {/* Meta details strip */}
-            <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 flex-wrap pt-1">
+            <div className="flex items-center gap-4 text-[13px] text-text-tertiary flex-wrap pt-1">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] uppercase font-semibold text-slate-400">Owner:</span>
+                <span className="font-medium text-text-secondary">Lead:</span>
                 <Avatar user={project.owner} size="xs" />
-                <span className="font-medium text-slate-700 dark:text-slate-300">
-                  {project.owner?.name || project.owner?.email || "Workspace Owner"}
+                <span className="font-medium text-text-primary">
+                  {project.owner?.name || project.owner?.email || "Project lead"}
                 </span>
               </div>
-
+              <span>•</span>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] uppercase font-semibold text-slate-400">Team:</span>
-                <AvatarGroup users={members} size="xs" max={5} />
+                <span className="font-medium text-text-secondary">Team:</span>
+                <AvatarGroup users={members} size="xs" max={4} />
                 <span>{members.length} {members.length === 1 ? "member" : "members"}</span>
               </div>
+              {project.createdAt && (
+                <>
+                  <span>•</span>
+                  <span>Created {new Date(project.createdAt).toLocaleDateString()}</span>
+                </>
+              )}
             </div>
           </div>
 
           {/* Quick Progress Card */}
-          <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-3.5 min-w-[220px] space-y-2.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">Completion</span>
-              <span className="font-bold text-slate-900 dark:text-white">{progressPercent}%</span>
+          <div className="rounded-lg border border-border bg-surface-subtle/50 p-4 min-w-[220px] space-y-2.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-text-secondary">Progress</span>
+              <span className="font-mono font-semibold text-text-primary">{progressPercent}%</span>
             </div>
 
-            <div className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+            <div className="h-2 w-full rounded-full bg-surface-subtle overflow-hidden">
               <div
-                className="h-full rounded-full bg-indigo-600 dark:bg-indigo-500"
+                className="h-full rounded-full bg-brand transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-1.5 pt-0.5 text-center">
-              <div className="p-1 rounded bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800">
-                <div className="text-xs font-bold text-slate-900 dark:text-white">{todoTasks}</div>
-                <div className="text-[9px] text-slate-500 dark:text-slate-400">Todo</div>
-              </div>
-              <div className="p-1 rounded bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800">
-                <div className="text-xs font-bold text-blue-600 dark:text-blue-400">{inProgressTasks}</div>
-                <div className="text-[9px] text-slate-500 dark:text-slate-400">Prog</div>
-              </div>
-              <div className="p-1 rounded bg-white dark:bg-[#161B22] border border-slate-200 dark:border-slate-800">
-                <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{completedTasks}</div>
-                <div className="text-[9px] text-slate-500 dark:text-slate-400">Done</div>
-              </div>
+            <div className="flex items-center justify-between text-[12px] text-text-secondary pt-0.5">
+              <span>{completedTasks} completed</span>
+              <span>•</span>
+              <span>{inProgressTasks} in progress</span>
+              <span>•</span>
+              <span>{totalTasks} total</span>
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="mt-5 flex items-center gap-1 border-t border-slate-200 dark:border-slate-800 pt-3 overflow-x-auto">
+        {/* Tab Navigation: Underlined Text Tabs (not pills) */}
+        <div className="mt-6 flex items-center gap-6 border-b border-border overflow-x-auto">
           <button
             type="button"
-            onClick={() => setActiveTab("board")}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-              activeTab === "board"
-                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            onClick={() => setActiveTab("tasks")}
+            className={`pb-2.5 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-[1px] ${
+              activeTab === "tasks"
+                ? "border-brand text-text-primary font-semibold"
+                : "border-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
-            <KanbanIcon className="w-3.5 h-3.5" />
-            <span>Task Board ({projectTasks.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("table")}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-              activeTab === "table"
-                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            <TableIcon className="w-3.5 h-3.5" />
-            <span>Table View</span>
+            Tasks ({projectTasks.length})
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("members")}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+            className={`pb-2.5 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-[1px] ${
               activeTab === "members"
-                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "border-brand text-text-primary font-semibold"
+                : "border-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
-            <UsersIcon className="w-3.5 h-3.5" />
-            <span>Team ({members.length})</span>
+            Team ({members.length})
           </button>
 
           {canManage && (
             <button
               type="button"
               onClick={() => setActiveTab("settings")}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+              className={`pb-2.5 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-[1px] ${
                 activeTab === "settings"
-                  ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  ? "border-brand text-text-primary font-semibold"
+                  : "border-transparent text-text-secondary hover:text-text-primary"
               }`}
             >
-              <EditIcon className="w-3.5 h-3.5" />
-              <span>Settings</span>
+              Settings
             </button>
           )}
         </div>
       </div>
 
-      {/* Tab 1: Task Board */}
-      {activeTab === "board" && (
-        <div>
+      {/* Tab 1: Tasks (Reuses Board / Table components) */}
+      {activeTab === "tasks" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-text-primary">
+              Project tasks
+            </h3>
+
+            {/* Board / Table view switcher */}
+            <div className="inline-flex rounded-md border border-border bg-surface-subtle p-0.5 text-[13px]">
+              <button
+                type="button"
+                onClick={() => setTaskViewMode("board")}
+                className={`flex items-center gap-1.5 rounded px-2.5 py-1 font-medium transition-colors cursor-pointer ${
+                  taskViewMode === "board"
+                    ? "bg-surface text-text-primary shadow-subtle"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                <KanbanIcon className="h-3.5 w-3.5" />
+                <span>Board</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTaskViewMode("table")}
+                className={`flex items-center gap-1.5 rounded px-2.5 py-1 font-medium transition-colors cursor-pointer ${
+                  taskViewMode === "table"
+                    ? "bg-surface text-text-primary shadow-subtle"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                <TableIcon className="h-3.5 w-3.5" />
+                <span>Table</span>
+              </button>
+            </div>
+          </div>
+
           {projectTasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-[#161B22] p-10 text-center">
-              <CheckSquareIcon className="w-7 h-7 text-slate-400 dark:text-slate-500 mb-1.5" />
-              <h3 className="text-xs font-semibold text-slate-900 dark:text-white">No tasks in this workspace</h3>
-              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 max-w-sm">
-                Get started by creating tasks to track project delivery and assign work to team members.
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-surface p-10 text-center shadow-subtle">
+              <h3 className="text-sm font-semibold text-text-primary">No tasks in this project</h3>
+              <p className="mt-1 text-[13px] text-text-secondary max-w-sm">
+                Get started by creating tasks to assign work and track deliverables.
               </p>
               {canManage && (
-                <button
-                  type="button"
-                  onClick={() => setCreateTaskModalOpen(true)}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1 text-xs font-medium text-white shadow-2xs transition"
-                >
-                  <PlusIcon className="w-3.5 h-3.5" />
-                  <span>Create First Task</span>
-                </button>
+                <div className="mt-4">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    icon={PlusIcon}
+                    onClick={() => setCreateTaskModalOpen(true)}
+                  >
+                    New task
+                  </Button>
+                </div>
               )}
             </div>
-          ) : (
+          ) : taskViewMode === "board" ? (
             <KanbanBoard
               tasks={projectTasks}
               projects={[project]}
@@ -352,101 +365,92 @@ export function ProjectWorkspace({
               onDelete={onTaskDelete}
               onClick={(task) => setSelectedTask(task)}
             />
-          )}
-        </div>
-      )}
-
-      {/* Tab 2: Table View */}
-      {activeTab === "table" && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22]">
-          {projectTasks.length === 0 ? (
-            <div className="p-10 text-center text-xs text-slate-500 dark:text-slate-400">
-              No tasks currently registered for this workspace.
-            </div>
           ) : (
-            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
-              <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
-                <tr>
-                  <th className="px-3.5 py-2.5">Task Title</th>
-                  <th className="px-3.5 py-2.5">Status</th>
-                  <th className="px-3.5 py-2.5">Priority</th>
-                  <th className="px-3.5 py-2.5">Assignees</th>
-                  <th className="px-3.5 py-2.5">Due Date</th>
-                  <th className="px-3.5 py-2.5 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {projectTasks.map((t) => {
-                  const assignedUsers = Array.isArray(t.assignedTo)
-                    ? t.assignedTo
-                    : t.assignedTo
-                    ? [t.assignedTo]
-                    : [];
+            <div className="overflow-x-auto rounded-lg border border-border bg-surface shadow-subtle">
+              <table className="w-full text-left text-sm text-text-primary">
+                <thead className="border-b border-border bg-surface-subtle/70 text-[12px] font-semibold text-text-secondary">
+                  <tr>
+                    <th className="px-4 py-3">Task</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Priority</th>
+                    <th className="px-4 py-3">Assignees</th>
+                    <th className="px-4 py-3">Due date</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border-subtle">
+                  {projectTasks.map((t) => {
+                    const assignedUsers = Array.isArray(t.assignedTo)
+                      ? t.assignedTo
+                      : t.assignedTo
+                      ? [t.assignedTo]
+                      : [];
 
-                  return (
-                    <tr
-                      key={t._id || t.id}
-                      onClick={() => setSelectedTask(t)}
-                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition cursor-pointer"
-                    >
-                      <td className="px-3.5 py-2.5 max-w-[280px]">
-                        <div className="font-semibold text-slate-900 dark:text-white truncate">
-                          {t.title}
-                        </div>
-                        {t.description && (
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                            {t.description}
+                    return (
+                      <tr
+                        key={t._id || t.id}
+                        onClick={() => setSelectedTask(t)}
+                        className="hover:bg-surface-subtle/50 transition-colors cursor-pointer"
+                      >
+                        <td className="px-4 py-3 max-w-[280px]">
+                          <div className="font-medium text-text-primary truncate">
+                            {t.title}
                           </div>
-                        )}
-                      </td>
-                      <td className="px-3.5 py-2.5 whitespace-nowrap">
-                        <StatusBadge status={t.status} size="xs" />
-                      </td>
-                      <td className="px-3.5 py-2.5 whitespace-nowrap">
-                        <PriorityBadge priority={t.priority} size="xs" />
-                      </td>
-                      <td className="px-3.5 py-2.5 whitespace-nowrap">
-                        <AvatarGroup users={assignedUsers} size="xs" max={3} />
-                      </td>
-                      <td className="px-3.5 py-2.5 whitespace-nowrap">
-                        {t.dueDate ? (
-                          <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-[11px]">
-                            <CalendarIcon className="w-3 h-3 text-slate-400" />
-                            {new Date(t.dueDate).toLocaleDateString()}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTask(t);
-                          }}
-                          className="px-2 py-0.5 rounded text-[11px] font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:text-indigo-300 dark:hover:bg-indigo-950/40 transition"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          {t.description && (
+                            <div className="text-[12px] text-text-secondary truncate mt-0.5">
+                              {t.description}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <StatusBadge status={t.status} size="xs" />
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <PriorityBadge priority={t.priority} size="xs" />
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <AvatarGroup users={assignedUsers} size="xs" max={3} />
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-[12px] text-text-secondary">
+                          {t.dueDate ? (
+                            <span className="flex items-center gap-1.5">
+                              <CalendarIcon className="w-3.5 h-3.5 text-text-tertiary" />
+                              {new Date(t.dueDate).toLocaleDateString()}
+                            </span>
+                          ) : (
+                            <span className="text-text-tertiary">No deadline</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedTask(t);
+                            }}
+                            className="text-[13px] font-medium text-brand hover:underline cursor-pointer"
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
 
-      {/* Tab 3: Team Roster */}
+      {/* Tab 2: Team Roster */}
       {activeTab === "members" && (
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 sm:p-5 space-y-4">
+        <div className="rounded-lg border border-border bg-surface p-5 space-y-4 shadow-subtle">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h3 className="text-xs font-semibold text-slate-900 dark:text-white">Project Members</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Team members can create tasks and update task progress within this workspace.
+              <h3 className="text-sm font-semibold text-text-primary">Team members</h3>
+              <p className="text-[13px] text-text-secondary mt-0.5">
+                Collaborators assigned to this project can view and manage tasks.
               </p>
             </div>
 
@@ -456,36 +460,37 @@ export function ProjectWorkspace({
                   type="email"
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
-                  placeholder="member@company.com"
+                  placeholder="name@company.com"
                   required
-                  className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-600 w-52 shadow-2xs"
+                  className="h-9 rounded-md border border-border bg-surface px-3 text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:border-brand w-56 shadow-subtle"
                 />
-                <button
+                <Button
+                  variant="primary"
+                  size="md"
                   type="submit"
                   disabled={addingMember}
-                  className="h-8 inline-flex items-center gap-1 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 text-xs font-medium text-white transition disabled:opacity-50 shadow-2xs"
+                  icon={UserPlusIcon}
                 >
-                  <UserPlusIcon className="w-3.5 h-3.5" />
-                  <span>{addingMember ? "..." : "Add"}</span>
-                </button>
+                  {addingMember ? "Adding..." : "Add"}
+                </Button>
               </form>
             )}
           </div>
 
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-200 dark:border-slate-800">
+          <div className="divide-y divide-border-subtle border-t border-border mt-3">
             {/* Owner Row */}
-            <div className="py-2.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
+            <div className="py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
                 <Avatar user={project.owner} size="sm" />
                 <div>
-                  <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                    {project.owner?.name || project.owner?.email || "Workspace Owner"}
+                  <div className="text-sm font-semibold text-text-primary">
+                    {project.owner?.name || project.owner?.email || "Project lead"}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{project.owner?.email}</div>
+                  <div className="text-[12px] text-text-secondary">{project.owner?.email}</div>
                 </div>
               </div>
-              <span className="rounded border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.2 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-                Project Owner
+              <span className="rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
+                Lead
               </span>
             </div>
 
@@ -495,22 +500,22 @@ export function ProjectWorkspace({
               const isCurrentUser = String(mId) === currentUserId;
 
               return (
-                <div key={mId} className="py-2.5 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
+                <div key={mId} className="py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
                     <Avatar user={m} size="sm" />
                     <div>
-                      <div className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <div className="text-sm font-semibold text-text-primary flex items-center gap-2">
                         <span>{m.name || m.email}</span>
                         {isCurrentUser && (
-                          <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">(You)</span>
+                          <span className="text-[12px] font-medium text-brand">(You)</span>
                         )}
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">{m.email}</div>
+                      <div className="text-[12px] text-text-secondary">{m.email}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.2 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center gap-2.5">
+                    <span className="rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
                       Member
                     </span>
 
@@ -518,7 +523,7 @@ export function ProjectWorkspace({
                       <button
                         type="button"
                         onClick={() => handleInlineRemoveMember(mId, m.name || m.email)}
-                        className="text-xs text-rose-600 dark:text-rose-400 hover:underline p-1 transition"
+                        className="text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:underline p-1 transition cursor-pointer"
                         title="Remove member"
                       >
                         Remove
@@ -530,28 +535,28 @@ export function ProjectWorkspace({
             })}
 
             {members.length === 0 && (
-              <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
-                No external members added yet. Add team members to collaborate on tasks.
+              <div className="py-8 text-center text-sm text-text-secondary">
+                No team members added yet. Add members to collaborate on tasks.
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Tab 4: Project Settings */}
+      {/* Tab 3: Project Settings */}
       {activeTab === "settings" && canManage && (
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 sm:p-5 space-y-5">
+        <div className="rounded-lg border border-border bg-surface p-5 space-y-6 shadow-subtle">
           <div>
-            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">Workspace Settings</h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Update workspace name and description or manage workspace lifecycle.
+            <h3 className="text-sm font-semibold text-text-primary">Project settings</h3>
+            <p className="text-[13px] text-text-secondary mt-0.5">
+              Update project details or manage project lifecycle.
             </p>
           </div>
 
-          <form onSubmit={handleSaveSettings} className="space-y-3.5 max-w-lg">
+          <form onSubmit={handleSaveSettings} className="space-y-4 max-w-lg">
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Project Name *
+              <label className="block text-[13px] font-medium text-text-secondary mb-1">
+                Project name *
               </label>
               <input
                 type="text"
@@ -559,45 +564,46 @@ export function ProjectWorkspace({
                 onChange={(e) => setEditName(e.target.value)}
                 maxLength={50}
                 required
-                className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition"
+                className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-colors shadow-subtle"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Project Description
+              <label className="block text-[13px] font-medium text-text-secondary mb-1">
+                Description
               </label>
               <textarea
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 maxLength={500}
                 rows={3}
-                className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition resize-none"
+                className="w-full rounded-md border border-border bg-surface p-3 text-sm text-text-primary outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-colors resize-none shadow-subtle"
               />
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              size="md"
               type="submit"
               disabled={savingSettings}
-              className="h-8 px-3 rounded-md text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition disabled:opacity-50 cursor-pointer shadow-2xs"
             >
-              {savingSettings ? "Saving..." : "Save Settings"}
-            </button>
+              {savingSettings ? "Saving..." : "Save settings"}
+            </Button>
           </form>
 
           {isAdmin && (
-            <div className="pt-4 border-t border-rose-200 dark:border-rose-900/60">
-              <h4 className="text-xs font-semibold text-rose-600 dark:text-rose-400">Danger Zone</h4>
-              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                Permanently delete this project along with all associated tasks. This action cannot be reversed.
+            <div className="pt-5 border-t border-border">
+              <h4 className="text-sm font-semibold text-[#991B1B] dark:text-[#F87171]">Danger zone</h4>
+              <p className="mt-1 text-[13px] text-text-secondary">
+                Permanently delete this project along with all associated tasks. This action cannot be undone.
               </p>
               <button
                 type="button"
                 onClick={handleDeleteProject}
-                className="mt-2.5 h-8 inline-flex items-center gap-1.5 rounded-md border border-rose-300 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 px-3 text-xs font-medium text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition cursor-pointer"
+                className="mt-3 h-9 inline-flex items-center gap-1.5 rounded-md border border-[#FECACA] dark:border-[#681D1D] bg-[#FEF2F2] dark:bg-[#3B0D0D] px-3.5 text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
               >
-                <TrashIcon className="w-3.5 h-3.5" />
-                <span>Delete Workspace</span>
+                <TrashIcon className="w-4 h-4" />
+                <span>Delete project</span>
               </button>
             </div>
           )}

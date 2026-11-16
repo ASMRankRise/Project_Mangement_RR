@@ -73,11 +73,11 @@ export function MemberManagementModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`${project.name} • Project Team Roster`}
-      subtitle="Assign employees to this project workspace and manage collaboration privileges."
+      title={`${project.name} • Team members`}
+      subtitle="Assign members to this project and manage collaboration access."
       size="md"
     >
-      <div className="space-y-4 text-slate-800 dark:text-slate-200">
+      <div className="space-y-4 text-text-primary text-left">
         {error && <Alert message={error} type="error" />}
         {success && <Alert message={success} type="success" />}
 
@@ -85,61 +85,61 @@ export function MemberManagementModal({
         {canManage && (
           <form
             onSubmit={handleAdd}
-            className="rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-3"
+            className="rounded-lg border border-border bg-surface-subtle p-3.5 shadow-subtle"
           >
             <label
               htmlFor="memberEmail"
-              className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300"
+              className="mb-1.5 block text-[13px] font-medium text-text-secondary"
             >
-              Assign Employee by Email
+              Add member by email
             </label>
-            <div className="flex gap-2">
+            <div className="flex gap-2.5">
               <div className="relative flex-1">
-                <MailIcon className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                <MailIcon className="absolute left-3 top-2.5 h-4 w-4 text-text-tertiary" />
                 <input
                   id="memberEmail"
                   type="email"
                   required
-                  placeholder="employee@company.com"
+                  placeholder="name@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-8 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] py-1 pl-8 pr-2.5 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 focus:border-indigo-600 transition shadow-2xs"
+                  className="h-9 w-full rounded-md border border-border bg-surface py-1 pl-9 pr-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand transition-colors shadow-subtle"
                 />
               </div>
               <button
                 type="submit"
                 disabled={addingMember || !email.trim()}
-                className="h-8 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 text-xs font-medium text-white shadow-2xs disabled:opacity-50 transition cursor-pointer"
+                className="h-9 inline-flex items-center gap-1.5 rounded-md bg-brand hover:bg-brand-hover px-4 text-[13px] font-medium text-brand-text shadow-subtle disabled:opacity-50 transition-colors cursor-pointer"
               >
-                {addingMember ? "Assigning..." : "+ Assign"}
+                {addingMember ? "Adding..." : "+ Add"}
               </button>
             </div>
           </form>
         )}
 
         {/* Member Directory */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-            <span>Assigned Employees ({members.length})</span>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-[12px] font-semibold text-text-secondary">
+            <span>Project members ({members.length + (owner ? 1 : 0)})</span>
           </div>
 
-          <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0D1117]">
+          <div className="max-h-64 overflow-y-auto divide-y divide-border-subtle rounded-lg border border-border bg-surface shadow-subtle">
             {/* Owner Row */}
             {owner && (
-              <div className="flex items-center justify-between p-2.5 bg-slate-50/70 dark:bg-slate-900/40">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center justify-between p-3 bg-surface-subtle/40">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <Avatar user={owner} size="sm" />
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
-                      {owner?.name || owner?.email || "Project Lead"}
+                    <p className="truncate text-sm font-semibold text-text-primary">
+                      {owner?.name || owner?.email || "Project lead"}
                     </p>
-                    <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">
+                    <p className="truncate text-[12px] text-text-tertiary">
                       {owner?.email}
                     </p>
                   </div>
                 </div>
 
-                <span className="rounded border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.2 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                <span className="shrink-0 rounded-md border border-border bg-surface px-2 py-0.5 text-[12px] font-medium text-text-secondary">
                   Lead
                 </span>
               </div>
@@ -154,23 +154,23 @@ export function MemberManagementModal({
               return (
                 <div
                   key={mId}
-                  className="flex items-center justify-between p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
+                  className="flex items-center justify-between p-3 hover:bg-surface-subtle/50 transition-colors"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <Avatar user={member} size="sm" />
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
-                        {member?.name || member?.email || "Team Employee"}
+                      <p className="truncate text-sm font-semibold text-text-primary">
+                        {member?.name || member?.email || "Team member"}
                       </p>
-                      <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">
+                      <p className="truncate text-[12px] text-text-tertiary">
                         {member?.email}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-medium text-slate-600 dark:text-slate-400">
-                      Employee
+                  <div className="flex items-center gap-2.5">
+                    <span className="shrink-0 rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
+                      Member
                     </span>
 
                     {canManage && (
@@ -178,8 +178,8 @@ export function MemberManagementModal({
                         type="button"
                         disabled={removingMember}
                         onClick={() => handleRemove(member)}
-                        className="rounded p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 text-xs transition"
-                        title="Remove employee from project"
+                        className="text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:underline p-1 transition-colors cursor-pointer"
+                        title="Remove member from project"
                       >
                         Remove
                       </button>
@@ -189,19 +189,19 @@ export function MemberManagementModal({
               );
             })}
 
-            {members.length === 0 && (
-              <div className="p-6 text-center text-xs text-slate-400 dark:text-slate-500">
-                No employees have been assigned to this project team yet.
+            {members.length === 0 && !owner && (
+              <div className="p-6 text-center text-sm text-text-secondary">
+                No members have been assigned to this project yet.
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex justify-end pt-2 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex justify-end pt-3 border-t border-border">
           <button
             type="button"
             onClick={onClose}
-            className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition"
+            className="h-9 rounded-md border border-border bg-surface px-4 text-[13px] font-medium text-text-primary hover:bg-surface-subtle transition-colors shadow-subtle cursor-pointer"
           >
             Done
           </button>

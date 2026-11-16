@@ -28,7 +28,7 @@ export function Sidebar({
 
   const navigationItems = [
     {
-      label: "WORKFORCE & OPERATIONS",
+      label: "Workspace",
       items: [
         {
           to: isAdmin ? "/admin" : "/dashboard",
@@ -37,21 +37,21 @@ export function Sidebar({
         },
         ...(isAdmin
           ? [
-            {
-              to: "/admin/users",
-              label: "Employee Directory",
-              icon: UsersIcon,
-            },
-          ]
+              {
+                to: "/admin/users",
+                label: "Team Directory",
+                icon: UsersIcon,
+              },
+            ]
           : []),
         {
           to: "/projects",
-          label: "Team Projects",
+          label: "Projects",
           icon: FolderIcon,
         },
         {
           to: "/tasks",
-          label: isAdmin ? "All Deliverables" : "My Deliverables",
+          label: "Tasks",
           icon: CheckSquareIcon,
         },
       ],
@@ -68,31 +68,32 @@ export function Sidebar({
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-slate-900/50 dark:bg-black/70 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px] lg:hidden"
         />
       )}
 
       {/* Sidebar container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] text-slate-800 dark:text-slate-200 transition-all duration-150 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:z-auto ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-          } ${collapsed ? "lg:w-16" : "w-60"}`}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface text-text-primary transition-all duration-150 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:z-auto ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        } ${collapsed ? "lg:w-16" : "w-60"}`}
       >
         {/* Brand Header */}
-        <div className="flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-800 px-3.5">
+        <div className="flex h-14 items-center justify-between border-b border-border px-3.5">
           <div
             onClick={() => navigate("/")}
             className="flex cursor-pointer items-center gap-2.5 overflow-hidden"
           >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white font-bold text-xs shadow-xs">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand text-brand-text font-bold text-xs shadow-subtle">
               <BriefcaseIcon className="w-4 h-4" />
             </div>
             {!collapsed && (
               <div className="flex flex-col">
-                <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-white leading-none">
+                <span className="text-sm font-semibold tracking-tight text-text-primary leading-none">
                   RankRise
                 </span>
-                <span className="text-[10px] font-medium tracking-wider text-slate-500 dark:text-slate-400 uppercase mt-0.5">
-                  Workforce OS
+                <span className="text-[12px] font-medium tracking-normal text-text-secondary mt-0.5">
+                  Workspace
                 </span>
               </div>
             )}
@@ -102,7 +103,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={() => setCollapsed(!collapsed)}
-            className="hidden rounded-md p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white lg:block transition"
+            className="hidden rounded-md p-1.5 text-text-tertiary hover:text-text-primary hover:bg-surface-subtle lg:block transition cursor-pointer"
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
@@ -116,7 +117,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="rounded-md p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden"
+            className="rounded-md p-1.5 text-text-tertiary hover:text-text-primary hover:bg-surface-subtle lg:hidden cursor-pointer"
           >
             <XIcon className="h-5 w-5" />
           </button>
@@ -127,7 +128,7 @@ export function Sidebar({
           {navigationItems.map((group, gIdx) => (
             <div key={gIdx} className="space-y-0.5">
               {!collapsed && (
-                <div className="px-2.5 pb-1 text-[10px] font-semibold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+                <div className="px-3 pb-1 text-[12px] font-medium text-text-tertiary">
                   {group.label}
                 </div>
               )}
@@ -139,14 +140,15 @@ export function Sidebar({
                     to={item.to}
                     onClick={handleNavClick}
                     className={({ isActive }) =>
-                      `flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${isActive
-                        ? "bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950/50 dark:text-indigo-300"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
+                      `flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors ${
+                        isActive
+                          ? "bg-surface-subtle text-text-primary font-semibold border border-border shadow-subtle"
+                          : "text-text-secondary hover:bg-surface-subtle/70 hover:text-text-primary"
                       } ${collapsed ? "justify-center px-0" : ""}`
                     }
                     title={collapsed ? item.label : undefined}
                   >
-                    <IconComponent className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-200" />
+                    <IconComponent className="h-4 w-4 shrink-0 text-text-tertiary" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </NavLink>
                 );
@@ -155,10 +157,10 @@ export function Sidebar({
           ))}
 
           {/* Preferences link */}
-          <div className="space-y-0.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="space-y-0.5 pt-2 border-t border-border">
             {!collapsed && (
-              <div className="px-2.5 pb-1 text-[10px] font-semibold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
-                SYSTEM
+              <div className="px-3 pb-1 text-[12px] font-medium text-text-tertiary">
+                System
               </div>
             )}
             <button
@@ -167,31 +169,33 @@ export function Sidebar({
                 handleNavClick();
                 if (onOpenSettings) onOpenSettings();
               }}
-              className={`w-full flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition ${collapsed ? "justify-center px-0" : ""
-                }`}
+              className={`w-full flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-surface-subtle/70 hover:text-text-primary transition-colors cursor-pointer ${
+                collapsed ? "justify-center px-0" : ""
+              }`}
               title={collapsed ? "Preferences" : undefined}
             >
-              <SunIcon className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
+              <SunIcon className="h-4 w-4 shrink-0 text-text-tertiary" />
               {!collapsed && <span>Preferences</span>}
             </button>
           </div>
         </div>
 
         {/* User Card at Bottom */}
-        <div className="border-t border-slate-200 dark:border-slate-800 p-2.5">
+        <div className="border-t border-border p-2.5">
           <div
-            className={`flex items-center gap-2 rounded-md bg-slate-50 dark:bg-slate-900/70 p-2 border border-slate-200 dark:border-slate-800 ${collapsed ? "justify-center p-1.5" : "justify-between"
-              }`}
+            className={`flex items-center gap-2 rounded-md bg-surface-subtle p-2 border border-border ${
+              collapsed ? "justify-center p-1.5" : "justify-between"
+            }`}
           >
             <div className="flex items-center gap-2 overflow-hidden">
               <Avatar user={user} size="sm" />
               {!collapsed && (
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-slate-900 dark:text-white leading-tight">
+                  <p className="truncate text-[13px] font-semibold text-text-primary leading-tight">
                     {user?.name || "User"}
                   </p>
-                  <div className="mt-0.5">
-                    <RoleBadge role={user?.role} size="xs" />
+                  <div className="mt-1">
+                    <RoleBadge role={user?.role} size="sm" />
                   </div>
                 </div>
               )}
@@ -202,7 +206,7 @@ export function Sidebar({
                 type="button"
                 onClick={onLogout}
                 title="Log out"
-                className="rounded-md p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
+                className="rounded-md p-1.5 text-text-tertiary hover:text-accent hover:bg-[#FEF2F2] dark:hover:bg-[#3B0D0D]/40 transition cursor-pointer"
               >
                 <LogOutIcon className="h-4 w-4" />
               </button>

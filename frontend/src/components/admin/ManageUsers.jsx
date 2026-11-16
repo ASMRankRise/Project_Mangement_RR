@@ -11,7 +11,6 @@ import {
   GridIcon,
   MailIcon,
   CalendarIcon,
-  ShieldIcon,
   CopyIcon,
   CheckCircleIcon,
   UserIcon,
@@ -45,7 +44,7 @@ export function ManageUsers() {
       setUsers(Array.isArray(response.data?.users) ? response.data.users : []);
     } catch (err) {
       setError(
-        err.response?.data?.message || err.message || "Failed to fetch employee directory.",
+        err.response?.data?.message || err.message || "Failed to fetch team members.",
       );
     } finally {
       setLoading(false);
@@ -148,33 +147,29 @@ export function ManageUsers() {
   const employeeCount = users.filter((u) => u.role === "user").length;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 text-left">
       {/* Page Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-            <span>Organization Workforce</span>
-          </div>
-          <h1 className="mt-1.5 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Employee Directory
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-primary font-heading">
+            Team
           </h1>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            Browse company employees, inspect profile details, and manage system access privileges.
+          <p className="mt-1 text-sm text-text-secondary">
+            Members and their roles.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* View Mode Toggle */}
-          <div className="inline-flex rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5">
+          <div className="inline-flex rounded-md border border-border bg-surface-subtle p-0.5 text-[13px]">
             <button
               type="button"
               onClick={() => setViewMode("table")}
-              title="Table View"
-              className={`rounded p-1.5 transition cursor-pointer ${
+              title="Table view"
+              className={`rounded px-2.5 py-1 font-medium transition-colors cursor-pointer ${
                 viewMode === "table"
-                  ? "bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-white shadow-2xs"
-                  : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  ? "bg-surface text-text-primary shadow-subtle"
+                  : "text-text-secondary hover:text-text-primary"
               }`}
             >
               <TableIcon className="h-3.5 w-3.5" />
@@ -182,11 +177,11 @@ export function ManageUsers() {
             <button
               type="button"
               onClick={() => setViewMode("cards")}
-              title="Card Directory View"
-              className={`rounded p-1.5 transition cursor-pointer ${
+              title="Cards view"
+              className={`rounded px-2.5 py-1 font-medium transition-colors cursor-pointer ${
                 viewMode === "cards"
-                  ? "bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-white shadow-2xs"
-                  : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  ? "bg-surface text-text-primary shadow-subtle"
+                  : "text-text-secondary hover:text-text-primary"
               }`}
             >
               <GridIcon className="h-3.5 w-3.5" />
@@ -197,10 +192,10 @@ export function ManageUsers() {
             type="button"
             onClick={fetchUsers}
             disabled={loading || Boolean(updatingEmail)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition disabled:opacity-50 cursor-pointer shadow-2xs"
+            className="inline-flex h-9 items-center gap-2 rounded-md border border-border bg-surface px-3 text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition-colors disabled:opacity-50 cursor-pointer shadow-subtle"
           >
             <RotateCwIcon
-              className={`h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 ${loading ? "animate-spin" : ""}`}
+              className={`h-4 w-4 text-text-secondary ${loading ? "animate-spin" : ""}`}
             />
             <span>{loading ? "Refreshing..." : "Refresh"}</span>
           </button>
@@ -210,57 +205,21 @@ export function ManageUsers() {
       {error && <Alert message={error} type="error" />}
       {success && <Alert message={success} type="success" />}
 
-      {/* Directory Metrics Strip */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5">
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Total Workforce
-          </p>
-          <div className="mt-1 flex items-baseline justify-between">
-            <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {users.length}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Registered accounts</span>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5">
-          <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-            Leadership & Admins
-          </p>
-          <div className="mt-1 flex items-baseline justify-between">
-            <span className="text-2xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400">
-              {superAdminCount + adminCount}
-            </span>
-            <span className="text-xs text-indigo-600/70 dark:text-indigo-400/70 font-medium">
-              {superAdminCount > 0 ? `${superAdminCount} Super · ` : ""}{adminCount} Admin
-            </span>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3.5">
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Team Staff
-          </p>
-          <div className="mt-1 flex items-baseline justify-between">
-            <span className="text-2xl font-bold tracking-tight text-slate-700 dark:text-slate-300">
-              {employeeCount}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Standard members</span>
-          </div>
-        </div>
+      {/* Summary Line (replaces the 3 stat cards) */}
+      <div className="text-[13px] text-text-secondary font-medium">
+        {users.length} members · {superAdminCount} {superAdminCount === 1 ? "Super Admin" : "Super Admins"} · {adminCount} {adminCount === 1 ? "Admin" : "Admins"} · {employeeCount} {employeeCount === 1 ? "Employee" : "Employees"}
       </div>
 
       {/* Search & Filter Toolbar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border bg-surface p-3 shadow-subtle">
         <div className="relative flex-1 max-w-md">
-          <SearchIcon className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <SearchIcon className="absolute left-3 top-2.5 h-4 w-4 text-text-tertiary" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search employees by name or email..."
-            className="h-9 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] py-1.5 pl-9 pr-3 text-xs text-slate-900 dark:text-white outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-1 focus:ring-indigo-600 transition shadow-2xs"
+            placeholder="Search members by name or email..."
+            className="h-9 w-full rounded-md border border-border bg-surface py-1 pl-9 pr-3 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand transition-colors shadow-subtle"
           />
         </div>
 
@@ -268,9 +227,9 @@ export function ManageUsers() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="h-9 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none focus:border-indigo-600 transition cursor-pointer shadow-2xs"
+            className="h-9 rounded-md border border-border bg-surface px-3 text-[13px] font-medium text-text-secondary outline-none focus:border-brand transition-colors cursor-pointer shadow-subtle"
           >
-            <option value="">All Roles ({users.length})</option>
+            <option value="">All roles ({users.length})</option>
             {superAdminCount > 0 && (
               <option value="superadmin">Super Admins ({superAdminCount})</option>
             )}
@@ -278,39 +237,38 @@ export function ManageUsers() {
             <option value="user">Employees ({employeeCount})</option>
           </select>
 
-          <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+          <span className="text-[13px] text-text-secondary whitespace-nowrap">
             Showing {filteredUsers.length} of {users.length}
           </span>
         </div>
       </div>
 
-      {/* Employee List Presentation */}
+      {/* Member List Presentation */}
       {loading && users.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-12 text-center text-xs text-slate-500 dark:text-slate-400">
-          <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-          <p className="mt-2.5 font-medium">Loading employee roster...</p>
+        <div className="rounded-lg border border-border bg-surface p-12 text-center text-sm text-text-secondary shadow-subtle">
+          <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+          <p className="mt-2.5 font-medium">Loading team members...</p>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-[#161B22] p-12 text-center text-xs text-slate-500 dark:text-slate-400">
-          <UserIcon className="mx-auto h-8 w-8 text-slate-400 mb-2 opacity-60" />
-          <p className="font-semibold text-slate-800 dark:text-slate-200">No employees found</p>
-          <p className="mt-0.5">Try adjusting your search query or role filter.</p>
+        <div className="rounded-lg border border-dashed border-border bg-surface p-12 text-center text-sm text-text-secondary shadow-subtle">
+          <UserIcon className="mx-auto h-8 w-8 text-text-tertiary mb-2 opacity-60" />
+          <p className="font-semibold text-text-primary">No members found</p>
+          <p className="mt-0.5 text-[13px]">Try adjusting your search query or role filter.</p>
         </div>
       ) : viewMode === "table" ? (
         /* TABLE VIEW */
-        <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22]">
+        <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-subtle">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+            <table className="w-full text-left text-sm text-text-primary">
+              <thead className="border-b border-border bg-surface-subtle/70 text-[13px] font-semibold text-text-secondary">
                 <tr>
-                  <th scope="col" className="py-2.5 pl-4 pr-3">Employee</th>
-                  <th scope="col" className="px-3 py-2.5">System Role</th>
-                  <th scope="col" className="px-3 py-2.5">Joined Date</th>
-                  <th scope="col" className="px-3 py-2.5">Role Permission</th>
-                  <th scope="col" className="py-2.5 pl-3 pr-4 text-right">Profile</th>
+                  <th scope="col" className="py-3 pl-4 pr-3">Member</th>
+                  <th scope="col" className="px-4 py-3">Role</th>
+                  <th scope="col" className="px-4 py-3">Joined</th>
+                  <th scope="col" className="py-3 pl-3 pr-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+              <tbody className="divide-y divide-border-subtle">
                 {filteredUsers.map((u) => {
                   const isUpdating = updatingEmail === u.email;
                   const formattedDate = u.createdAt
@@ -321,31 +279,36 @@ export function ManageUsers() {
                       })
                     : "—";
 
+                  const canChangeRole =
+                    isSuperAdmin &&
+                    u.role !== "superadmin" &&
+                    u.email !== currentUser?.email;
+
                   return (
                     <tr
                       key={u._id}
-                      className="transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
+                      className="group transition-colors hover:bg-surface-subtle/50"
                     >
-                      {/* Name & Email */}
+                      {/* Name & Email with Copy on Hover */}
                       <td className="py-3 pl-4 pr-3">
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-3">
                           <Avatar user={u} size="md" />
                           <div className="min-w-0">
-                            <p className="font-semibold text-slate-900 dark:text-white truncate text-xs">
+                            <p className="font-semibold text-text-primary truncate text-sm">
                               {u.name}
                             </p>
-                            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px]">
+                            <div className="flex items-center gap-1.5 text-text-secondary text-[12px] mt-0.5">
                               <span className="truncate">{u.email}</span>
                               <button
                                 type="button"
                                 onClick={() => handleCopyEmail(u.email)}
                                 title="Copy email"
-                                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                                className="text-text-tertiary hover:text-text-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-0.5 cursor-pointer"
                               >
                                 {copiedEmail === u.email ? (
-                                  <CheckCircleIcon className="h-3 w-3 text-emerald-500" />
+                                  <CheckCircleIcon className="h-3.5 w-3.5 text-done" />
                                 ) : (
-                                  <CopyIcon className="h-3 w-3" />
+                                  <CopyIcon className="h-3.5 w-3.5" />
                                 )}
                               </button>
                             </div>
@@ -353,61 +316,42 @@ export function ManageUsers() {
                         </div>
                       </td>
 
-                      {/* Current Role Badge */}
-                      <td className="px-3 py-3">
-                        <RoleBadge role={u.role} size="xs" />
-                      </td>
-
-                      {/* Joined Date */}
-                      <td className="px-3 py-3 text-slate-500 dark:text-slate-400">
-                        {formattedDate}
-                      </td>
-
-                      {/* Role Dropdown Selector */}
-                      <td className="px-3 py-3">
-                        {!isSuperAdmin ? (
-                          <div className="flex items-center gap-1.5">
-                            <RoleBadge role={u.role} size="xs" />
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                              (Protected)
-                            </span>
-                          </div>
-                        ) : u.role === "superadmin" ? (
-                          <div className="flex items-center gap-1.5">
-                            <RoleBadge role="superadmin" size="xs" />
-                            <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400">
-                              Root
-                            </span>
-                          </div>
-                        ) : u.email === currentUser?.email ? (
-                          <div className="flex items-center gap-1.5">
-                            <RoleBadge role={u.role} size="xs" />
-                            <span className="text-[10px] text-slate-400 italic">
-                              (You)
-                            </span>
-                          </div>
-                        ) : (
+                      {/* Role Column (Single Control) */}
+                      <td className="px-4 py-3">
+                        {canChangeRole ? (
                           <select
                             aria-label={`Role selector for ${u.email}`}
                             value={u.role}
                             disabled={loading || isUpdating}
                             onChange={(e) => handleRoleChange(u.email, e.target.value)}
-                            className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 py-1 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer disabled:opacity-50"
+                            className="h-8 rounded-md border border-border bg-surface px-2.5 text-[12px] font-medium text-text-primary outline-none focus:border-brand transition-colors cursor-pointer disabled:opacity-50 shadow-subtle"
                           >
                             <option value="user">Employee</option>
                             <option value="admin">Administrator</option>
                           </select>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5">
+                            <RoleBadge role={u.role} size="xs" />
+                            {u.email === currentUser?.email && (
+                              <span className="text-[12px] text-text-tertiary italic">(You)</span>
+                            )}
+                          </div>
                         )}
                       </td>
 
-                      {/* Actions */}
+                      {/* Joined Date */}
+                      <td className="px-4 py-3 text-text-secondary text-[13px]">
+                        {formattedDate}
+                      </td>
+
+                      {/* Actions Column (Plain text link) */}
                       <td className="py-3 pl-3 pr-4 text-right">
                         <button
                           type="button"
                           onClick={() => setSelectedUser(u)}
-                          className="inline-flex items-center gap-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer shadow-2xs"
+                          className="text-[13px] font-medium text-brand hover:underline cursor-pointer"
                         >
-                          View Details
+                          View details
                         </button>
                       </td>
                     </tr>
@@ -418,8 +362,8 @@ export function ManageUsers() {
           </div>
         </div>
       ) : (
-        /* DIRECTORY CARDS VIEW (Rippling / Deel style) */
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        /* CARDS VIEW */
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredUsers.map((u) => {
             const isUpdating = updatingEmail === u.email;
             const formattedDate = u.createdAt
@@ -430,10 +374,15 @@ export function ManageUsers() {
                 })
               : "—";
 
+            const canChangeRole =
+              isSuperAdmin &&
+              u.role !== "superadmin" &&
+              u.email !== currentUser?.email;
+
             return (
               <div
                 key={u._id}
-                className="group flex flex-col justify-between rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B22] p-4 hover:border-slate-300 dark:hover:border-slate-700 transition shadow-2xs text-left"
+                className="group flex flex-col justify-between rounded-lg border border-border bg-surface p-4 hover:border-brand/40 transition-colors shadow-subtle text-left"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
@@ -442,11 +391,11 @@ export function ManageUsers() {
                   </div>
 
                   <div className="mt-3">
-                    <h3 className="font-semibold text-slate-900 dark:text-white text-xs truncate">
+                    <h3 className="font-semibold text-text-primary text-sm truncate">
                       {u.name}
                     </h3>
-                    <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                      <MailIcon className="h-3 w-3 shrink-0 text-slate-400" />
+                    <div className="mt-1 flex items-center gap-1.5 text-[12px] text-text-secondary">
+                      <MailIcon className="h-3.5 w-3.5 shrink-0 text-text-tertiary" />
                       <span className="truncate">{u.email}</span>
                       <button
                         type="button"
@@ -455,53 +404,47 @@ export function ManageUsers() {
                           handleCopyEmail(u.email);
                         }}
                         title="Copy email"
-                        className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5"
+                        className="text-text-tertiary hover:text-text-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-0.5 cursor-pointer"
                       >
                         {copiedEmail === u.email ? (
-                          <CheckCircleIcon className="h-3 w-3 text-emerald-500" />
+                          <CheckCircleIcon className="h-3.5 w-3.5 text-done" />
                         ) : (
-                          <CopyIcon className="h-3 w-3" />
+                          <CopyIcon className="h-3.5 w-3.5" />
                         )}
                       </button>
                     </div>
 
-                    <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
-                      <CalendarIcon className="h-3 w-3" />
-                      <span>Member since {formattedDate}</span>
+                    <div className="mt-2 flex items-center gap-1.5 text-[12px] text-text-tertiary">
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                      <span>Joined {formattedDate}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                  {!isSuperAdmin ? (
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                      Managed by Super Admin
-                    </span>
-                  ) : u.role === "superadmin" ? (
-                    <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400">
-                      Super Admin (Root)
-                    </span>
-                  ) : u.email === currentUser?.email ? (
-                    <span className="text-[10px] text-slate-400 italic">Your Account</span>
-                  ) : (
+                <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between gap-2">
+                  {canChangeRole ? (
                     <select
                       aria-label={`Role selector for ${u.email}`}
                       value={u.role}
                       disabled={loading || isUpdating}
                       onChange={(e) => handleRoleChange(u.email, e.target.value)}
-                      className="h-7 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-2 text-[11px] text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer disabled:opacity-50"
+                      className="h-8 rounded-md border border-border bg-surface px-2 text-[12px] font-medium text-text-primary outline-none focus:border-brand transition-colors cursor-pointer disabled:opacity-50 shadow-subtle"
                     >
                       <option value="user">Employee</option>
                       <option value="admin">Admin</option>
                     </select>
+                  ) : (
+                    <span className="text-[12px] text-text-tertiary">
+                      {u.email === currentUser?.email ? "Your account" : "Protected"}
+                    </span>
                   )}
 
                   <button
                     type="button"
                     onClick={() => setSelectedUser(u)}
-                    className="h-7 inline-flex items-center rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer"
+                    className="text-[13px] font-medium text-brand hover:underline cursor-pointer"
                   >
-                    Details
+                    View details
                   </button>
                 </div>
               </div>
@@ -510,36 +453,36 @@ export function ManageUsers() {
         </div>
       )}
 
-      {/* Employee Details Modal */}
+      {/* Member Details Modal */}
       {selectedUser && (
         <Modal
           isOpen={Boolean(selectedUser)}
           onClose={() => setSelectedUser(null)}
-          title="Employee Profile"
-          subtitle="Workforce profile record and administrative privileges"
+          title="Member details"
+          subtitle="Account record and access privileges"
           size="md"
         >
-          <div className="space-y-4">
+          <div className="space-y-4 text-left">
             {/* Profile Overview */}
-            <div className="flex items-center gap-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 p-4">
+            <div className="flex items-center gap-3.5 rounded-lg border border-border bg-surface-subtle/50 p-4">
               <Avatar user={selectedUser} size="xl" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                  <h3 className="text-base font-semibold text-text-primary truncate">
                     {selectedUser.name}
                   </h3>
                   <RoleBadge role={selectedUser.role} size="xs" />
                 </div>
-                <div className="mt-1 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                <div className="mt-1 flex items-center gap-2 text-[13px] text-text-secondary">
                   <span className="truncate">{selectedUser.email}</span>
                   <button
                     type="button"
                     onClick={() => handleCopyEmail(selectedUser.email)}
                     title="Copy email"
-                    className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    className="text-text-tertiary hover:text-text-primary cursor-pointer"
                   >
                     {copiedEmail === selectedUser.email ? (
-                      <CheckCircleIcon className="h-3.5 w-3.5 text-emerald-500" />
+                      <CheckCircleIcon className="h-3.5 w-3.5 text-done" />
                     ) : (
                       <CopyIcon className="h-3.5 w-3.5" />
                     )}
@@ -548,23 +491,23 @@ export function ManageUsers() {
               </div>
             </div>
 
-            {/* Employment Record Details */}
-            <div className="space-y-2.5 rounded-lg border border-slate-200 dark:border-slate-800 p-3.5">
-              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Workforce Credentials
+            {/* Account Details */}
+            <div className="space-y-2.5 rounded-lg border border-border p-3.5">
+              <h4 className="text-[12px] font-semibold text-text-secondary">
+                Account information
               </h4>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 block text-[11px]">System Account ID</span>
-                  <span className="font-mono text-[11px] text-slate-800 dark:text-slate-200 truncate block mt-0.5">
+                  <span className="text-text-tertiary block text-[12px]">Account ID</span>
+                  <span className="font-mono text-[12px] text-text-primary truncate block mt-0.5">
                     {selectedUser._id}
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Onboarding Date</span>
-                  <span className="text-slate-800 dark:text-slate-200 font-medium block mt-0.5">
+                  <span className="text-text-tertiary block text-[12px]">Joined date</span>
+                  <span className="text-text-primary font-medium block mt-0.5 text-[13px]">
                     {selectedUser.createdAt
                       ? new Date(selectedUser.createdAt).toLocaleDateString(undefined, {
                           year: "numeric",
@@ -578,26 +521,23 @@ export function ManageUsers() {
             </div>
 
             {/* Privilege & Role Governance */}
-            <div className="space-y-2.5 rounded-lg border border-slate-200 dark:border-slate-800 p-3.5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                    <ShieldIcon className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
-                    <span>Access Permissions</span>
-                  </h4>
-                  <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                    {selectedUser.role === "superadmin"
-                      ? "Root governance control: system-wide authority to manage roles, elevate administrators, and oversee all organizational operations."
-                      : selectedUser.role === "admin"
-                      ? "Full administrative control: oversee employee directory, create team projects, and review company deliverables."
-                      : "Standard employee access: collaborate on assigned team projects, update task statuses, and view organizational deliverables."}
-                  </p>
-                </div>
+            <div className="space-y-2.5 rounded-lg border border-border p-3.5">
+              <div>
+                <h4 className="text-[12px] font-semibold text-text-secondary">
+                  Access permissions
+                </h4>
+                <p className="mt-1 text-[13px] text-text-secondary leading-relaxed">
+                  {selectedUser.role === "superadmin"
+                    ? "Full system authority to manage user roles, elevate administrators, and oversee all operations."
+                    : selectedUser.role === "admin"
+                    ? "Administrative control: oversee the team directory, create projects, and manage tasks."
+                    : "Standard employee access: collaborate on assigned projects, update task statuses, and view work."}
+                </p>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  System Role Status
+              <div className="pt-3 border-t border-border-subtle flex items-center justify-between">
+                <span className="text-[13px] font-medium text-text-secondary">
+                  Role status
                 </span>
                 {isSuperAdmin &&
                 selectedUser.role !== "superadmin" &&
@@ -607,19 +547,19 @@ export function ManageUsers() {
                     value={selectedUser.role}
                     disabled={loading || updatingEmail === selectedUser.email}
                     onChange={(e) => handleRoleChange(selectedUser.email, e.target.value)}
-                    className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0D1117] px-2.5 py-1 text-xs text-slate-900 dark:text-white outline-none focus:border-indigo-600 transition cursor-pointer"
+                    className="h-8 rounded-md border border-border bg-surface px-2.5 text-[12px] font-medium text-text-primary outline-none focus:border-brand transition-colors cursor-pointer shadow-subtle"
                   >
-                    <option value="user">Standard Employee</option>
-                    <option value="admin">System Administrator</option>
+                    <option value="user">Employee</option>
+                    <option value="admin">Administrator</option>
                   </select>
                 ) : (
                   <div className="flex items-center gap-1.5">
                     <RoleBadge role={selectedUser.role} size="xs" />
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                    <span className="text-[12px] text-text-tertiary">
                       {selectedUser.role === "superadmin"
-                        ? "(Root Account)"
+                        ? "(Root account)"
                         : selectedUser.email === currentUser?.email
-                        ? "(Your Account)"
+                        ? "(Your account)"
                         : "(Managed by Super Admin)"}
                     </span>
                   </div>
@@ -632,7 +572,7 @@ export function ManageUsers() {
               <button
                 type="button"
                 onClick={() => setSelectedUser(null)}
-                className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer"
+                className="h-9 rounded-md border border-border bg-surface px-4 text-[13px] font-medium text-text-primary hover:bg-surface-subtle transition-colors cursor-pointer shadow-subtle"
               >
                 Close
               </button>

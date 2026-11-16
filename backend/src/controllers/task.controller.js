@@ -248,6 +248,8 @@ const getTasks = async (req, res) => {
 
       assignedTo,
 
+      project,
+
       page = 1,
 
       limit = 10,
@@ -275,6 +277,12 @@ const getTasks = async (req, res) => {
       });
     }
 
+    if (project && !mongoose.isValidObjectId(project)) {
+      return res.status(400).json({
+        message: "Invalid project ID",
+      });
+    }
+
     const filter = {};
 
     const isAdmin = role === "admin" || role === "superadmin";
@@ -284,9 +292,20 @@ const getTasks = async (req, res) => {
         $or: [{ owner: userId }, { members: userId }],
       }).select("_id");
 
-      filter.project = {
-        $in: projects.map((item) => item._id),
-      };
+      const userProjectIds = projects.map((item) => item._id.toString());
+
+      if (project) {
+        if (!userProjectIds.includes(project.toString())) {
+          return res.status(403).json({
+            message: "You can only view tasks from projects you belong to",
+          });
+        }
+        filter.project = project;
+      } else {
+        filter.project = {
+          $in: projects.map((item) => item._id),
+        };
+      }
 
       if (assignedTo) {
         if (assignedTo !== userId.toString()) {
@@ -296,8 +315,9 @@ const getTasks = async (req, res) => {
         }
         filter.assignedTo = assignedTo;
       }
-    } else if (assignedTo) {
-      filter.assignedTo = assignedTo;
+    } else {
+      if (project) filter.project = project;
+      if (assignedTo) filter.assignedTo = assignedTo;
     }
 
     if (status) filter.status = status;
@@ -354,6 +374,8 @@ const getTasks = async (req, res) => {
       search: search?.trim() || "",
 
       assignedTo: assignedTo || "",
+
+      project: project || "",
 
       page: pageNumber,
 

@@ -5,6 +5,7 @@ import ProjectList from "../projects/ProjectList";
 import ProjectWorkspace from "../projects/ProjectWorkspace";
 import CreateProjectModal from "../projects/CreateProjectModal";
 import Alert from "../common/Alert";
+import Button from "../common/Button";
 import { PlusIcon } from "../common/Icons";
 import { useToast } from "../../context/ToastContext";
 
@@ -42,7 +43,7 @@ export function ProjectsPage({ user }) {
   const handleCreateProject = async (name, description) => {
     const res = await createProject(name, description);
     if (res?.success !== false) {
-      success("Project workspace created!");
+      success("Project created successfully");
       setCreateModalOpen(false);
     } else {
       toastError(res?.error || "Failed to create project");
@@ -64,7 +65,7 @@ export function ProjectsPage({ user }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 text-left">
       {/* If a project is selected, render the full Project Workspace */}
       {selectedProject ? (
         <ProjectWorkspace
@@ -84,35 +85,32 @@ export function ProjectsPage({ user }) {
       ) : (
         <>
           {/* Page Header */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                Workspaces & Teams
-              </span>
-              <h1 className="mt-1 text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Team Projects
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-primary font-heading">
+                Projects
               </h1>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                Manage team project initiatives, assign employee collaborators, and oversee delivery progress.
+              <p className="mt-1 text-sm text-text-secondary">
+                Manage projects, collaborators, and track progress.
               </p>
             </div>
 
             {user && (
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="md"
+                icon={PlusIcon}
                 onClick={() => setCreateModalOpen(true)}
-                className="h-8 inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-medium text-white shadow-2xs transition cursor-pointer"
               >
-                <PlusIcon className="h-3.5 w-3.5" />
-                <span>New Project</span>
-              </button>
+                New project
+              </Button>
             )}
           </div>
 
           {projectError && <Alert type="error" message={projectError} />}
           {projectSuccess && <Alert type="success" message={projectSuccess} />}
 
-          {/* Project Cards List */}
+          {/* Projects List */}
           <ProjectList
             projects={projects}
             tasks={taskState.allTasks}
