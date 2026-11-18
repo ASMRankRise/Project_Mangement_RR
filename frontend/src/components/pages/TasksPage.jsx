@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useMemo, useCallback } from "react";
 import useProjects from "../../hooks/useProjects";
 import useTasks from "../../hooks/useTasks";
@@ -22,13 +23,15 @@ export function TasksPage({ user }) {
 
   const taskState = useTasks(effectiveUser, { limit: 100 });
   const { fetchTasks } = taskState;
+
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [viewMode, setViewMode] = useState("kanban"); // "kanban" | "list" | "table"
+  const [viewMode, setViewMode] = useState("kanban");
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
     const targetLimit = mode === "kanban" ? 100 : 10;
+
     if (taskState.limit !== targetLimit) {
       taskState.setLimit(targetLimit);
     }
@@ -44,21 +47,17 @@ export function TasksPage({ user }) {
 
   const getEntityId = (entity) => {
     if (!entity) return "";
+
     if (typeof entity === "object") {
       return String(entity._id || entity.id || entity.userId || "").trim();
     }
+
     return String(entity).trim();
   };
 
   const isSuperAdmin = effectiveUser?.role === "superadmin";
   const currentUserId = getEntityId(effectiveUser);
 
-  // Helper function to check if effectiveUser can create tasks in a given project:
-  // - Super Admin: Can create tasks in any permitted project.
-  // - Admin: Can create tasks only in projects they own.
-  // - Project Owner (including legacy normal-user owners): Can create tasks in their own project.
-  // - Project Head: Can create tasks in their assigned project, select priority, and assign project members.
-  // - Normal Member: Cannot create tasks.
   const canUserCreateTaskInProject = useCallback(
     (project) => {
       if (!project || !effectiveUser) return false;
@@ -76,22 +75,33 @@ export function TasksPage({ user }) {
     [effectiveUser, isSuperAdmin, currentUserId],
   );
 
-  // Projects where the user has permission to create tasks:
   const permittedProjectsForTaskCreation = useMemo(() => {
     if (!effectiveUser) return [];
     if (isSuperAdmin) return projects;
-    return projects.filter((project) => canUserCreateTaskInProject(project));
-  }, [projects, effectiveUser, isSuperAdmin, canUserCreateTaskInProject]);
 
-  // If filtered by a specific project, verify permission under that specific project
+    return projects.filter((project) =>
+      canUserCreateTaskInProject(project),
+    );
+  }, [
+    projects,
+    effectiveUser,
+    isSuperAdmin,
+    canUserCreateTaskInProject,
+  ]);
+
   const activePermittedProjects = useMemo(() => {
     if (!taskState.projectFilter) {
       return permittedProjectsForTaskCreation;
     }
+
     return permittedProjectsForTaskCreation.filter(
-      (p) => getEntityId(p) === String(taskState.projectFilter)
+      (project) =>
+        getEntityId(project) === String(taskState.projectFilter),
     );
-  }, [permittedProjectsForTaskCreation, taskState.projectFilter]);
+  }, [
+    permittedProjectsForTaskCreation,
+    taskState.projectFilter,
+  ]);
 
   const canCreateTask = activePermittedProjects.length > 0;
 
@@ -100,9 +110,22 @@ export function TasksPage({ user }) {
     setCreateModalOpen(true);
   };
 
+  const handleCreateTasks = async (payloads) => {
+    if (!canCreateTask) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const res = await taskState.createTasks(payloads);
+
+    if (res?.success) {
+      setCreateModalOpen(false);
+    }
+
+    return res;
+  };
+
   return (
     <div className="space-y-5 text-left">
-      {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-primary font-heading">
@@ -114,7 +137,6 @@ export function TasksPage({ user }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Project Filter Selector */}
           {projects.length > 0 && (
             <div className="relative">
               <select
@@ -124,11 +146,13 @@ export function TasksPage({ user }) {
                 className="h-9 rounded-md border border-border bg-surface px-3 text-[13px] font-medium text-text-secondary outline-none focus:border-brand cursor-pointer transition-colors shadow-subtle"
               >
                 <option value="">All projects ({projects.length})</option>
-                {projects.map((p) => {
-                  const pid = getEntityId(p);
+
+                {projects.map((project) => {
+                  const projectId = getEntityId(project);
+
                   return (
-                    <option key={pid} value={pid}>
-                      {p.name}
+                    <option key={projectId} value={projectId}>
+                      {project.name}
                     </option>
                   );
                 })}
@@ -149,11 +173,18 @@ export function TasksPage({ user }) {
         </div>
       </div>
 
-      {projectError && <Alert type="error" message={projectError} />}
-      {taskState.error && <Alert type="error" message={taskState.error} />}
-      {taskState.success && <Alert type="success" message={taskState.success} />}
+      {projectError && (
+        <Alert type="error" message={projectError} />
+      )}
 
-      {/* Filters & View Mode Selector */}
+      {taskState.error && (
+        <Alert type="error" message={taskState.error} />
+      )}
+
+      {taskState.success && (
+        <Alert type="success" message={taskState.success} />
+      )}
+
       <TaskFilters
         search={taskState.search}
         setSearch={taskState.setSearch}
@@ -165,7 +196,6 @@ export function TasksPage({ user }) {
         setViewMode={handleViewModeChange}
       />
 
-      {/* Task List Workspace */}
       <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 shadow-subtle">
         <TaskList
           tasks={taskState.tasks}
@@ -179,28 +209,18 @@ export function TasksPage({ user }) {
           onPageChange={taskState.setPage}
           onUpdate={taskState.updateTask}
           onDelete={taskState.deleteTask}
-          onTaskClick={(t) => setSelectedTask(t)}
+          onTaskClick={(task) => setSelectedTask(task)}
           viewMode={viewMode}
         />
       </div>
 
-      {/* Modals */}
       {createModalOpen && canCreateTask && (
         <CreateTaskModal
-          isOpen={createModalOpen && canCreateTask}
+          isOpen={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
           projects={activePermittedProjects}
           user={effectiveUser}
-          onSubmit={async (payload) => {
-            if (!canCreateTask) {
-              return { success: false, error: "Unauthorized" };
-            }
-            const res = await taskState.createTask(payload);
-            if (res?.success !== false) {
-              setCreateModalOpen(false);
-            }
-            return res;
-          }}
+          onSubmit={handleCreateTasks}
         />
       )}
 
@@ -210,8 +230,8 @@ export function TasksPage({ user }) {
           onClose={() => setSelectedTask(null)}
           task={
             taskState.tasks.find(
-              (t) =>
-                String(t._id || t.id) ===
+              (task) =>
+                String(task._id || task.id) ===
                 String(selectedTask._id || selectedTask.id),
             ) || selectedTask
           }

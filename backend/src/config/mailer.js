@@ -9,29 +9,86 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+const escapeHtml = (value = "") =>
+    String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+    })[char]);
+
 const sendTaskAssignmentEmail = async ({
     to,
     task,
     projectName,
     assignedBy,
 }) => {
+    const dueDate = task.dueDate
+        ? new Date(task.dueDate).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+        })
+        : "Not specified";
+
+    const title = escapeHtml(task.title);
+    const description = escapeHtml(task.description || "No description");
+    const project = escapeHtml(projectName);
+    const priority = escapeHtml(task.priority);
+    const assigner = escapeHtml(assignedBy);
+
     return transporter.sendMail({
         from: `"Project Management" <${process.env.EMAIL_USER}>`,
         to,
         subject: `New Task Assigned: ${task.title}`,
-        text: `
-Hello,
-
-A new task has been assigned to you.
+        text: `A new task has been assigned to you.
 
 Task: ${task.title}
 Description: ${task.description || "No description"}
 Project: ${projectName}
 Priority: ${task.priority}
-Due Date: ${task.dueDate || "Not specified"}
+Due Date: ${dueDate}
 Assigned By: ${assignedBy}
 
-Please login to your Project Management System to view the task.
+Please login to your Project Management System to view the task.`,
+        html: `
+      <div style="background:#f4f5f7;padding:30px;font-family:Arial,sans-serif;">
+        <div style="max-width:560px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;">
+          <div style="background:#2563eb;padding:24px;color:#ffffff;">
+            <h2 style="margin:0;">Project Management</h2>
+            <p style="margin:8px 0 0;">New task assigned to you</p>
+          </div>
+
+          <div style="padding:28px;">
+            <h2 style="color:#111827;margin-top:0;">${title}</h2>
+            <p style="color:#6b7280;">${description}</p>
+
+            <table style="width:100%;border-collapse:collapse;margin-top:24px;">
+              <tr>
+                <td style="padding:12px 0;color:#6b7280;">Project</td>
+                <td style="padding:12px 0;color:#111827;font-weight:bold;">${project}</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 0;color:#6b7280;">Priority</td>
+                <td style="padding:12px 0;color:#111827;font-weight:bold;">${priority}</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 0;color:#6b7280;">Due Date</td>
+                <td style="padding:12px 0;color:#111827;font-weight:bold;">${dueDate}</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 0;color:#6b7280;">Assigned By</td>
+                <td style="padding:12px 0;color:#111827;font-weight:bold;">${assigner}</td>
+              </tr>
+            </table>
+
+            <p style="margin-top:28px;color:#6b7280;font-size:14px;">
+              Please login to your Project Management System to view and manage this task.
+            </p>
+          </div>
+        </div>
+      </div>
     `,
     });
 };

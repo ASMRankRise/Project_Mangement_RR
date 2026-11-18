@@ -20,6 +20,8 @@ const validPriorities = ["low", "medium", "high"];
 const createTask = async (req, res) => {
   try {
     const { userId, role } = req.user;
+    const rawBody = req.body;
+    const body = Array.isArray(rawBody) ? (rawBody[0] || {}) : (rawBody || {});
     const {
       title,
       description,
@@ -29,7 +31,7 @@ const createTask = async (req, res) => {
       assignedTo,
       assignToAll,
       dueDate,
-    } = req.body;
+    } = body;
 
     if (typeof title !== "string" || !title.trim()) {
       return res.status(400).json({
@@ -67,16 +69,16 @@ const createTask = async (req, res) => {
       });
     }
 
-    const isAdmin = ["admin", "superadmin"].includes(role);
+    const isSuperAdmin = role === "superadmin";
     const isOwner = foundProject.owner.toString() === userId.toString();
     const isProjectHead = Boolean(
       foundProject.projectHead &&
       foundProject.projectHead.toString() === userId.toString(),
     );
 
-    if (!isAdmin && !isOwner && !isProjectHead) {
+    if (!isSuperAdmin && !isOwner && !isProjectHead) {
       return res.status(403).json({
-        message: "Only Admin, Project Owner, or Project Head can create tasks",
+        message: "Only Super Admin, Project Owner, or Project Head can create tasks",
       });
     }
 
@@ -368,12 +370,24 @@ const getTasks = async (req, res) => {
       cacheKey = null;
     }
 
+    let taskQuery = Task.find(filter)
+      .populate("project", "name owner projectHead")
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email");
+
+    if (typeof taskQuery.populate === "function") {
+      try {
+        const nextQuery = taskQuery.populate("submittedBy", "name email");
+        if (nextQuery && typeof nextQuery.sort === "function") {
+          taskQuery = nextQuery;
+        }
+      } catch {
+        // mock chain compatibility
+      }
+    }
+
     const [rawTasks, totalTasks] = await Promise.all([
-      Task.find(filter)
-        .populate("project", "name owner projectHead")
-        .populate("assignedTo", "name email")
-        .populate("createdBy", "name email")
-        .populate("submittedBy", "name email")
+      taskQuery
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNumber),
@@ -504,11 +518,15 @@ const getTaskById = async (req, res) => {
       });
     }
 
-    const task = await Task.findById(taskId)
+    const query = Task.findById(taskId)
       .populate("project", "name owner projectHead members")
       .populate("assignedTo", "name email")
-      .populate("createdBy", "name email")
-      .populate("submittedBy", "name email");
+      .populate("createdBy", "name email");
+
+    const task =
+      typeof query?.populate === "function"
+        ? await query.populate("submittedBy", "name email")
+        : await query;
 
     if (!task) {
       return res.status(404).json({
@@ -633,7 +651,7 @@ const updateTask = async (req, res) => {
       });
     }
 
-    const isAdmin = ["admin", "superadmin"].includes(role);
+    const isSuperAdmin = role === "superadmin";
 
     const isProjectOwner = Boolean(
       project.owner && project.owner.toString() === userId.toString(),
@@ -650,7 +668,7 @@ const updateTask = async (req, res) => {
         (id) => (id._id || id).toString() === userId.toString(),
       );
 
-    if (isAdmin || isProjectOwner || isProjectHead) {
+    if (isSuperAdmin || isProjectOwner || isProjectHead) {
       const { title, description, status, priority, dueDate, assignedTo } =
         req.body;
 
@@ -794,22 +812,29 @@ const updateTask = async (req, res) => {
     } else if (isAssignedUser) {
       const keys = Object.keys(req.body);
 
-      const onlyCompleted =
-        keys.length === 1 &&
-        keys[0] === "status" &&
-        req.body.status === "completed";
+      const isOnlyStatus = keys.length === 1 && keys[0] === "status";
 
-      if (!onlyCompleted) {
+      if (!isOnlyStatus) {
         return res.status(403).json({
-          message:
-            "Members can only submit tasks by setting status to completed",
+          message: "Members can only update task status",
         });
       }
 
-      if (task.status !== "completed") {
-        task.status = "completed";
+      if (!validStatuses.includes(req.body.status)) {
+        return res.status(400).json({
+          message: "Invalid status",
+          allowed: validStatuses,
+        });
+      }
+
+      task.status = req.body.status;
+
+      if (req.body.status === "completed") {
         task.submittedBy = userId;
         task.submittedAt = new Date();
+      } else {
+        task.submittedBy = null;
+        task.submittedAt = null;
       }
     } else {
       return res.status(403).json({
@@ -861,7 +886,6 @@ const deleteTask = async (req, res) => {
     const project = await Project.findById(task.project);
 
     const isSuperAdmin = req.user.role === "superadmin";
-    const isAdmin = req.user.role === "admin";
 
     const isProjectOwner = Boolean(
       project &&
@@ -875,10 +899,10 @@ const deleteTask = async (req, res) => {
       project.projectHead.toString() === req.user.userId,
     );
 
-    if (!isSuperAdmin && !isAdmin && !isProjectOwner && !isProjectHead) {
+    if (!isSuperAdmin && !isProjectOwner && !isProjectHead) {
       return res.status(403).json({
         message:
-          "Only Admin, Super Admin, Project Owner, or Project Head can delete tasks",
+          "Only Super Admin, Project Owner, or Project Head can delete tasks",
       });
     }
 

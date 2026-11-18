@@ -800,7 +800,13 @@ export function ProjectWorkspace({
           onClose={() => setCreateTaskModalOpen(false)}
           projects={[project]}
           user={effectiveUser}
-          onSubmit={onTaskCreate}
+          onSubmit={async (payloads) => {
+            const res = await onTaskCreate?.(payloads);
+            if (res?.success !== false) {
+              setCreateTaskModalOpen(false);
+            }
+            return res;
+          }}
         />
       )}
 

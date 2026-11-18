@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import api from "../services/api";
 
@@ -88,19 +89,25 @@ function useTasks(user, initialOptions = {}) {
       const data = response.data;
       const fetchedTasks = data.tasks || [];
       const fetchedTotal = data.totalTasks ?? data.total ?? 0;
-      const fetchedTotalPages = Math.max(1, data.totalPages || Math.ceil(fetchedTotal / targetLimit) || 1);
+      const fetchedTotalPages = Math.max(
+        1,
+        data.totalPages || Math.ceil(fetchedTotal / targetLimit) || 1,
+      );
 
-      // If current page is past total pages (e.g. after deletion on last page), fall back to previous page
       if (targetPage > fetchedTotalPages && fetchedTotal > 0) {
         setPageValue(fetchedTotalPages);
+
         const fallbackRes = await api.get("/tasks", {
           params: { ...params, page: fetchedTotalPages },
         });
+
         if (currentRequestId !== requestId.current) return false;
+
         const fallbackData = fallbackRes.data;
         setTasks(fallbackData.tasks || []);
         setTotal(fallbackData.totalTasks ?? fallbackData.total ?? fetchedTotal);
         setTotalPages(fallbackData.totalPages ?? fetchedTotalPages);
+
         return true;
       }
 
@@ -120,22 +127,97 @@ function useTasks(user, initialOptions = {}) {
         setLoading(false);
       }
     }
-  }, [userId, page, limit, debouncedSearch, statusFilter, priorityFilter, projectFilter]);
+  }, [
+    userId,
+    page,
+    limit,
+    debouncedSearch,
+    statusFilter,
+    priorityFilter,
+    projectFilter,
+  ]);
 
   const createTask = async (payload) => {
     setError("");
     setSuccess("");
 
+    if (Array.isArray(payload)) {
+      if (payload.length === 0) {
+        return { success: false, error: "No tasks to create." };
+      }
+      if (payload.length === 1) {
+        return await createTask(payload[0]);
+      }
+      const res = await createTasks(payload);
+      return {
+        ...res,
+        task: res.results?.[0]?.task,
+        error: res.results?.find((r) => !r.success)?.error || res.error,
+      };
+    }
+
     try {
       const response = await api.post("/tasks", payload);
+
       setSuccess("Task created successfully!");
       await fetchTasks();
+
       return { success: true, task: response.data?.task };
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to create task.";
       setError(msg);
+
       return { success: false, error: msg };
     }
+  };
+
+  const createTasks = async (payloads) => {
+    setError("");
+    setSuccess("");
+
+    const taskPayloads = (
+      Array.isArray(payloads) ? payloads.flat(Infinity) : [payloads]
+    ).filter(Boolean);
+
+    if (!taskPayloads.length) {
+      setError("No tasks to create.");
+      return { success: false, results: [] };
+    }
+
+    const results = await Promise.allSettled(
+      taskPayloads.map((payload) => api.post("/tasks", payload)),
+    );
+
+    const taskResults = results.map((result) =>
+      result.status === "fulfilled"
+        ? {
+          success: true,
+          task: result.value.data?.task,
+        }
+        : {
+          success: false,
+          error:
+            result.reason?.response?.data?.message ||
+            "Failed to create task.",
+        },
+    );
+
+    const successCount = taskResults.filter((result) => result.success).length;
+    const failedCount = taskResults.length - successCount;
+
+    if (successCount > 0) {
+      setSuccess(`${successCount} task(s) created successfully!`);
+      await fetchTasks();
+    }
+
+    if (failedCount > 0) {
+      setError(`${failedCount} task(s) could not be created.`);
+    }
+
+    return {
+      success: failedCount === 0,
+      results: taskResults,
+    };
   };
 
   const updateTask = async (taskId, changes) => {
@@ -147,18 +229,24 @@ function useTasks(user, initialOptions = {}) {
       setSuccess("Task updated successfully!");
 
       const updated = response.data?.task;
+
       if (updated) {
         const upId = String(updated._id || updated.id);
+
         setTasks((prev) =>
-          prev.map((t) => (String(t._id || t.id) === upId ? { ...t, ...updated } : t))
+          prev.map((t) =>
+            String(t._id || t.id) === upId ? { ...t, ...updated } : t,
+          ),
         );
       }
 
       await fetchTasks();
+
       return { success: true, task: updated };
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to update task.";
       setError(msg);
+
       return { success: false, error: msg };
     }
   };
@@ -183,6 +271,7 @@ function useTasks(user, initialOptions = {}) {
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to delete task.";
       setError(msg);
+
       return { success: false, error: msg };
     }
   };
@@ -211,6 +300,7 @@ function useTasks(user, initialOptions = {}) {
     setSuccess,
     fetchTasks,
     createTask,
+    createTasks,
     updateTask,
     deleteTask,
   };

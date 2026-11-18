@@ -85,7 +85,9 @@ export function AdminDashboard({ user }) {
   };
 
   const handleCreateTask = async (payload) => {
-    const res = await taskState.createTask(payload);
+    const res = Array.isArray(payload)
+      ? await taskState.createTasks(payload)
+      : await taskState.createTask(payload);
     if (res?.success !== false) {
       success("Task created!");
       setCreateTaskOpen(false);

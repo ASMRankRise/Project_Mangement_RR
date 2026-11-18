@@ -25,7 +25,7 @@ export function Sidebar({
 }) {
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin" || user?.role === "superadmin";
-
+  const isSuperAdmin = user?.role === "superadmin";
   const navigationItems = [
     {
       label: "Workspace",
@@ -35,14 +35,14 @@ export function Sidebar({
           label: "Overview",
           icon: LayoutDashboardIcon,
         },
-        ...(isAdmin
+        ...(isSuperAdmin
           ? [
-              {
-                to: "/admin/users",
-                label: "Team Directory",
-                icon: UsersIcon,
-              },
-            ]
+            {
+              to: "/admin/users",
+              label: "Team Directory",
+              icon: UsersIcon,
+            },
+          ]
           : []),
         {
           to: "/projects",
@@ -74,9 +74,8 @@ export function Sidebar({
 
       {/* Sidebar container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface text-text-primary transition-all duration-150 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:z-auto ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        } ${collapsed ? "lg:w-16" : "w-60"}`}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface text-text-primary transition-all duration-150 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:z-auto ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          } ${collapsed ? "lg:w-16" : "w-60"}`}
       >
         {/* Brand Header */}
         <div className="flex h-14 items-center justify-between border-b border-border px-3.5">
@@ -140,10 +139,9 @@ export function Sidebar({
                     to={item.to}
                     onClick={handleNavClick}
                     className={({ isActive }) =>
-                      `flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors ${
-                        isActive
-                          ? "bg-surface-subtle text-text-primary font-semibold border border-border shadow-subtle"
-                          : "text-text-secondary hover:bg-surface-subtle/70 hover:text-text-primary"
+                      `flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors ${isActive
+                        ? "bg-surface-subtle text-text-primary font-semibold border border-border shadow-subtle"
+                        : "text-text-secondary hover:bg-surface-subtle/70 hover:text-text-primary"
                       } ${collapsed ? "justify-center px-0" : ""}`
                     }
                     title={collapsed ? item.label : undefined}
@@ -169,9 +167,8 @@ export function Sidebar({
                 handleNavClick();
                 if (onOpenSettings) onOpenSettings();
               }}
-              className={`w-full flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-surface-subtle/70 hover:text-text-primary transition-colors cursor-pointer ${
-                collapsed ? "justify-center px-0" : ""
-              }`}
+              className={`w-full flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-surface-subtle/70 hover:text-text-primary transition-colors cursor-pointer ${collapsed ? "justify-center px-0" : ""
+                }`}
               title={collapsed ? "Preferences" : undefined}
             >
               <SunIcon className="h-4 w-4 shrink-0 text-text-tertiary" />
@@ -183,9 +180,8 @@ export function Sidebar({
         {/* User Card at Bottom */}
         <div className="border-t border-border p-2.5">
           <div
-            className={`flex items-center gap-2 rounded-md bg-surface-subtle p-2 border border-border ${
-              collapsed ? "justify-center p-1.5" : "justify-between"
-            }`}
+            className={`flex items-center gap-2 rounded-md bg-surface-subtle p-2 border border-border ${collapsed ? "justify-center p-1.5" : "justify-between"
+              }`}
           >
             <div className="flex items-center gap-2 overflow-hidden">
               <Avatar user={user} size="sm" />
