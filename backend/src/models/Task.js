@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const taskSchema = new mongoose.Schema(
@@ -42,6 +43,22 @@ const taskSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+    assignedAt: {
+      type: Date,
+      default: null,
+    },
+
+    submittedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    submittedAt: {
+      type: Date,
+      default: null,
     },
 
     dueDate: {

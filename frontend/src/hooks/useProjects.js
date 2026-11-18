@@ -155,6 +155,46 @@ function useProjects() {
     [fetchProjects],
   );
 
+  const assignProjectHead = useCallback(
+    async (projectId, email) => {
+      setError("");
+      setSuccess("");
+
+      try {
+        const response = await api.post(`/projects/${projectId}/project-head`, {
+          email: email.trim().toLowerCase(),
+        });
+        await fetchProjects();
+        setSuccess("Project Head assigned successfully!");
+        return { success: true, project: response.data?.project };
+      } catch (err) {
+        const msg = err.response?.data?.message || "Failed to assign Project Head.";
+        setError(msg);
+        return { success: false, error: msg };
+      }
+    },
+    [fetchProjects],
+  );
+
+  const removeProjectHead = useCallback(
+    async (projectId) => {
+      setError("");
+      setSuccess("");
+
+      try {
+        const response = await api.delete(`/projects/${projectId}/project-head`);
+        await fetchProjects();
+        setSuccess("Project Head removed successfully!");
+        return { success: true, project: response.data?.project };
+      } catch (err) {
+        const msg = err.response?.data?.message || "Failed to remove Project Head.";
+        setError(msg);
+        return { success: false, error: msg };
+      }
+    },
+    [fetchProjects],
+  );
+
   return {
     projects,
     loading,
@@ -168,6 +208,8 @@ function useProjects() {
     deleteProject,
     addMember,
     removeMember,
+    assignProjectHead,
+    removeProjectHead,
   };
 }
 

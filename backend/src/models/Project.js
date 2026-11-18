@@ -21,6 +21,12 @@ const projectSchema = new mongoose.Schema(
       required: true,
     },
 
+    projectHead: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
     members: [
       {
         type: mongoose.Schema.Types.ObjectId,

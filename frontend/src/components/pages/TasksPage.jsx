@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import useProjects from "../../hooks/useProjects";
 import useTasks from "../../hooks/useTasks";
 import TaskFilters from "../tasks/TaskFilters";
@@ -8,6 +8,7 @@ import TaskDetailModal from "../tasks/TaskDetailModal";
 import Alert from "../common/Alert";
 import Button from "../common/Button";
 import { PlusIcon } from "../common/Icons";
+import { useAuth } from "../../context/AuthContext";
 
 export function TasksPage({ user }) {
   const {
@@ -16,7 +17,10 @@ export function TasksPage({ user }) {
     fetchProjects,
   } = useProjects();
 
-  const taskState = useTasks(user, { limit: 100 });
+  const { user: authUser } = useAuth();
+  const effectiveUser = user || authUser;
+
+  const taskState = useTasks(effectiveUser, { limit: 100 });
   const { fetchTasks } = taskState;
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -38,14 +42,63 @@ export function TasksPage({ user }) {
     fetchTasks();
   }, [fetchTasks]);
 
-  const canCreateTask =
-    user?.role === "admin" ||
-    user?.role === "superadmin" ||
-    projects.some(
-      (project) =>
-        String(project.owner?._id || project.owner) ===
-        String(user?._id || user?.id),
+  const getEntityId = (entity) => {
+    if (!entity) return "";
+    if (typeof entity === "object") {
+      return String(entity._id || entity.id || entity.userId || "").trim();
+    }
+    return String(entity).trim();
+  };
+
+  const isSuperAdmin = effectiveUser?.role === "superadmin";
+  const currentUserId = getEntityId(effectiveUser);
+
+  // Helper function to check if effectiveUser can create tasks in a given project:
+  // - Super Admin: Can create tasks in any permitted project.
+  // - Admin: Can create tasks only in projects they own.
+  // - Project Owner (including legacy normal-user owners): Can create tasks in their own project.
+  // - Project Head: Can create tasks in their assigned project, select priority, and assign project members.
+  // - Normal Member: Cannot create tasks.
+  const canUserCreateTaskInProject = useCallback(
+    (project) => {
+      if (!project || !effectiveUser) return false;
+      if (isSuperAdmin) return true;
+      if (!currentUserId) return false;
+
+      const ownerId = getEntityId(project.owner);
+      const headId = getEntityId(project.projectHead);
+
+      const isOwner = ownerId !== "" && ownerId === currentUserId;
+      const isHead = headId !== "" && headId === currentUserId;
+
+      return isOwner || isHead;
+    },
+    [effectiveUser, isSuperAdmin, currentUserId],
+  );
+
+  // Projects where the user has permission to create tasks:
+  const permittedProjectsForTaskCreation = useMemo(() => {
+    if (!effectiveUser) return [];
+    if (isSuperAdmin) return projects;
+    return projects.filter((project) => canUserCreateTaskInProject(project));
+  }, [projects, effectiveUser, isSuperAdmin, canUserCreateTaskInProject]);
+
+  // If filtered by a specific project, verify permission under that specific project
+  const activePermittedProjects = useMemo(() => {
+    if (!taskState.projectFilter) {
+      return permittedProjectsForTaskCreation;
+    }
+    return permittedProjectsForTaskCreation.filter(
+      (p) => getEntityId(p) === String(taskState.projectFilter)
     );
+  }, [permittedProjectsForTaskCreation, taskState.projectFilter]);
+
+  const canCreateTask = activePermittedProjects.length > 0;
+
+  const handleOpenCreateModal = () => {
+    if (!canCreateTask) return;
+    setCreateModalOpen(true);
+  };
 
   return (
     <div className="space-y-5 text-left">
@@ -71,11 +124,14 @@ export function TasksPage({ user }) {
                 className="h-9 rounded-md border border-border bg-surface px-3 text-[13px] font-medium text-text-secondary outline-none focus:border-brand cursor-pointer transition-colors shadow-subtle"
               >
                 <option value="">All projects ({projects.length})</option>
-                {projects.map((p) => (
-                  <option key={p._id || p.id} value={p._id || p.id}>
-                    {p.name}
-                  </option>
-                ))}
+                {projects.map((p) => {
+                  const pid = getEntityId(p);
+                  return (
+                    <option key={pid} value={pid}>
+                      {p.name}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           )}
@@ -85,7 +141,7 @@ export function TasksPage({ user }) {
               variant="primary"
               size="md"
               icon={PlusIcon}
-              onClick={() => setCreateModalOpen(true)}
+              onClick={handleOpenCreateModal}
             >
               New task
             </Button>
@@ -114,7 +170,7 @@ export function TasksPage({ user }) {
         <TaskList
           tasks={taskState.tasks}
           projects={projects}
-          user={user}
+          user={effectiveUser}
           page={taskState.page}
           totalPages={taskState.totalPages}
           total={taskState.total}
@@ -129,16 +185,21 @@ export function TasksPage({ user }) {
       </div>
 
       {/* Modals */}
-      {createModalOpen && (
+      {createModalOpen && canCreateTask && (
         <CreateTaskModal
-          isOpen={createModalOpen}
+          isOpen={createModalOpen && canCreateTask}
           onClose={() => setCreateModalOpen(false)}
-          projects={projects}
+          projects={activePermittedProjects}
+          user={effectiveUser}
           onSubmit={async (payload) => {
+            if (!canCreateTask) {
+              return { success: false, error: "Unauthorized" };
+            }
             const res = await taskState.createTask(payload);
             if (res?.success !== false) {
               setCreateModalOpen(false);
             }
+            return res;
           }}
         />
       )}
@@ -147,9 +208,15 @@ export function TasksPage({ user }) {
         <TaskDetailModal
           isOpen={Boolean(selectedTask)}
           onClose={() => setSelectedTask(null)}
-          task={selectedTask}
+          task={
+            taskState.tasks.find(
+              (t) =>
+                String(t._id || t.id) ===
+                String(selectedTask._id || selectedTask.id),
+            ) || selectedTask
+          }
           projects={projects}
-          user={user}
+          user={effectiveUser}
           onUpdate={taskState.updateTask}
           onDelete={taskState.deleteTask}
         />

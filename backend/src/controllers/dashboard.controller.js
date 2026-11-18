@@ -30,30 +30,34 @@ const getDashboard = async (req, res) => {
     }
 
     const cacheKey = `dashboard:v${version}:user:${userId}:role:${currentUser.role}`;
-    console.log("Dashboard cache key:", cacheKey);
 
     try {
       const cachedDashboard = await redis.get(cacheKey);
 
       if (cachedDashboard !== null) {
         console.log("Dashboard fetched from Redis");
-
         return res.status(200).json(cachedDashboard);
       }
+
+      console.log("Dashboard Redis cache miss");
     } catch (error) {
       console.error("Redis read error:", error);
     }
 
-    // Set filters
+    // Set filters: only Super Admin gets global project/task counts.
+    // Regular Admins, Project Heads, and Members are scoped to associated projects.
     let projectFilter = {};
     let taskFilter = {};
 
-    const isAdmin =
-      currentUser.role === "admin" || currentUser.role === "superadmin";
+    const isSuperAdmin = currentUser.role === "superadmin";
 
-    if (!isAdmin) {
+    if (!isSuperAdmin) {
       const projects = await Project.find({
-        $or: [{ owner: userId }, { members: userId }],
+        $or: [
+          { owner: userId },
+          { members: userId },
+          { projectHead: userId },
+        ],
       }).select("_id");
 
       const projectIds = projects.map((project) => project._id);
@@ -115,12 +119,11 @@ const getDashboard = async (req, res) => {
       totalTasks,
     };
 
-    if (
-      currentUser.role === "admin" ||
-      currentUser.role === "superadmin"
-    ) {
+    if (currentUser.role === "superadmin" || currentUser.role === "admin") {
       summary.totalUsers = await User.countDocuments();
-    } else {
+    }
+
+    if (!isSuperAdmin) {
       const [assignedTasks, createdTasks] = await Promise.all([
         Task.countDocuments({
           ...taskFilter,
@@ -145,6 +148,7 @@ const getDashboard = async (req, res) => {
         byPriority,
       },
     };
+    console.log("Dashboard fetched from MongoDB");
 
     try {
       const latestVersion = Number(
@@ -155,6 +159,7 @@ const getDashboard = async (req, res) => {
         await redis.set(cacheKey, responseData, {
           ex: 60,
         });
+        console.log("Dashboard saved to Redis cache");
       }
     } catch (error) {
       console.error("Redis write error:", error);

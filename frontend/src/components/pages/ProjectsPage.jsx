@@ -8,6 +8,7 @@ import Alert from "../common/Alert";
 import Button from "../common/Button";
 import { PlusIcon } from "../common/Icons";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/AuthContext";
 
 export function ProjectsPage({ user }) {
   const { success, error: toastError } = useToast();
@@ -23,9 +24,17 @@ export function ProjectsPage({ user }) {
     deleteProject,
     addMember,
     removeMember,
+    assignProjectHead,
+    removeProjectHead,
   } = useProjects();
 
-  const taskState = useTasks(user, { limit: 100 });
+  const { user: authUser } = useAuth();
+  const effectiveUser = user || authUser;
+
+  const canCreateProject =
+    effectiveUser?.role === "admin" || effectiveUser?.role === "superadmin";
+
+  const taskState = useTasks(effectiveUser, { limit: 100 });
   const { fetchTasks } = taskState;
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -71,7 +80,7 @@ export function ProjectsPage({ user }) {
         <ProjectWorkspace
           project={selectedProject}
           allTasks={taskState.allTasks}
-          currentUser={user}
+          currentUser={effectiveUser}
           onBack={() => setSelectedProjectId(null)}
           onUpdateProject={updateProject}
           onDeleteProject={handleDeleteProject}
@@ -80,6 +89,8 @@ export function ProjectsPage({ user }) {
           onTaskDelete={taskState.deleteTask}
           onAddMember={addMember}
           onRemoveMember={removeMember}
+          onAssignProjectHead={assignProjectHead}
+          onRemoveProjectHead={removeProjectHead}
           onRefresh={fetchProjects}
         />
       ) : (
@@ -95,7 +106,7 @@ export function ProjectsPage({ user }) {
               </p>
             </div>
 
-            {user && (
+            {canCreateProject && (
               <Button
                 variant="primary"
                 size="md"
@@ -114,7 +125,7 @@ export function ProjectsPage({ user }) {
           <ProjectList
             projects={projects}
             tasks={taskState.allTasks}
-            user={user}
+            user={effectiveUser}
             loading={projectsLoading}
             onRefresh={fetchProjects}
             onSelectProject={(p) => setSelectedProjectId(p._id || p.id)}
@@ -122,6 +133,8 @@ export function ProjectsPage({ user }) {
             onDeleteProject={handleDeleteProject}
             onAddMember={addMember}
             onRemoveMember={removeMember}
+            onAssignProjectHead={assignProjectHead}
+            onRemoveProjectHead={removeProjectHead}
           />
 
           {/* Create Project Modal */}

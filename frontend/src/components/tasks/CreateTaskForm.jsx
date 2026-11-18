@@ -20,7 +20,7 @@ function CreateTaskForm({ projects = [], onCreate, loading = false }) {
   const [validationError, setValidationError] = useState("");
 
   const selectedProject = projects.find(
-    (item) => String(item._id) === String(project),
+    (item) => String(item._id || item.id) === String(project),
   );
 
   const projectMembers = [
@@ -138,7 +138,7 @@ function CreateTaskForm({ projects = [], onCreate, loading = false }) {
           >
             <option value="">Select project</option>
             {projects.map((item) => (
-              <option key={item._id} value={item._id}>
+              <option key={item._id || item.id} value={item._id || item.id}>
                 {item.name}
               </option>
             ))}

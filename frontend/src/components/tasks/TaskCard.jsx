@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { AvatarGroup } from "../common/Avatar";
-import { PriorityBadge } from "../common/Badge";
 import {
   CalendarIcon,
   TrashIcon,
 } from "../common/Icons";
+import { useAuth } from "../../context/AuthContext";
+import { getEntityId, getTaskPermissions } from "../../utils/taskPermissions";
+import TaskStatusDropdown from "./TaskStatusDropdown";
+import TaskPriorityDropdown from "./TaskPriorityDropdown";
 
 export function TaskCard({
   task,
@@ -14,44 +17,29 @@ export function TaskCard({
   onDelete,
   onClick,
 }) {
-  const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
-  const getId = (v) =>
-    typeof v === "object" && v !== null ? v._id || v.id : v;
+  const { user: authUser } = useAuth();
+  const effectiveUser = user || authUser;
 
-  const currentUserId = String(getId(user) || "");
+  const projectId = getEntityId(task.project);
+  const project = projects.find(
+    (item) => getEntityId(item) === String(projectId),
+  );
+
+  const {
+    canView,
+    canChangeStatus,
+    canChangePriority,
+    canDeleteTask,
+  } = getTaskPermissions(task, project, effectiveUser);
+
 
   const assignedUsers = Array.isArray(task.assignedTo)
     ? task.assignedTo
     : task.assignedTo
-    ? [task.assignedTo]
-    : [];
-
-  const projectId = getId(task.project);
-  const project = projects.find(
-    (item) => String(getId(item)) === String(projectId),
-  );
-
-  const projectOwnerId = String(getId(project?.owner) || "");
-  const isProjectOwner =
-    currentUserId !== "" && projectOwnerId === currentUserId;
-
-  const canManageTask = isAdmin || isProjectOwner;
-
-  const handlePriorityChange = async (e, newPriority) => {
-    e.stopPropagation();
-    if (!onUpdate || updating || newPriority === task.priority) return;
-    setUpdating(true);
-    try {
-      await onUpdate(task._id || task.id, { priority: newPriority });
-    } catch (error) {
-      console.error("Task priority update failed:", error);
-    } finally {
-      setUpdating(false);
-    }
-  };
+      ? [task.assignedTo]
+      : [];
 
   const handleDelete = async (e) => {
     e.stopPropagation();
@@ -79,39 +67,46 @@ export function TaskCard({
 
   const formattedDueDate = task.dueDate
     ? new Date(task.dueDate).toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-      })
+      month: "short",
+      day: "numeric",
+    })
     : null;
 
   return (
     <article
-      onClick={() => onClick && onClick(task)}
-      className="group relative flex flex-col justify-between rounded-lg border border-border bg-surface hover:bg-surface-subtle/50 p-3.5 shadow-subtle transition-colors hover:border-brand/40 cursor-pointer text-left"
+      onClick={() => {
+        if (canView && onClick) {
+          onClick(task);
+        }
+      }}
+      className={`group relative flex flex-col justify-between rounded-lg border border-border bg-surface p-3.5 shadow-subtle transition-colors ${canView
+        ? "hover:bg-surface-subtle/50 hover:border-brand/40 cursor-pointer"
+        : "opacity-85 cursor-default"
+        } text-left`}
     >
       <div>
-        {/* Top Header: Compact Inline Priority + Delete Action (Status pill removed per column context) */}
+        {/* Top Header: Inline Status & Priority Dropdowns + Delete Action */}
         <div className="flex items-center justify-between gap-2">
-          <div className="inline-flex items-center">
-            {canManageTask ? (
-              <select
-                aria-label="Change priority"
-                value={task.priority || "low"}
-                disabled={updating}
-                onClick={(e) => e.stopPropagation()}
-                onChange={(e) => handlePriorityChange(e, e.target.value)}
-                className="h-6 rounded border border-border bg-surface-subtle px-2 text-[12px] font-medium text-text-secondary outline-none focus:border-brand cursor-pointer disabled:opacity-50 transition-colors"
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            ) : (
-              <PriorityBadge priority={task.priority} size="xs" />
-            )}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <TaskStatusDropdown
+              status={task.status}
+              canEdit={canChangeStatus}
+              onUpdate={(newStatus) =>
+                onUpdate?.(task._id || task.id, { status: newStatus })
+              }
+              size="xs"
+            />
+            <TaskPriorityDropdown
+              priority={task.priority}
+              canEdit={canChangePriority}
+              onUpdate={(newPriority) =>
+                onUpdate?.(task._id || task.id, { priority: newPriority })
+              }
+              size="xs"
+            />
           </div>
 
-          {canManageTask && (
+          {canDeleteTask && (
             <button
               type="button"
               onClick={handleDelete}
@@ -151,23 +146,23 @@ export function TaskCard({
 
             {formattedDueDate && (
               <span
-                className={`flex items-center gap-1 text-[12px] font-medium shrink-0 ${
-                  isOverdue
-                    ? "text-accent font-semibold"
-                    : "text-text-tertiary"
-                }`}
-                title={`Due: ${formattedDueDate}`}
+                className={`flex items-center gap-1 text-[12px] font-medium shrink-0 ${isOverdue
+                  ? "text-accent font-semibold"
+                  : "text-text-secondary"
+                  }`}
               >
-                <CalendarIcon className="h-3.5 w-3.5" />
+                <CalendarIcon className="h-3 w-3" />
                 <span>{formattedDueDate}</span>
               </span>
             )}
           </div>
 
-          {/* Assigned Avatars */}
-          <div className="shrink-0">
-            <AvatarGroup users={assignedUsers} max={2} size="xs" />
-          </div>
+          {/* Assigned Members Avatars */}
+          {assignedUsers.length > 0 && (
+            <div className="shrink-0">
+              <AvatarGroup users={assignedUsers} size="xs" max={2} />
+            </div>
+          )}
         </div>
       </div>
     </article>

@@ -1,7 +1,9 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import Modal from "../common/Modal";
 import Alert from "../common/Alert";
 import { PlusIcon } from "../common/Icons";
+import { useAuth } from "../../context/AuthContext";
 
 function getTodayDate() {
   const today = new Date();
@@ -15,26 +17,72 @@ export function CreateTaskModal({
   isOpen,
   onClose,
   projects = [],
+  user,
+  currentUser,
   onSubmit,
   onCreate,
   loading = false,
 }) {
   const submitAction = onSubmit || onCreate;
+  const { user: authUser } = useAuth();
+  const effectiveUser = user || currentUser || authUser;
+
+  const getEntityId = (entity) => {
+    if (!entity) return "";
+    if (typeof entity === "object") {
+      return String(entity._id || entity.id || entity.userId || "").trim();
+    }
+    return String(entity).trim();
+  };
+
+  const currentUserId = getEntityId(effectiveUser);
+  const isAdmin = ["admin", "superadmin"].includes(effectiveUser?.role);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [project, setProject] = useState(projects.length === 1 ? (projects[0]._id || projects[0].id) : "");
+  const [project, setProject] = useState(
+    projects.length === 1 ? getEntityId(projects[0]) : "",
+  );
+  const [status, setStatus] = useState("todo");
   const [priority, setPriority] = useState("low");
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState(getTodayDate());
   const [validationError, setValidationError] = useState("");
 
+  useEffect(() => {
+    if (projects.length === 1) {
+      setProject(getEntityId(projects[0]));
+    } else if (
+      project &&
+      !projects.some((p) => getEntityId(p) === String(project))
+    ) {
+      setProject("");
+    }
+  }, [projects, project]);
+
   const selectedProject = projects.find(
-    (item) => String(item._id || item.id) === String(project),
+    (item) => getEntityId(item) === String(project),
+  );
+
+  const ownerId = getEntityId(selectedProject?.owner);
+  const headId = getEntityId(selectedProject?.projectHead);
+
+  const isOwner =
+    currentUserId !== "" && ownerId !== "" && ownerId === currentUserId;
+
+  const isProjectHead =
+    currentUserId !== "" &&
+    headId === currentUserId &&
+    !isAdmin &&
+    !isOwner;
+
+  const canCreateInSelected = Boolean(
+    selectedProject && (isAdmin || isOwner || isProjectHead),
   );
 
   const projectMembers = [
     ...(selectedProject?.owner ? [selectedProject.owner] : []),
+    ...(selectedProject?.projectHead ? [selectedProject.projectHead] : []),
     ...(selectedProject?.members || []),
   ].filter(
     (member, index, members) =>
@@ -58,6 +106,13 @@ export function CreateTaskModal({
       return;
     }
 
+    if (!selectedProject || !canCreateInSelected) {
+      setValidationError(
+        "You do not have permission to create tasks in this project.",
+      );
+      return;
+    }
+
     if (!assignedTo) {
       setValidationError("Please select at least one task assignee.");
       return;
@@ -77,7 +132,7 @@ export function CreateTaskModal({
       title: title.trim(),
       description: description.trim(),
       priority,
-      status: "todo",
+      status,
       project,
       ...(assignedTo === "ALL"
         ? { assignToAll: true }
@@ -87,10 +142,12 @@ export function CreateTaskModal({
 
     try {
       const created = await submitAction(payload);
+
       if (created?.success !== false) {
         setTitle("");
         setDescription("");
         setProject("");
+        setStatus("todo");
         setPriority("low");
         setAssignedTo("");
         setDueDate(getTodayDate());
@@ -112,16 +169,19 @@ export function CreateTaskModal({
     >
       {projects.length === 0 ? (
         <div className="rounded-lg border border-border bg-surface-subtle p-4 text-center text-sm text-text-secondary">
-          <p className="font-medium text-text-primary">No active projects available.</p>
+          <p className="font-medium text-text-primary">
+            No active projects available.
+          </p>
           <p className="mt-1 text-[13px] text-text-secondary">
             Please create or join a project first before creating tasks.
           </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 text-left">
-          {validationError && <Alert message={validationError} type="error" />}
+          {validationError && (
+            <Alert message={validationError} type="error" />
+          )}
 
-          {/* Project Workspace Selector */}
           <div>
             <label className="mb-1 block text-[13px] font-medium text-text-secondary">
               Project <span className="text-accent">*</span>
@@ -144,7 +204,6 @@ export function CreateTaskModal({
             </select>
           </div>
 
-          {/* Title */}
           <div>
             <label className="mb-1 block text-[13px] font-medium text-text-secondary">
               Task title <span className="text-accent">*</span>
@@ -160,7 +219,6 @@ export function CreateTaskModal({
             />
           </div>
 
-          {/* Description */}
           <div>
             <label className="mb-1 block text-[13px] font-medium text-text-secondary">
               Description <span className="text-text-tertiary font-normal">(optional)</span>
@@ -175,8 +233,24 @@ export function CreateTaskModal({
             />
           </div>
 
-          {/* Priority & Assignee Grid */}
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-[13px] font-medium text-text-secondary">
+                Status
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary outline-none focus:border-brand transition-colors cursor-pointer shadow-subtle"
+              >
+                <option value="todo">To do</option>
+                <option value="in-progress">In Progress</option>
+                <option value="testing">Testing</option>
+                <option value="completed">Completed</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+
             <div>
               <label className="mb-1 block text-[13px] font-medium text-text-secondary">
                 Priority
@@ -191,34 +265,35 @@ export function CreateTaskModal({
                 <option value="high">High priority</option>
               </select>
             </div>
-
-            <div>
-              <label className="mb-1 block text-[13px] font-medium text-text-secondary">
-                Assigned team member <span className="text-accent">*</span>
-              </label>
-              <select
-                value={assignedTo}
-                onChange={(e) => setAssignedTo(e.target.value)}
-                disabled={!project}
-                required
-                className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary outline-none focus:border-brand transition-colors cursor-pointer shadow-subtle disabled:opacity-50"
-              >
-                <option value="">
-                  {project ? "Select assignee..." : "Choose a project first..."}
-                </option>
-                {projectMembers.length > 1 && (
-                  <option value="ALL">All project members ({projectMembers.length})</option>
-                )}
-                {projectMembers.map((m) => (
-                  <option key={m._id || m.email} value={m.email}>
-                    {m.name || m.email} ({m.email})
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
-          {/* Due Date */}
+          <div>
+            <label className="mb-1 block text-[13px] font-medium text-text-secondary">
+              Assigned team member <span className="text-accent">*</span>
+            </label>
+            <select
+              value={assignedTo}
+              onChange={(e) => setAssignedTo(e.target.value)}
+              disabled={!project}
+              required
+              className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary outline-none focus:border-brand transition-colors cursor-pointer shadow-subtle disabled:opacity-50"
+            >
+              <option value="">
+                {project ? "Select assignee..." : "Choose a project first..."}
+              </option>
+              {projectMembers.length > 1 && (
+                <option value="ALL">
+                  All project members ({projectMembers.length})
+                </option>
+              )}
+              {projectMembers.map((member) => (
+                <option key={member._id || member.email} value={member.email}>
+                  {member.name || member.email} ({member.email})
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="mb-1 block text-[13px] font-medium text-text-secondary">
               Due date
@@ -243,7 +318,13 @@ export function CreateTaskModal({
 
             <button
               type="submit"
-              disabled={loading || !title.trim() || !project || !assignedTo}
+              disabled={
+                loading ||
+                !title.trim() ||
+                !project ||
+                !assignedTo ||
+                !canCreateInSelected
+              }
               className="h-9 inline-flex items-center gap-1.5 rounded-md bg-brand hover:bg-brand-hover px-4 text-[13px] font-medium text-brand-text shadow-subtle transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? (

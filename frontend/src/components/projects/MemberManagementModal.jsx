@@ -8,9 +8,11 @@ export function MemberManagementModal({
   isOpen,
   onClose,
   project,
-  canManage = true,
+  canManage = false,
   onAddMember,
   onRemoveMember,
+  onAssignProjectHead,
+  onRemoveProjectHead,
   addingMember,
   removingMember,
 }) {
@@ -22,6 +24,9 @@ export function MemberManagementModal({
 
   const owner = project.owner;
   const ownerId = typeof owner === "object" ? owner?._id || owner?.id : owner;
+  const headId = typeof project.projectHead === "object"
+    ? project.projectHead?._id || project.projectHead?.id
+    : project.projectHead;
   const members = Array.isArray(project.members) ? project.members : [];
 
   const handleAdd = async (e) => {
@@ -44,6 +49,36 @@ export function MemberManagementModal({
       }
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to add member.");
+    }
+  };
+
+  const handleAssignHead = async (targetEmail) => {
+    setError("");
+    setSuccess("");
+    try {
+      const res = await onAssignProjectHead?.(project._id || project.id, targetEmail);
+      if (res?.success !== false) {
+        setSuccess(`Assigned Project Head successfully.`);
+      } else {
+        setError(res?.error || "Failed to assign Project Head.");
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to assign Project Head.");
+    }
+  };
+
+  const handleRemoveHead = async () => {
+    setError("");
+    setSuccess("");
+    try {
+      const res = await onRemoveProjectHead?.(project._id || project.id);
+      if (res?.success !== false) {
+        setSuccess(`Project Head removed successfully.`);
+      } else {
+        setError(res?.error || "Failed to remove Project Head.");
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to remove Project Head.");
     }
   };
 
@@ -150,6 +185,7 @@ export function MemberManagementModal({
               const mId = typeof member === "object" ? member?._id || member?.id : member;
               const isOwner = String(mId) === String(ownerId);
               if (isOwner) return null;
+              const isHead = headId && String(mId) === String(headId);
 
               return (
                 <div
@@ -169,20 +205,47 @@ export function MemberManagementModal({
                   </div>
 
                   <div className="flex items-center gap-2.5">
-                    <span className="shrink-0 rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
-                      Member
-                    </span>
+                    {isHead ? (
+                      <span className="shrink-0 rounded-md border border-brand/30 bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-brand">
+                        Project Head
+                      </span>
+                    ) : (
+                      <span className="shrink-0 rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
+                        Member
+                      </span>
+                    )}
 
                     {canManage && (
-                      <button
-                        type="button"
-                        disabled={removingMember}
-                        onClick={() => handleRemove(member)}
-                        className="text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:underline p-1 transition-colors cursor-pointer"
-                        title="Remove member from project"
-                      >
-                        Remove
-                      </button>
+                      <>
+                        {isHead ? (
+                          <button
+                            type="button"
+                            onClick={handleRemoveHead}
+                            className="text-[12px] font-medium text-text-secondary hover:underline p-1 cursor-pointer"
+                            title="Remove as Project Head"
+                          >
+                            Remove Head
+                          </button>
+                        ) : !headId ? (
+                          <button
+                            type="button"
+                            onClick={() => handleAssignHead(member.email)}
+                            className="text-[12px] font-medium text-brand hover:underline p-1 cursor-pointer"
+                            title="Assign as Project Head"
+                          >
+                            Make Head
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          disabled={removingMember}
+                          onClick={() => handleRemove(member)}
+                          className="text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:underline p-1 transition-colors cursor-pointer"
+                          title="Remove member from project"
+                        >
+                          Remove
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>

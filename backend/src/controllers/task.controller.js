@@ -1,48 +1,33 @@
+
 const Task = require("../models/Task");
-
 const Project = require("../models/Project");
-
 const User = require("../models/User");
-
+const Comment = require("../models/Comment");
 const mongoose = require("mongoose");
-
-const validStatuses = ["todo", "in-progress", "completed", "testing", "done"];
-
-const validPriorities = ["low", "medium", "high"];
-
 const crypto = require("crypto");
-
 const redis = require("../config/redis");
-
+const { sendTaskAssignmentEmail } = require("../config/mailer");
 const {
   TASK_CACHE_VERSION_KEY,
-
   invalidateTaskRelatedCaches,
 } = require("../utils/cache");
 
-// CREATE TASK
+const validStatuses = ["todo", "in-progress", "completed", "testing", "done"];
+const validPriorities = ["low", "medium", "high"];
 
-// Admin, project owner, or project member
+// CREATE TASK
 
 const createTask = async (req, res) => {
   try {
     const { userId, role } = req.user;
-
     const {
       title,
-
       description,
-
       status,
-
       priority,
-
       project: projectId,
-
       assignedTo,
-
       assignToAll,
-
       dueDate,
     } = req.body;
 
@@ -58,7 +43,11 @@ const createTask = async (req, res) => {
       });
     }
 
-    if (description && typeof description === "string" && description.trim().length > 1000) {
+    if (
+      description &&
+      typeof description === "string" &&
+      description.trim().length > 1000
+    ) {
       return res.status(400).json({
         message: "Task description cannot exceed 1000 characters",
       });
@@ -78,23 +67,25 @@ const createTask = async (req, res) => {
       });
     }
 
-    const isAdmin = role === "admin" || role === "superadmin";
+    const isAdmin = ["admin", "superadmin"].includes(role);
     const isOwner = foundProject.owner.toString() === userId.toString();
+    const isProjectHead = Boolean(
+      foundProject.projectHead &&
+      foundProject.projectHead.toString() === userId.toString(),
+    );
 
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin && !isOwner && !isProjectHead) {
       return res.status(403).json({
-        message: "Only Admin or Project Owner can create tasks",
+        message: "Only Admin, Project Owner, or Project Head can create tasks",
       });
     }
 
     const taskStatus = status ?? "todo";
-
     const taskPriority = priority ?? "low";
 
     if (!validStatuses.includes(taskStatus)) {
       return res.status(400).json({
         message: "Invalid status",
-
         allowed: validStatuses,
       });
     }
@@ -102,7 +93,6 @@ const createTask = async (req, res) => {
     if (!validPriorities.includes(taskPriority)) {
       return res.status(400).json({
         message: "Invalid priority",
-
         allowed: validPriorities,
       });
     }
@@ -119,39 +109,23 @@ const createTask = async (req, res) => {
       }
     }
 
-    if (
-      assignToAll !== true &&
-      (!Array.isArray(assignedTo) || assignedTo.length === 0)
-    ) {
-      return res.status(400).json({
-        message: "Please assign this task to at least one member",
-      });
-    }
+    let assignedUserIds = [];
 
     const eligibleIds = [
       foundProject.owner.toString(),
-
+      ...(foundProject.projectHead
+        ? [foundProject.projectHead.toString()]
+        : []),
       ...foundProject.members.map((id) => id.toString()),
     ];
 
     const uniqueEligibleIds = [...new Set(eligibleIds)];
 
-    let assignedUserIds = [];
-
     if (assignToAll === true) {
       assignedUserIds = uniqueEligibleIds;
-    } else {
-      if (!Array.isArray(assignedTo)) {
-        return res.status(400).json({
-          message: "Assigned users must be provided as an array",
-        });
-      }
-
+    } else if (Array.isArray(assignedTo) && assignedTo.length > 0) {
       const emails = assignedTo.map((email) => {
-        if (typeof email !== "string" || !email.trim()) {
-          return null;
-        }
-
+        if (typeof email !== "string" || !email.trim()) return null;
         return email.trim().toLowerCase();
       });
 
@@ -184,9 +158,7 @@ const createTask = async (req, res) => {
       }
 
       assignedUserIds = users.map((user) => user._id);
-    }
-
-    if (assignedUserIds.length === 0) {
+    } else {
       return res.status(400).json({
         message: "Please assign this task to at least one member",
       });
@@ -194,71 +166,79 @@ const createTask = async (req, res) => {
 
     const task = await Task.create({
       title: title.trim(),
-
       description: typeof description === "string" ? description.trim() : "",
-
       status: taskStatus,
-
       priority: taskPriority,
-
       project: foundProject._id,
-
       assignedTo: assignedUserIds,
-
       createdBy: userId,
-
+      assignedAt: assignedUserIds.length > 0 ? new Date() : null,
+      submittedBy: null,
+      submittedAt: null,
       dueDate: parsedDueDate,
     });
 
     await task.populate([
-      { path: "project", select: "name" },
-
+      { path: "project", select: "name owner projectHead" },
       { path: "assignedTo", select: "name email" },
-
       { path: "createdBy", select: "name email" },
+      { path: "submittedBy", select: "name email" },
     ]);
+
+    const emailResults = await Promise.allSettled(
+      task.assignedTo
+        .filter((member) => member.email)
+        .map((member) =>
+          sendTaskAssignmentEmail({
+            to: member.email,
+            task,
+            projectName: task.project.name,
+            assignedBy: task.createdBy.name,
+          }),
+        ),
+    );
+
+    emailResults.forEach((result) => {
+      if (result.status === "rejected") {
+        console.error(
+          "Task assignment email failed:",
+          result.reason.message,
+        );
+      }
+    });
 
     await invalidateTaskRelatedCaches();
 
     return res.status(201).json({
       message: "Task created successfully",
-
       task,
     });
   } catch (error) {
     console.error("Create task error:", error);
-
     return res.status(500).json({
       message: "Failed to create task",
     });
   }
 };
 
-// GET TASKS
 
+// GET TASKS
 const getTasks = async (req, res) => {
   try {
     const { userId, role } = req.user;
     const {
       status,
-
       priority,
-
       search,
-
       assignedTo,
-
       project,
-
       page = 1,
-
       limit = 10,
     } = req.query;
 
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({
         message: "Invalid status",
-
         allowed: validStatuses,
       });
     }
@@ -266,7 +246,6 @@ const getTasks = async (req, res) => {
     if (priority && !validPriorities.includes(priority)) {
       return res.status(400).json({
         message: "Invalid priority",
-
         allowed: validPriorities,
       });
     }
@@ -284,12 +263,15 @@ const getTasks = async (req, res) => {
     }
 
     const filter = {};
+    const isSuperAdmin = role === "superadmin";
 
-    const isAdmin = role === "admin" || role === "superadmin";
-
-    if (!isAdmin) {
+    if (!isSuperAdmin) {
       const projects = await Project.find({
-        $or: [{ owner: userId }, { members: userId }],
+        $or: [
+          { owner: userId },
+          { members: userId },
+          { projectHead: userId },
+        ],
       }).select("_id");
 
       const userProjectIds = projects.map((item) => item._id.toString());
@@ -300,6 +282,7 @@ const getTasks = async (req, res) => {
             message: "You can only view tasks from projects you belong to",
           });
         }
+
         filter.project = project;
       } else {
         filter.project = {
@@ -308,11 +291,6 @@ const getTasks = async (req, res) => {
       }
 
       if (assignedTo) {
-        if (assignedTo !== userId.toString()) {
-          return res.status(403).json({
-            message: "You can only view your own assigned tasks",
-          });
-        }
         filter.assignedTo = assignedTo;
       }
     } else {
@@ -321,33 +299,26 @@ const getTasks = async (req, res) => {
     }
 
     if (status) filter.status = status;
-
     if (priority) filter.priority = priority;
 
     if (search && search.trim()) {
       const escapedSearch = search
-
         .trim()
-
         .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
       filter.$and = [
         ...(filter.$and || []),
-
         {
           $or: [
             {
               title: {
                 $regex: escapedSearch,
-
                 $options: "i",
               },
             },
-
             {
               description: {
                 $regex: escapedSearch,
-
                 $options: "i",
               },
             },
@@ -357,90 +328,142 @@ const getTasks = async (req, res) => {
     }
 
     const pageNumber = Math.max(Number(page) || 1, 1);
-
     const limitNumber = Math.min(Math.max(Number(limit) || 10, 1), 100);
-
     const skip = (pageNumber - 1) * limitNumber;
 
     const cacheParams = {
       userId: userId.toString(),
-
-      role: role,
-
+      role,
       status: status || "",
-
       priority: priority || "",
-
       search: search?.trim() || "",
-
       assignedTo: assignedTo || "",
-
       project: project || "",
-
       page: pageNumber,
-
       limit: limitNumber,
     };
 
     const cacheHash = crypto
-
       .createHash("sha256")
-
       .update(JSON.stringify(cacheParams))
-
       .digest("hex");
 
     let cacheKey = null;
-
     let cacheVersion = null;
 
     try {
       cacheVersion = (await redis.get(TASK_CACHE_VERSION_KEY)) ?? 0;
-
       cacheKey = `tasks:v${cacheVersion}:user:${userId}:role:${role}:${cacheHash}`;
 
       const cachedTasks = await redis.get(cacheKey);
 
       if (cachedTasks !== null) {
         console.log("Tasks fetched from Redis");
-
         return res.status(200).json(cachedTasks);
       }
 
-      console.log("Tasks cache miss");
+      console.log("Tasks Redis cache miss");
     } catch (error) {
       console.error("Tasks Redis cache read error:", error);
-
       cacheKey = null;
     }
 
-    const [tasks, totalTasks] = await Promise.all([
+    const [rawTasks, totalTasks] = await Promise.all([
       Task.find(filter)
-
-        .populate("project", "name")
-
+        .populate("project", "name owner projectHead")
         .populate("assignedTo", "name email")
-
         .populate("createdBy", "name email")
-
+        .populate("submittedBy", "name email")
         .sort({ createdAt: -1 })
-
         .skip(skip)
-
         .limit(limitNumber),
-
       Task.countDocuments(filter),
     ]);
 
+    console.log("Tasks fetched from MongoDB");
+
+    const tasks = rawTasks.map((t) => {
+      const taskObj = t.toObject();
+
+      if (isSuperAdmin) return taskObj;
+
+      const pOwner =
+        taskObj.project?.owner?.toString?.() || taskObj.project?.owner;
+      const pHead =
+        taskObj.project?.projectHead?.toString?.() ||
+        taskObj.project?.projectHead;
+
+      const isOwner = pOwner === userId.toString();
+      const isHead = pHead === userId.toString();
+
+      if (isOwner || isHead) {
+        return taskObj;
+      }
+
+      const isAssigned =
+        Array.isArray(taskObj.assignedTo) &&
+        taskObj.assignedTo.some(
+          (u) => (u._id || u).toString() === userId.toString(),
+        );
+
+      const sanitizedProject = taskObj.project
+        ? {
+          _id: taskObj.project._id,
+          name: taskObj.project.name,
+        }
+        : undefined;
+
+      if (isAssigned) {
+        return {
+          _id: taskObj._id,
+          title: taskObj.title,
+          description: taskObj.description,
+          status: taskObj.status,
+          priority: taskObj.priority,
+          dueDate: taskObj.dueDate,
+          project: sanitizedProject,
+          assignedTo: (taskObj.assignedTo || []).map((u) => ({
+            _id: u._id,
+            name: u.name,
+          })),
+          createdBy: taskObj.createdBy
+            ? {
+              _id: taskObj.createdBy._id,
+              name: taskObj.createdBy.name,
+            }
+            : undefined,
+          createdAt: taskObj.createdAt,
+          assignedAt: taskObj.assignedAt,
+          submittedBy: taskObj.submittedBy
+            ? {
+              _id: taskObj.submittedBy._id,
+              name: taskObj.submittedBy.name,
+            }
+            : null,
+          submittedAt: taskObj.submittedAt,
+          updatedAt: taskObj.updatedAt,
+        };
+      }
+
+      return {
+        _id: taskObj._id,
+        title: taskObj.title,
+        description: "",
+        status: taskObj.status,
+        priority: taskObj.priority,
+        dueDate: taskObj.dueDate,
+        project: sanitizedProject,
+        assignedTo: [],
+        createdAt: taskObj.createdAt,
+        updatedAt: taskObj.updatedAt,
+      };
+    });
+
     const responseData = {
       count: tasks.length,
-
       totalTasks,
-
       currentPage: pageNumber,
-
       totalPages: Math.ceil(totalTasks / limitNumber),
-
       tasks,
     };
 
@@ -452,6 +475,8 @@ const getTasks = async (req, res) => {
           await redis.set(cacheKey, responseData, {
             ex: 60,
           });
+
+          console.log("Tasks saved to Redis cache");
         }
       } catch (error) {
         console.error("Tasks Redis cache write error:", error);
@@ -461,66 +486,171 @@ const getTasks = async (req, res) => {
     return res.status(200).json(responseData);
   } catch (error) {
     console.error("Get tasks error:", error);
-
     return res.status(500).json({
       message: "Failed to fetch tasks",
     });
   }
 };
 
-// UPDATE TASK
-
-const updateTask = async (req, res) => {
+// GET TASK BY ID
+const getTaskById = async (req, res) => {
   try {
     const { userId, role } = req.user;
-
     const { taskId } = req.params;
 
     if (!mongoose.isValidObjectId(taskId)) {
-      return res.status(400).json({ message: "Invalid task ID" });
+      return res.status(400).json({
+        message: "Invalid task ID",
+      });
+    }
+
+    const task = await Task.findById(taskId)
+      .populate("project", "name owner projectHead members")
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .populate("submittedBy", "name email");
+
+    if (!task) {
+      return res.status(404).json({
+        message: "Task not found",
+      });
+    }
+
+    if (role === "superadmin") {
+      return res.status(200).json({ task });
+    }
+
+    const project = task.project;
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Associated project not found",
+      });
+    }
+
+    const pOwner = project.owner?.toString?.() || project.owner;
+    const pHead = project.projectHead?.toString?.() || project.projectHead;
+
+    const isOwner = pOwner === userId.toString();
+    const isHead = pHead === userId.toString();
+
+    const isAssigned =
+      Array.isArray(task.assignedTo) &&
+      task.assignedTo.some(
+        (u) => (u._id || u).toString() === userId.toString(),
+      );
+
+    const isMember =
+      Array.isArray(project.members) &&
+      project.members.some((m) => m.toString() === userId.toString());
+
+    if (!isOwner && !isHead && !isAssigned) {
+      if (isMember) {
+        return res.status(403).json({
+          message:
+            "Members can only view task details for tasks assigned to them",
+        });
+      }
+
+      return res.status(403).json({
+        message: "You do not have permission to view this task",
+      });
+    }
+
+    if (isOwner || isHead) {
+      return res.status(200).json({ task });
+    }
+
+    const sanitizedTask = {
+      _id: task._id,
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      project: {
+        _id: project._id,
+        name: project.name,
+      },
+      assignedTo: (task.assignedTo || []).map((u) => ({
+        _id: u._id,
+        name: u.name,
+      })),
+      createdBy: task.createdBy
+        ? {
+          _id: task.createdBy._id,
+          name: task.createdBy.name,
+        }
+        : undefined,
+      createdAt: task.createdAt,
+      assignedAt: task.assignedAt,
+      submittedBy: task.submittedBy
+        ? {
+          _id: task.submittedBy._id,
+          name: task.submittedBy.name,
+        }
+        : null,
+      submittedAt: task.submittedAt,
+      updatedAt: task.updatedAt,
+    };
+
+    return res.status(200).json({
+      task: sanitizedTask,
+    });
+  } catch (error) {
+    console.error("Get task by ID error:", error);
+    return res.status(500).json({
+      message: "Failed to fetch task details",
+    });
+  }
+};
+
+// UPDATE TASK
+const updateTask = async (req, res) => {
+  try {
+    const { userId, role } = req.user;
+    const { taskId } = req.params;
+
+    if (!mongoose.isValidObjectId(taskId)) {
+      return res.status(400).json({
+        message: "Invalid task ID",
+      });
     }
 
     const task = await Task.findById(taskId);
 
     if (!task) {
-      return res.status(404).json({ message: "Task not found" });
+      return res.status(404).json({
+        message: "Task not found",
+      });
     }
 
     const project = await Project.findById(task.project);
 
     if (!project) {
-      return res.status(404).json({ message: "Project not found" });
+      return res.status(404).json({
+        message: "Project not found",
+      });
     }
 
-    const isAdmin = role === "admin" || role === "superadmin";
-    const isProjectOwner = project.owner.toString() === userId.toString();
+    const isAdmin = ["admin", "superadmin"].includes(role);
 
-    const isAssignedUser = task.assignedTo.some(
-      (id) => id.toString() === userId.toString(),
+    const isProjectOwner = Boolean(
+      project.owner && project.owner.toString() === userId.toString(),
     );
 
-    if (!isAdmin && !isProjectOwner) {
-      if (!isAssignedUser) {
-        return res.status(403).json({
-          message: "You can only update tasks assigned to you",
-        });
-      }
+    const isProjectHead = Boolean(
+      project.projectHead &&
+      project.projectHead.toString() === userId.toString(),
+    );
 
-      const keys = Object.keys(req.body);
+    const isAssignedUser =
+      Array.isArray(task.assignedTo) &&
+      task.assignedTo.some(
+        (id) => (id._id || id).toString() === userId.toString(),
+      );
 
-      const onlyStatus =
-        keys.length === 1 &&
-        keys[0] === "status" &&
-        validStatuses.includes(req.body.status);
-
-      if (!onlyStatus) {
-        return res.status(403).json({
-          message: "Members can only update task status",
-        });
-      }
-
-      task.status = req.body.status;
-    } else {
+    if (isAdmin || isProjectOwner || isProjectHead) {
       const { title, description, status, priority, dueDate, assignedTo } =
         req.body;
 
@@ -564,6 +694,11 @@ const updateTask = async (req, res) => {
           });
         }
 
+        if (status !== "completed" && task.status === "completed") {
+          task.submittedBy = null;
+          task.submittedAt = null;
+        }
+
         task.status = status;
       }
 
@@ -603,8 +738,13 @@ const updateTask = async (req, res) => {
 
         const eligibleIds = [
           project.owner.toString(),
+          ...(project.projectHead
+            ? [project.projectHead.toString()]
+            : []),
           ...project.members.map((id) => id.toString()),
         ];
+
+        const uniqueEligibleIds = [...new Set(eligibleIds)];
 
         const emails = assignedTo.map((email) =>
           typeof email === "string" ? email.trim().toLowerCase() : "",
@@ -628,24 +768,63 @@ const updateTask = async (req, res) => {
           });
         }
 
-        if (users.some((user) => !eligibleIds.includes(user._id.toString()))) {
+        if (
+          users.some(
+            (user) => !uniqueEligibleIds.includes(user._id.toString()),
+          )
+        ) {
           return res.status(400).json({
             message: "All assignees must belong to this project",
           });
         }
 
+        const newAssignedIds = users.map((user) => user._id.toString());
+        const currentAssignedIds = task.assignedTo.map((id) => id.toString());
+
+        const assignmentChanged =
+          newAssignedIds.length !== currentAssignedIds.length ||
+          newAssignedIds.some((id) => !currentAssignedIds.includes(id));
+
+        if (assignmentChanged) {
+          task.assignedAt = new Date();
+        }
+
         task.assignedTo = users.map((user) => user._id);
       }
+    } else if (isAssignedUser) {
+      const keys = Object.keys(req.body);
+
+      const onlyCompleted =
+        keys.length === 1 &&
+        keys[0] === "status" &&
+        req.body.status === "completed";
+
+      if (!onlyCompleted) {
+        return res.status(403).json({
+          message:
+            "Members can only submit tasks by setting status to completed",
+        });
+      }
+
+      if (task.status !== "completed") {
+        task.status = "completed";
+        task.submittedBy = userId;
+        task.submittedAt = new Date();
+      }
+    } else {
+      return res.status(403).json({
+        message: "You can only update tasks assigned to you",
+      });
     }
 
     await task.save();
-
     await invalidateTaskRelatedCaches();
 
     await task.populate([
-      { path: "project", select: "name" },
+      { path: "project", select: "name owner projectHead" },
       { path: "assignedTo", select: "name email" },
       { path: "createdBy", select: "name email" },
+      { path: "submittedBy", select: "name email" },
     ]);
 
     return res.status(200).json({
@@ -654,15 +833,13 @@ const updateTask = async (req, res) => {
     });
   } catch (error) {
     console.error("Update task error:", error);
-
     return res.status(500).json({
       message: "Failed to update task",
     });
   }
 };
 
-// DELETE TASK: ADMIN OR PROJECT OWNER
-
+// DELETE TASK
 const deleteTask = async (req, res) => {
   try {
     const { taskId } = req.params;
@@ -682,19 +859,34 @@ const deleteTask = async (req, res) => {
     }
 
     const project = await Project.findById(task.project);
-    const isAdmin =
-      req.user.role === "admin" || req.user.role === "superadmin";
-    const isProjectOwner =
-      project && project.owner.toString() === req.user.userId;
 
-    if (!isAdmin && !isProjectOwner) {
+    const isSuperAdmin = req.user.role === "superadmin";
+    const isAdmin = req.user.role === "admin";
+
+    const isProjectOwner = Boolean(
+      project &&
+      project.owner &&
+      project.owner.toString() === req.user.userId,
+    );
+
+    const isProjectHead = Boolean(
+      project &&
+      project.projectHead &&
+      project.projectHead.toString() === req.user.userId,
+    );
+
+    if (!isSuperAdmin && !isAdmin && !isProjectOwner && !isProjectHead) {
       return res.status(403).json({
-        message: "Only Admin or Project Owner can delete tasks",
+        message:
+          "Only Admin, Super Admin, Project Owner, or Project Head can delete tasks",
       });
     }
 
-    await task.deleteOne();
+    await Comment.deleteMany({
+      task: task._id,
+    });
 
+    await task.deleteOne();
     await invalidateTaskRelatedCaches();
 
     return res.status(200).json({
@@ -702,19 +894,165 @@ const deleteTask = async (req, res) => {
     });
   } catch (error) {
     console.error("Delete task error:", error);
-
     return res.status(500).json({
       message: "Failed to delete task",
     });
   }
 };
 
+// CREATE COMMENT
+const createComment = async (req, res) => {
+  try {
+    const { userId, role } = req.user;
+    const { taskId } = req.params;
+    const { content } = req.body;
+
+    if (!mongoose.isValidObjectId(taskId)) {
+      return res.status(400).json({
+        message: "Invalid task ID",
+      });
+    }
+
+    if (typeof content !== "string" || !content.trim()) {
+      return res.status(400).json({
+        message: "Comment content is required",
+      });
+    }
+
+    if (content.trim().length > 1000) {
+      return res.status(400).json({
+        message: "Comment cannot exceed 1000 characters",
+      });
+    }
+
+    const task = await Task.findById(taskId);
+
+    if (!task) {
+      return res.status(404).json({
+        message: "Task not found",
+      });
+    }
+
+    const project = await Project.findById(task.project);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Associated project not found",
+      });
+    }
+
+    const isSuperAdmin = role === "superadmin";
+    const isOwner = Boolean(
+      project.owner && project.owner.toString() === userId.toString(),
+    );
+    const isProjectHead = Boolean(
+      project.projectHead &&
+      project.projectHead.toString() === userId.toString(),
+    );
+
+    if (!isSuperAdmin && !isOwner && !isProjectHead) {
+      return res.status(403).json({
+        message:
+          "Only Super Admin, Project Owner, or Project Head can add comments",
+      });
+    }
+
+    const comment = await Comment.create({
+      content: content.trim(),
+      task: task._id,
+      project: project._id,
+      user: userId,
+    });
+
+    await comment.populate("user", "name email");
+    await invalidateTaskRelatedCaches();
+
+    return res.status(201).json({
+      message: "Comment added successfully",
+      comment,
+    });
+  } catch (error) {
+    console.error("Create comment error:", error);
+    return res.status(500).json({
+      message: "Failed to add comment",
+    });
+  }
+};
+
+// GET COMMENTS
+const getComments = async (req, res) => {
+  try {
+    const { userId, role } = req.user;
+    const { taskId } = req.params;
+
+    if (!mongoose.isValidObjectId(taskId)) {
+      return res.status(400).json({
+        message: "Invalid task ID",
+      });
+    }
+
+    const task = await Task.findById(taskId);
+
+    if (!task) {
+      return res.status(404).json({
+        message: "Task not found",
+      });
+    }
+
+    const project = await Project.findById(task.project);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Associated project not found",
+      });
+    }
+
+    const isSuperAdmin = role === "superadmin";
+    const isOwner = Boolean(
+      project.owner && project.owner.toString() === userId.toString(),
+    );
+    const isProjectHead = Boolean(
+      project.projectHead &&
+      project.projectHead.toString() === userId.toString(),
+    );
+
+    const isAssigned =
+      Array.isArray(task.assignedTo) &&
+      task.assignedTo.some(
+        (u) => (u._id || u).toString() === userId.toString(),
+      );
+
+    if (!isSuperAdmin && !isOwner && !isProjectHead && !isAssigned) {
+      return res.status(403).json({
+        message:
+          "Members can only view comments for tasks assigned to them",
+      });
+    }
+
+    const comments = await Comment.find({
+      task: task._id,
+    })
+      .populate("user", "name email")
+      .sort({ createdAt: 1 });
+
+    return res.status(200).json({
+      count: comments.length,
+      comments,
+    });
+  } catch (error) {
+    console.error("Get comments error:", error);
+    return res.status(500).json({
+      message: "Failed to fetch comments",
+    });
+  }
+};
+
 module.exports = {
   createTask,
-
   getTasks,
-
+  getTaskById,
   updateTask,
-
   deleteTask,
+  createComment,
+  getComments,
 };

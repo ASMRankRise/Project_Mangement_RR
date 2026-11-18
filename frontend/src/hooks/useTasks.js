@@ -145,8 +145,17 @@ function useTasks(user, initialOptions = {}) {
     try {
       const response = await api.patch(`/tasks/${taskId}`, changes);
       setSuccess("Task updated successfully!");
+
+      const updated = response.data?.task;
+      if (updated) {
+        const upId = String(updated._id || updated.id);
+        setTasks((prev) =>
+          prev.map((t) => (String(t._id || t.id) === upId ? { ...t, ...updated } : t))
+        );
+      }
+
       await fetchTasks();
-      return { success: true, task: response.data?.task };
+      return { success: true, task: updated };
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to update task.";
       setError(msg);

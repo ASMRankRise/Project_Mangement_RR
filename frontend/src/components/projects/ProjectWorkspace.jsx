@@ -1,6 +1,6 @@
+
 import { useState, useMemo } from "react";
 import { Avatar, AvatarGroup } from "../common/Avatar";
-import { StatusBadge, PriorityBadge } from "../common/Badge";
 import Button from "../common/Button";
 import {
   CalendarIcon,
@@ -15,8 +15,12 @@ import {
 import KanbanBoard from "../tasks/KanbanBoard";
 import CreateTaskModal from "../tasks/CreateTaskModal";
 import TaskDetailModal from "../tasks/TaskDetailModal";
+import TaskStatusDropdown from "../tasks/TaskStatusDropdown";
+import TaskPriorityDropdown from "../tasks/TaskPriorityDropdown";
 import MemberManagementModal from "./MemberManagementModal";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/AuthContext";
+import { getTaskPermissions } from "../../utils/taskPermissions";
 
 export function ProjectWorkspace({
   project,
@@ -30,59 +34,82 @@ export function ProjectWorkspace({
   onTaskDelete,
   onAddMember,
   onRemoveMember,
+  onAssignProjectHead,
+  onRemoveProjectHead,
   onRefresh,
 }) {
   const { success, error: toastError } = useToast();
-  const [activeTab, setActiveTab] = useState("tasks"); // "tasks" | "members" | "settings"
-  const [taskViewMode, setTaskViewMode] = useState("board"); // "board" | "table"
+  const [activeTab, setActiveTab] = useState("tasks");
+  const [taskViewMode, setTaskViewMode] = useState("board");
   const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [addingMember, setAddingMember] = useState(false);
 
-  // Settings tab form state
   const [editName, setEditName] = useState(project.name || "");
   const [editDescription, setEditDescription] = useState(project.description || "");
   const [savingSettings, setSavingSettings] = useState(false);
 
-  const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
-  const currentUserId = String(getId(currentUser) || "");
-  const isAdmin =
-    currentUser?.role === "admin" || currentUser?.role === "superadmin";
-  const pId = String(getId(project) || "");
-  const ownerId = String(getId(project.owner) || "");
-  const isOwner = currentUserId !== "" && ownerId === currentUserId;
-  const canManage = isAdmin || isOwner;
+  const { user: authUser } = useAuth();
+  const effectiveUser = currentUser || authUser;
 
-  // Filter tasks belonging exclusively to this project
+  const getEntityId = (entity) => {
+    if (!entity) return "";
+    if (typeof entity === "object") {
+      return String(entity._id || entity.id || entity.userId || "").trim();
+    }
+    return String(entity).trim();
+  };
+
+  const currentUserId = getEntityId(effectiveUser);
+  const isSuperAdmin = effectiveUser?.role === "superadmin";
+  const pId = getEntityId(project);
+  const ownerId = getEntityId(project.owner);
+  const headId = getEntityId(project.projectHead);
+
+  const isOwner =
+    currentUserId !== "" && ownerId !== "" && ownerId === currentUserId;
+
+  const isProjectHead =
+    currentUserId !== "" && headId !== "" && headId === currentUserId;
+
+  const canManageProject = isSuperAdmin || isOwner;
+  const canCreateTask = isSuperAdmin || isOwner || isProjectHead;
+
   const projectTasks = useMemo(() => {
     return allTasks.filter((t) => {
-      const taskProjectId = getId(t.project);
-      return String(taskProjectId) === pId;
+      const taskProjectId = getEntityId(t.project);
+      return taskProjectId === pId;
     });
   }, [allTasks, pId]);
 
-  // Real task metrics for this project
   const totalTasks = projectTasks.length;
+
   const completedTasks = projectTasks.filter(
     (t) => t.status === "completed" || t.status === "done"
   ).length;
+
   const inProgressTasks = projectTasks.filter(
     (t) => t.status === "in-progress" || t.status === "testing"
   ).length;
-  const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  const progressPercent =
+    totalTasks > 0
+      ? Math.round((completedTasks / totalTasks) * 100)
+      : 0;
 
   const members = Array.isArray(project.members) ? project.members : [];
 
   const handleSaveSettings = async (e) => {
     e.preventDefault();
-    if (!canManage || savingSettings) return;
+    if (!canManageProject || savingSettings) return;
 
     if (!editName.trim()) {
       toastError("Project name is required");
       return;
     }
+
     if (editName.trim().length < 3 || editName.trim().length > 50) {
       toastError("Project name must be 3-50 characters");
       return;
@@ -105,7 +132,7 @@ export function ProjectWorkspace({
 
   const handleInlineAddMember = async (e) => {
     e.preventDefault();
-    if (!canManage || addingMember || !newMemberEmail.trim()) return;
+    if (!canManageProject || addingMember || !newMemberEmail.trim()) return;
 
     setAddingMember(true);
     const res = await onAddMember(pId, newMemberEmail.trim());
@@ -121,11 +148,16 @@ export function ProjectWorkspace({
   };
 
   const handleInlineRemoveMember = async (memberId, memberName) => {
-    if (!canManage) return;
-    const confirmed = window.confirm(`Remove ${memberName} from this project?`);
+    if (!canManageProject) return;
+
+    const confirmed = window.confirm(
+      `Remove ${memberName} from this project?`
+    );
+
     if (!confirmed) return;
 
     const res = await onRemoveMember(pId, memberId);
+
     if (res?.success !== false) {
       success("Member removed from project");
       onRefresh?.();
@@ -134,17 +166,46 @@ export function ProjectWorkspace({
     }
   };
 
+  const handleInlineAssignHead = async (targetEmail) => {
+    if (!canManageProject) return;
+
+    const res = await onAssignProjectHead?.(pId, targetEmail);
+
+    if (res?.success !== false) {
+      success("Project Head assigned successfully");
+      onRefresh?.();
+    } else {
+      toastError(res?.error || "Failed to assign Project Head");
+    }
+  };
+
+  const handleInlineRemoveHead = async () => {
+    if (!canManageProject) return;
+
+    const res = await onRemoveProjectHead?.(pId);
+
+    if (res?.success !== false) {
+      success("Project Head removed successfully");
+      onRefresh?.();
+    } else {
+      toastError(res?.error || "Failed to remove Project Head");
+    }
+  };
+
   const handleDeleteProject = async () => {
-    if (!isAdmin) {
-      toastError("Only administrators can delete projects");
+    if (!canManageProject) {
+      toastError("Only the project owner or super admin can delete projects");
       return;
     }
+
     const confirmed = window.confirm(
       `Permanently delete "${project.name}" and all associated tasks?`
     );
+
     if (!confirmed) return;
 
     const res = await onDeleteProject(pId);
+
     if (res?.success !== false) {
       success("Project deleted successfully");
       onBack();
@@ -155,7 +216,6 @@ export function ProjectWorkspace({
 
   return (
     <div className="space-y-5 text-left">
-      {/* Top Back Navigation & Action Buttons */}
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
@@ -167,7 +227,7 @@ export function ProjectWorkspace({
         </button>
 
         <div className="flex items-center gap-2.5">
-          {canManage && (
+          {canManageProject && (
             <Button
               variant="secondary"
               size="md"
@@ -178,7 +238,7 @@ export function ProjectWorkspace({
             </Button>
           )}
 
-          {canManage && (
+          {canCreateTask && (
             <Button
               variant="primary"
               size="md"
@@ -191,7 +251,6 @@ export function ProjectWorkspace({
         </div>
       </div>
 
-      {/* Project Header Banner: Clear Header, Short Meta Line */}
       <div className="rounded-lg border border-border bg-surface p-5 shadow-subtle">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
           <div className="space-y-2 max-w-2xl">
@@ -199,9 +258,18 @@ export function ProjectWorkspace({
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-primary font-heading">
                 {project.name}
               </h1>
-              {isOwner && (
+
+              {isOwner ? (
                 <span className="rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
                   Owner
+                </span>
+              ) : isProjectHead ? (
+                <span className="rounded-md border border-brand/30 bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-brand">
+                  Project Head
+                </span>
+              ) : (
+                <span className="rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
+                  Member
                 </span>
               )}
             </div>
@@ -210,7 +278,6 @@ export function ProjectWorkspace({
               {project.description || "No project description specified."}
             </p>
 
-            {/* Meta details strip */}
             <div className="flex items-center gap-4 text-[13px] text-text-tertiary flex-wrap pt-1">
               <div className="flex items-center gap-1.5">
                 <span className="font-medium text-text-secondary">Lead:</span>
@@ -219,26 +286,44 @@ export function ProjectWorkspace({
                   {project.owner?.name || project.owner?.email || "Project lead"}
                 </span>
               </div>
+
+              {project.projectHead && (
+                <>
+                  <span>•</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-text-secondary">Head:</span>
+                    <Avatar user={project.projectHead} size="xs" />
+                    <span className="font-medium text-text-primary">
+                      {project.projectHead?.name || project.projectHead?.email || "Project head"}
+                    </span>
+                  </div>
+                </>
+              )}
+
               <span>•</span>
               <div className="flex items-center gap-1.5">
                 <span className="font-medium text-text-secondary">Team:</span>
                 <AvatarGroup users={members} size="xs" max={4} />
                 <span>{members.length} {members.length === 1 ? "member" : "members"}</span>
               </div>
+
               {project.createdAt && (
                 <>
                   <span>•</span>
-                  <span>Created {new Date(project.createdAt).toLocaleDateString()}</span>
+                  <span>
+                    Created {new Date(project.createdAt).toLocaleDateString()}
+                  </span>
                 </>
               )}
             </div>
           </div>
 
-          {/* Quick Progress Card */}
           <div className="rounded-lg border border-border bg-surface-subtle/50 p-4 min-w-[220px] space-y-2.5">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium text-text-secondary">Progress</span>
-              <span className="font-mono font-semibold text-text-primary">{progressPercent}%</span>
+              <span className="font-mono font-semibold text-text-primary">
+                {progressPercent}%
+              </span>
             </div>
 
             <div className="h-2 w-full rounded-full bg-surface-subtle overflow-hidden">
@@ -258,16 +343,14 @@ export function ProjectWorkspace({
           </div>
         </div>
 
-        {/* Tab Navigation: Underlined Text Tabs (not pills) */}
         <div className="mt-6 flex items-center gap-6 border-b border-border overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab("tasks")}
-            className={`pb-2.5 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-[1px] ${
-              activeTab === "tasks"
-                ? "border-brand text-text-primary font-semibold"
-                : "border-transparent text-text-secondary hover:text-text-primary"
-            }`}
+            className={`pb-2.5 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-[1px] ${activeTab === "tasks"
+              ? "border-brand text-text-primary font-semibold"
+              : "border-transparent text-text-secondary hover:text-text-primary"
+              }`}
           >
             Tasks ({projectTasks.length})
           </button>
@@ -275,24 +358,22 @@ export function ProjectWorkspace({
           <button
             type="button"
             onClick={() => setActiveTab("members")}
-            className={`pb-2.5 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-[1px] ${
-              activeTab === "members"
-                ? "border-brand text-text-primary font-semibold"
-                : "border-transparent text-text-secondary hover:text-text-primary"
-            }`}
+            className={`pb-2.5 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-[1px] ${activeTab === "members"
+              ? "border-brand text-text-primary font-semibold"
+              : "border-transparent text-text-secondary hover:text-text-primary"
+              }`}
           >
             Team ({members.length})
           </button>
 
-          {canManage && (
+          {canManageProject && (
             <button
               type="button"
               onClick={() => setActiveTab("settings")}
-              className={`pb-2.5 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-[1px] ${
-                activeTab === "settings"
-                  ? "border-brand text-text-primary font-semibold"
-                  : "border-transparent text-text-secondary hover:text-text-primary"
-              }`}
+              className={`pb-2.5 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-[1px] ${activeTab === "settings"
+                ? "border-brand text-text-primary font-semibold"
+                : "border-transparent text-text-secondary hover:text-text-primary"
+                }`}
             >
               Settings
             </button>
@@ -300,7 +381,6 @@ export function ProjectWorkspace({
         </div>
       </div>
 
-      {/* Tab 1: Tasks (Reuses Board / Table components) */}
       {activeTab === "tasks" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -308,28 +388,26 @@ export function ProjectWorkspace({
               Project tasks
             </h3>
 
-            {/* Board / Table view switcher */}
             <div className="inline-flex rounded-md border border-border bg-surface-subtle p-0.5 text-[13px]">
               <button
                 type="button"
                 onClick={() => setTaskViewMode("board")}
-                className={`flex items-center gap-1.5 rounded px-2.5 py-1 font-medium transition-colors cursor-pointer ${
-                  taskViewMode === "board"
-                    ? "bg-surface text-text-primary shadow-subtle"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
+                className={`flex items-center gap-1.5 rounded px-2.5 py-1 font-medium transition-colors cursor-pointer ${taskViewMode === "board"
+                  ? "bg-surface text-text-primary shadow-subtle"
+                  : "text-text-secondary hover:text-text-primary"
+                  }`}
               >
                 <KanbanIcon className="h-3.5 w-3.5" />
                 <span>Board</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => setTaskViewMode("table")}
-                className={`flex items-center gap-1.5 rounded px-2.5 py-1 font-medium transition-colors cursor-pointer ${
-                  taskViewMode === "table"
-                    ? "bg-surface text-text-primary shadow-subtle"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
+                className={`flex items-center gap-1.5 rounded px-2.5 py-1 font-medium transition-colors cursor-pointer ${taskViewMode === "table"
+                  ? "bg-surface text-text-primary shadow-subtle"
+                  : "text-text-secondary hover:text-text-primary"
+                  }`}
               >
                 <TableIcon className="h-3.5 w-3.5" />
                 <span>Table</span>
@@ -339,11 +417,14 @@ export function ProjectWorkspace({
 
           {projectTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-surface p-10 text-center shadow-subtle">
-              <h3 className="text-sm font-semibold text-text-primary">No tasks in this project</h3>
+              <h3 className="text-sm font-semibold text-text-primary">
+                No tasks in this project
+              </h3>
               <p className="mt-1 text-[13px] text-text-secondary max-w-sm">
                 Get started by creating tasks to assign work and track deliverables.
               </p>
-              {canManage && (
+
+              {canCreateTask && (
                 <div className="mt-4">
                   <Button
                     variant="primary"
@@ -360,7 +441,7 @@ export function ProjectWorkspace({
             <KanbanBoard
               tasks={projectTasks}
               projects={[project]}
-              user={currentUser}
+              user={effectiveUser}
               onUpdate={onTaskUpdate}
               onDelete={onTaskDelete}
               onClick={(task) => setSelectedTask(task)}
@@ -378,19 +459,38 @@ export function ProjectWorkspace({
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-border-subtle">
                   {projectTasks.map((t) => {
                     const assignedUsers = Array.isArray(t.assignedTo)
                       ? t.assignedTo
                       : t.assignedTo
-                      ? [t.assignedTo]
-                      : [];
+                        ? [t.assignedTo]
+                        : [];
+
+                    const {
+                      canView,
+                      canChangeStatus,
+                      canChangePriority,
+                      canDeleteTask,
+                    } = getTaskPermissions(t, project, effectiveUser);
 
                     return (
                       <tr
                         key={t._id || t.id}
-                        onClick={() => setSelectedTask(t)}
-                        className="hover:bg-surface-subtle/50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (canView) {
+                            setSelectedTask(t);
+                          } else {
+                            toastError(
+                              "Members can only view task details for tasks assigned to them"
+                            );
+                          }
+                        }}
+                        className={`${canView
+                          ? "hover:bg-surface-subtle/50 cursor-pointer"
+                          : "opacity-85 cursor-default"
+                          } transition-colors`}
                       >
                         <td className="px-4 py-3 max-w-[280px]">
                           <div className="font-medium text-text-primary truncate">
@@ -402,15 +502,33 @@ export function ProjectWorkspace({
                             </div>
                           )}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <StatusBadge status={t.status} size="xs" />
+
+                        <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          <TaskStatusDropdown
+                            status={t.status}
+                            canEdit={canChangeStatus}
+                            onUpdate={(newStatus) =>
+                              onTaskUpdate?.(t._id || t.id, { status: newStatus })
+                            }
+                            size="xs"
+                          />
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <PriorityBadge priority={t.priority} size="xs" />
+
+                        <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          <TaskPriorityDropdown
+                            priority={t.priority}
+                            canEdit={canChangePriority}
+                            onUpdate={(newPriority) =>
+                              onTaskUpdate?.(t._id || t.id, { priority: newPriority })
+                            }
+                            size="xs"
+                          />
                         </td>
+
                         <td className="px-4 py-3 whitespace-nowrap">
                           <AvatarGroup users={assignedUsers} size="xs" max={3} />
                         </td>
+
                         <td className="px-4 py-3 whitespace-nowrap text-[12px] text-text-secondary">
                           {t.dueDate ? (
                             <span className="flex items-center gap-1.5">
@@ -421,17 +539,40 @@ export function ProjectWorkspace({
                             <span className="text-text-tertiary">No deadline</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedTask(t);
-                            }}
-                            className="text-[13px] font-medium text-brand hover:underline cursor-pointer"
-                          >
-                            View
-                          </button>
+
+                        <td className="px-4 py-3 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          <div className="inline-flex items-center gap-2">
+                            {canView ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedTask(t);
+                                }}
+                                className="text-[13px] font-medium text-brand hover:underline cursor-pointer"
+                              >
+                                View
+                              </button>
+                            ) : (
+                              <span className="text-[12px] text-text-tertiary italic">
+                                Restricted
+                              </span>
+                            )}
+                            {canDeleteTask && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (window.confirm(`Delete task "${t.title}"?`)) {
+                                    onTaskDelete?.(t._id || t.id);
+                                  }
+                                }}
+                                className="rounded p-1 text-text-tertiary hover:text-[#991B1B] hover:bg-[#FEF2F2] dark:hover:bg-[#3B0D0D] dark:hover:text-[#F87171] transition-colors cursor-pointer"
+                                title="Delete task"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -443,19 +584,23 @@ export function ProjectWorkspace({
         </div>
       )}
 
-      {/* Tab 2: Team Roster */}
       {activeTab === "members" && (
         <div className="rounded-lg border border-border bg-surface p-5 space-y-4 shadow-subtle">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-text-primary">Team members</h3>
+              <h3 className="text-sm font-semibold text-text-primary">
+                Team members
+              </h3>
               <p className="text-[13px] text-text-secondary mt-0.5">
                 Collaborators assigned to this project can view and manage tasks.
               </p>
             </div>
 
-            {canManage && (
-              <form onSubmit={handleInlineAddMember} className="flex items-center gap-2">
+            {canManageProject && (
+              <form
+                onSubmit={handleInlineAddMember}
+                className="flex items-center gap-2"
+              >
                 <input
                   type="email"
                   value={newMemberEmail}
@@ -478,7 +623,6 @@ export function ProjectWorkspace({
           </div>
 
           <div className="divide-y divide-border-subtle border-t border-border mt-3">
-            {/* Owner Row */}
             <div className="py-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Avatar user={project.owner} size="sm" />
@@ -486,48 +630,87 @@ export function ProjectWorkspace({
                   <div className="text-sm font-semibold text-text-primary">
                     {project.owner?.name || project.owner?.email || "Project lead"}
                   </div>
-                  <div className="text-[12px] text-text-secondary">{project.owner?.email}</div>
+                  <div className="text-[12px] text-text-secondary">
+                    {project.owner?.email}
+                  </div>
                 </div>
               </div>
+
               <span className="rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
                 Lead
               </span>
             </div>
 
-            {/* Member Rows */}
             {members.map((m) => {
-              const mId = getId(m);
-              const isCurrentUser = String(mId) === currentUserId;
+              const mId = getEntityId(m);
+              const isCurrentUser = mId === currentUserId;
 
               return (
-                <div key={mId} className="py-3 flex items-center justify-between gap-3">
+                <div
+                  key={mId}
+                  className="py-3 flex items-center justify-between gap-3"
+                >
                   <div className="flex items-center gap-3">
                     <Avatar user={m} size="sm" />
                     <div>
                       <div className="text-sm font-semibold text-text-primary flex items-center gap-2">
                         <span>{m.name || m.email}</span>
                         {isCurrentUser && (
-                          <span className="text-[12px] font-medium text-brand">(You)</span>
+                          <span className="text-[12px] font-medium text-brand">
+                            (You)
+                          </span>
                         )}
                       </div>
-                      <div className="text-[12px] text-text-secondary">{m.email}</div>
+                      <div className="text-[12px] text-text-secondary">
+                        {m.email}
+                      </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2.5">
-                    <span className="rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
-                      Member
-                    </span>
+                    {mId === headId ? (
+                      <span className="rounded-md border border-brand/30 bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-brand">
+                        Project Head
+                      </span>
+                    ) : (
+                      <span className="rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
+                        Member
+                      </span>
+                    )}
 
-                    {canManage && (
-                      <button
-                        type="button"
-                        onClick={() => handleInlineRemoveMember(mId, m.name || m.email)}
-                        className="text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:underline p-1 transition cursor-pointer"
-                        title="Remove member"
-                      >
-                        Remove
-                      </button>
+                    {canManageProject && (
+                      <>
+                        {mId === headId ? (
+                          <button
+                            type="button"
+                            onClick={handleInlineRemoveHead}
+                            className="text-[12px] font-medium text-text-secondary hover:underline p-1 cursor-pointer"
+                            title="Remove as Project Head"
+                          >
+                            Remove Head
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleInlineAssignHead(m.email)}
+                            className="text-[12px] font-medium text-brand hover:underline p-1 cursor-pointer"
+                            title="Assign as Project Head"
+                          >
+                            Make Head
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleInlineRemoveMember(mId, m.name || m.email)
+                          }
+                          className="text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:underline p-1 transition cursor-pointer"
+                          title="Remove member"
+                        >
+                          Remove
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -543,11 +726,12 @@ export function ProjectWorkspace({
         </div>
       )}
 
-      {/* Tab 3: Project Settings */}
-      {activeTab === "settings" && canManage && (
+      {activeTab === "settings" && canManageProject && (
         <div className="rounded-lg border border-border bg-surface p-5 space-y-6 shadow-subtle">
           <div>
-            <h3 className="text-sm font-semibold text-text-primary">Project settings</h3>
+            <h3 className="text-sm font-semibold text-text-primary">
+              Project settings
+            </h3>
             <p className="text-[13px] text-text-secondary mt-0.5">
               Update project details or manage project lifecycle.
             </p>
@@ -591,40 +775,46 @@ export function ProjectWorkspace({
             </Button>
           </form>
 
-          {isAdmin && (
-            <div className="pt-5 border-t border-border">
-              <h4 className="text-sm font-semibold text-[#991B1B] dark:text-[#F87171]">Danger zone</h4>
-              <p className="mt-1 text-[13px] text-text-secondary">
-                Permanently delete this project along with all associated tasks. This action cannot be undone.
-              </p>
-              <button
-                type="button"
-                onClick={handleDeleteProject}
-                className="mt-3 h-9 inline-flex items-center gap-1.5 rounded-md border border-[#FECACA] dark:border-[#681D1D] bg-[#FEF2F2] dark:bg-[#3B0D0D] px-3.5 text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
-              >
-                <TrashIcon className="w-4 h-4" />
-                <span>Delete project</span>
-              </button>
-            </div>
-          )}
+          <div className="pt-5 border-t border-border">
+            <h4 className="text-sm font-semibold text-[#991B1B] dark:text-[#F87171]">
+              Danger zone
+            </h4>
+            <p className="mt-1 text-[13px] text-text-secondary">
+              Permanently delete this project along with all associated tasks. This action cannot be undone.
+            </p>
+            <button
+              type="button"
+              onClick={handleDeleteProject}
+              className="mt-3 h-9 inline-flex items-center gap-1.5 rounded-md border border-[#FECACA] dark:border-[#681D1D] bg-[#FEF2F2] dark:bg-[#3B0D0D] px-3.5 text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
+            >
+              <TrashIcon className="w-4 h-4" />
+              <span>Delete project</span>
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Modals */}
-      <CreateTaskModal
-        isOpen={createTaskModalOpen}
-        onClose={() => setCreateTaskModalOpen(false)}
-        projects={[project]}
-        onSubmit={onTaskCreate}
-      />
+      {createTaskModalOpen && canCreateTask && (
+        <CreateTaskModal
+          isOpen={createTaskModalOpen && canCreateTask}
+          onClose={() => setCreateTaskModalOpen(false)}
+          projects={[project]}
+          user={effectiveUser}
+          onSubmit={onTaskCreate}
+        />
+      )}
 
       {selectedTask && (
         <TaskDetailModal
           isOpen={Boolean(selectedTask)}
           onClose={() => setSelectedTask(null)}
-          task={selectedTask}
+          task={
+            projectTasks.find(
+              (t) => getEntityId(t) === getEntityId(selectedTask)
+            ) || selectedTask
+          }
           projects={[project]}
-          user={currentUser}
+          user={effectiveUser}
           onUpdate={onTaskUpdate}
           onDelete={onTaskDelete}
         />
@@ -634,9 +824,12 @@ export function ProjectWorkspace({
         isOpen={memberModalOpen}
         onClose={() => setMemberModalOpen(false)}
         project={project}
-        currentUser={currentUser}
+        currentUser={effectiveUser}
+        canManage={canManageProject}
         onAddMember={onAddMember}
         onRemoveMember={onRemoveMember}
+        onAssignProjectHead={onAssignProjectHead}
+        onRemoveProjectHead={onRemoveProjectHead}
       />
     </div>
   );

@@ -19,11 +19,10 @@ const requireProjectOwner = async (req, res, next) => {
       });
     }
 
-    const isAdmin =
-      req.user.role === "admin" || req.user.role === "superadmin";
+    const isSuperAdmin = req.user.role === "superadmin";
     const isOwner = project.owner.toString() === req.user.userId;
 
-    if (!isAdmin && !isOwner) {
+    if (!isSuperAdmin && !isOwner) {
       return res.status(403).json({
         message: "You do not have permission to manage this project",
       });

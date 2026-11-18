@@ -206,7 +206,7 @@ testAsync("requireProjectOwner allows superadmin even if not project owner", asy
   }
 });
 
-testAsync("requireProjectOwner allows regular admin even if not project owner", async () => {
+testAsync("requireProjectOwner blocks regular admin if not project owner (403)", async () => {
   const originalFindById = require("../src/models/Project").findById;
   require("../src/models/Project").findById = async () => ({
     _id: "proj123",
@@ -222,7 +222,8 @@ testAsync("requireProjectOwner allows regular admin even if not project owner", 
     const res = createMockRes();
     let nextCalled = false;
     await requireProjectOwner(req, res, () => { nextCalled = true; });
-    assert.strictEqual(nextCalled, true);
+    assert.strictEqual(nextCalled, false, "Admin without ownership must be blocked");
+    assert.strictEqual(res.statusCode, 403, "Must return 403");
   } finally {
     require("../src/models/Project").findById = originalFindById;
   }

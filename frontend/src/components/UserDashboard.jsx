@@ -13,8 +13,11 @@ import {
   FolderIcon,
   CheckSquareIcon,
 } from "./common/Icons";
+import { useAuth } from "../context/AuthContext";
 
 export function UserDashboard({ user }) {
+  const { user: authUser } = useAuth();
+  const effectiveUser = user || authUser;
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState("");
@@ -29,9 +32,11 @@ export function UserDashboard({ user }) {
     deleteProject,
     addMember,
     removeMember,
+    assignProjectHead,
+    removeProjectHead,
   } = useProjects();
 
-  const taskState = useTasks(user, { limit: 50 });
+  const taskState = useTasks(effectiveUser, { limit: 50 });
   const { fetchTasks } = taskState;
 
   const fetchDashboard = useCallback(async () => {
@@ -71,18 +76,26 @@ export function UserDashboard({ user }) {
     return res;
   };
 
-  const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
-  const userId = String(getId(user) || "");
-  const firstName = user?.name ? user.name.split(" ")[0] : "Member";
+  const getEntityId = (entity) => {
+    if (!entity) return "";
+    if (typeof entity === "object") {
+      return String(entity._id || entity.id || entity.userId || "").trim();
+    }
+    return String(entity).trim();
+  };
+  const userId = getEntityId(effectiveUser);
+  const firstName = effectiveUser?.name ? effectiveUser.name.split(" ")[0] : "Member";
 
   // Real SaaS metrics
   const ownedProjectsCount = useMemo(() => {
-    return projects.filter((p) => String(getId(p.owner)) === userId).length;
+    if (!userId) return 0;
+    return projects.filter((p) => getEntityId(p.owner) === userId).length;
   }, [projects, userId]);
 
   const assignedProjectsCount = useMemo(() => {
+    if (!userId) return 0;
     return projects.filter((p) =>
-      p.members?.some((m) => String(getId(m)) === userId),
+      p.members?.some((m) => getEntityId(m) === userId),
     ).length;
   }, [projects, userId]);
 
@@ -115,7 +128,7 @@ export function UserDashboard({ user }) {
       : 0;
 
   const selectedProject = projects.find(
-    (p) => String(getId(p)) === String(selectedProjectId),
+    (p) => getEntityId(p) === String(selectedProjectId),
   );
 
   return (
@@ -125,7 +138,7 @@ export function UserDashboard({ user }) {
         <ProjectWorkspace
           project={selectedProject}
           allTasks={taskState.allTasks}
-          currentUser={user}
+          currentUser={effectiveUser}
           onBack={() => setSelectedProjectId(null)}
           onUpdateProject={updateProject}
           onDeleteProject={deleteProject}
@@ -134,6 +147,8 @@ export function UserDashboard({ user }) {
           onTaskDelete={handleDeleteTask}
           onAddMember={addMember}
           onRemoveMember={removeMember}
+          onAssignProjectHead={assignProjectHead}
+          onRemoveProjectHead={removeProjectHead}
           onRefresh={fetchProjects}
         />
       ) : (
@@ -171,9 +186,8 @@ export function UserDashboard({ user }) {
                     Overdue
                   </span>
                   <span
-                    className={`text-sm font-bold ${
-                      overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
-                    }`}
+                    className={`text-sm font-bold ${overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
+                      }`}
                   >
                     {overdueTasksCount}
                   </span>
@@ -245,18 +259,16 @@ export function UserDashboard({ user }) {
                 Overdue
               </span>
               <div
-                className={`mt-1 text-2xl font-bold tracking-tight ${
-                  overdueTasksCount > 0
-                    ? "text-rose-600 dark:text-rose-400"
-                    : "text-slate-900 dark:text-white"
-                }`}
+                className={`mt-1 text-2xl font-bold tracking-tight ${overdueTasksCount > 0
+                  ? "text-rose-600 dark:text-rose-400"
+                  : "text-slate-900 dark:text-white"
+                  }`}
               >
                 {dashboardLoading ? "..." : overdueTasksCount}
               </div>
               <span
-                className={`text-[11px] font-medium mt-0.5 block ${
-                  overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"
-                }`}
+                className={`text-[11px] font-medium mt-0.5 block ${overdueTasksCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"
+                  }`}
               >
                 {overdueTasksCount > 0 ? "Action required" : "On schedule"}
               </span>
@@ -296,10 +308,11 @@ export function UserDashboard({ user }) {
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {projects.map((proj) => {
-                  const pId = String(getId(proj));
-                  const isOwner = String(getId(proj.owner)) === userId;
+                  const pId = getEntityId(proj);
+                  const isOwner = userId !== "" && getEntityId(proj.owner) === userId;
+                  const isHead = userId !== "" && getEntityId(proj.projectHead) === userId;
                   const projTasks = taskState.allTasks.filter(
-                    (t) => String(getId(t.project)) === pId,
+                    (t) => getEntityId(t.project) === pId,
                   );
                   const completed = projTasks.filter(
                     (t) => t.status === "completed" || t.status === "done",
@@ -321,13 +334,14 @@ export function UserDashboard({ user }) {
                             {proj.name}
                           </h4>
                           <span
-                            className={`rounded px-1.5 py-0.2 text-[10px] font-medium border ${
-                              isOwner
-                                ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50"
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-medium border ${isOwner
+                              ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50"
+                              : isHead
+                                ? "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-800/50"
                                 : "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
-                            }`}
+                              }`}
                           >
-                            {isOwner ? "Lead" : "Member"}
+                            {isOwner ? "Owner" : isHead ? "Project Head" : "Member"}
                           </span>
                         </div>
                         <p className="mt-1 line-clamp-1 text-[11px] text-slate-500 dark:text-slate-400">
@@ -368,22 +382,20 @@ export function UserDashboard({ user }) {
                 <button
                   type="button"
                   onClick={() => setViewMode("kanban")}
-                  className={`rounded px-3 py-1 font-medium transition ${
-                    viewMode === "kanban"
-                      ? "bg-white text-slate-900 shadow-xs dark:bg-[#161B22] dark:text-white"
-                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                  }`}
+                  className={`rounded px-3 py-1 font-medium transition ${viewMode === "kanban"
+                    ? "bg-white text-slate-900 shadow-xs dark:bg-[#161B22] dark:text-white"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                    }`}
                 >
                   Kanban Board
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode("table")}
-                  className={`rounded px-3 py-1 font-medium transition ${
-                    viewMode === "table"
-                      ? "bg-white text-slate-900 shadow-xs dark:bg-[#161B22] dark:text-white"
-                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                  }`}
+                  className={`rounded px-3 py-1 font-medium transition ${viewMode === "table"
+                    ? "bg-white text-slate-900 shadow-xs dark:bg-[#161B22] dark:text-white"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                    }`}
                 >
                   Table View
                 </button>

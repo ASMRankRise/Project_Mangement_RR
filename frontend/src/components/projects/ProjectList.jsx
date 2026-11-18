@@ -12,6 +12,7 @@ import {
   CalendarIcon,
 } from "../common/Icons";
 import MemberManagementModal from "./MemberManagementModal";
+import { useAuth } from "../../context/AuthContext";
 
 export function ProjectList({
   projects = [],
@@ -24,6 +25,8 @@ export function ProjectList({
   onDeleteProject,
   onAddMember,
   onRemoveMember,
+  onAssignProjectHead,
+  onRemoveProjectHead,
 }) {
   const [search, setSearch] = useState("");
   const [editingProject, setEditingProject] = useState(null);
@@ -33,16 +36,27 @@ export function ProjectList({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
-  const userId = user?._id || user?.id;
+  const { user: authUser } = useAuth();
+  const effectiveUser = user || authUser;
+  const getEntityId = (entity) => {
+    if (!entity) return "";
+    if (typeof entity === "object") {
+      return String(entity._id || entity.id || entity.userId || "").trim();
+    }
+    return String(entity).trim();
+  };
+  const getId = getEntityId;
 
-  const getId = (v) =>
-    typeof v === "object" && v !== null ? v._id || v.id : v;
+  const isSuperAdmin = effectiveUser?.role === "superadmin";
+  const userId = getEntityId(effectiveUser);
 
   const isProjectOwner = (p) =>
-    String(getId(p.owner)) === String(userId);
+    userId !== "" && getId(p?.owner) === userId;
 
-  const canManage = (p) => isAdmin || isProjectOwner(p);
+  const isProjectHead = (p) =>
+    userId !== "" && getId(p?.projectHead) === userId;
+
+  const canManage = (p) => isSuperAdmin || isProjectOwner(p);
 
   // Filter projects by search
   const filteredProjects = projects.filter((p) => {
@@ -178,6 +192,10 @@ export function ProjectList({
                     {isOwner ? (
                       <span className="shrink-0 rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
                         Owner
+                      </span>
+                    ) : isProjectHead(project) ? (
+                      <span className="shrink-0 rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-brand border-brand/30">
+                        Project Head
                       </span>
                     ) : (
                       <span className="shrink-0 rounded-md border border-border bg-surface-subtle px-2 py-0.5 text-[12px] font-medium text-text-secondary">
@@ -357,6 +375,8 @@ export function ProjectList({
           canManage={canManage(manageMembersProject)}
           onAddMember={onAddMember}
           onRemoveMember={onRemoveMember}
+          onAssignProjectHead={onAssignProjectHead}
+          onRemoveProjectHead={onRemoveProjectHead}
         />
       )}
     </div>

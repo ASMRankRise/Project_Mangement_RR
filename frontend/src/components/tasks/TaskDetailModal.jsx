@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Modal } from "../common/Modal";
-import { StatusBadge, PriorityBadge } from "../common/Badge";
 import { AvatarGroup } from "../common/Avatar";
 import {
   CalendarIcon,
@@ -10,6 +9,10 @@ import {
   AlertTriangleIcon,
 } from "../common/Icons";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/AuthContext";
+import { getEntityId, getTaskPermissions } from "../../utils/taskPermissions";
+import TaskStatusDropdown from "./TaskStatusDropdown";
+import TaskPriorityDropdown from "./TaskPriorityDropdown";
 
 export function TaskDetailModal({
   isOpen,
@@ -24,7 +27,8 @@ export function TaskDetailModal({
   onDelete,
 }) {
   const { success, error: toastError } = useToast();
-  const effectiveUser = currentUser || user;
+  const { user: authUser } = useAuth();
+  const effectiveUser = currentUser || user || authUser;
   const updateHandler = onUpdateTask || onUpdate;
   const deleteHandler = onDeleteTask || onDelete;
 
@@ -50,28 +54,52 @@ export function TaskDetailModal({
 
   if (!task) return null;
 
-  const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
-  const currentUserId = String(getId(effectiveUser) || "");
-  const isAdmin =
-    effectiveUser?.role === "admin" || effectiveUser?.role === "superadmin";
-
   const assignedUsers = Array.isArray(task.assignedTo)
     ? task.assignedTo
     : task.assignedTo
     ? [task.assignedTo]
     : [];
 
-  const isAssignedToMe =
-    currentUserId !== "" &&
-    assignedUsers.some((m) => String(getId(m) || "") === currentUserId);
+  const projectId = getEntityId(task.project);
+  const project = projects.find((p) => String(getEntityId(p)) === String(projectId));
 
-  const projectId = getId(task.project);
-  const project = projects.find((p) => String(getId(p)) === String(projectId));
-  const isProjectOwner =
-    currentUserId !== "" && String(getId(project?.owner) || "") === currentUserId;
+  const {
+    canView,
+    canChangeStatus,
+    canChangePriority,
+    canEditDetails,
+    canDeleteTask,
+  } = getTaskPermissions(task, project, effectiveUser);
 
-  const canManageAll = isAdmin || isProjectOwner;
-  const canUpdateStatus = canManageAll || isAssignedToMe;
+  const canManageFull = canEditDetails;
+  const canEdit = canEditDetails;
+  const canUpdateStatus = canChangeStatus;
+
+  if (!canView) {
+    return (
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Access Restricted"
+        size="md"
+      >
+        <div className="p-4 space-y-3 text-left">
+          <p className="text-sm text-text-secondary leading-relaxed">
+            You do not have permission to view details for this task. Normal members can only view details for tasks assigned to them.
+          </p>
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-9 px-4 rounded-md text-[13px] font-medium text-text-primary border border-border bg-surface hover:bg-surface-subtle transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   const isOverdue =
     task.dueDate &&
@@ -83,7 +111,7 @@ export function TaskDetailModal({
     e?.preventDefault();
     if (submitting) return;
 
-    if (canManageAll) {
+    if (canManageFull) {
       if (!title.trim()) {
         toastError("Task title cannot be empty");
         return;
@@ -131,7 +159,7 @@ export function TaskDetailModal({
   };
 
   const handleDelete = async () => {
-    if (!canManageAll || deleting) return;
+    if (!canDeleteTask || deleting) return;
     const confirmed = window.confirm(`Permanently delete "${task.title}"?`);
     if (!confirmed) return;
 
@@ -165,13 +193,29 @@ export function TaskDetailModal({
           </div>
 
           <div className="flex items-center gap-2">
-            <StatusBadge status={status} size="xs" />
-            <PriorityBadge priority={priority} size="xs" />
+            <TaskStatusDropdown
+              status={status}
+              canEdit={canChangeStatus}
+              onUpdate={async (newStatus) => {
+                setStatus(newStatus);
+                return await updateHandler?.(task._id || task.id, { status: newStatus });
+              }}
+              size="xs"
+            />
+            <TaskPriorityDropdown
+              priority={priority}
+              canEdit={canChangePriority}
+              onUpdate={async (newPriority) => {
+                setPriority(newPriority);
+                return await updateHandler?.(task._id || task.id, { priority: newPriority });
+              }}
+              size="xs"
+            />
           </div>
         </div>
 
         {/* Task Form or View */}
-        {isEditing && canManageAll ? (
+        {isEditing && canEdit ? (
           <form onSubmit={handleSave} className="space-y-4">
             <div>
               <label className="block text-[13px] font-medium text-text-secondary mb-1">
@@ -248,15 +292,19 @@ export function TaskDetailModal({
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t border-border">
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting || submitting}
-                className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:bg-[#FEF2F2] dark:hover:bg-[#3B0D0D] transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                <TrashIcon className="w-4 h-4" />
-                <span>{deleting ? "Deleting..." : "Delete"}</span>
-              </button>
+              {canDeleteTask ? (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting || submitting}
+                  className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md text-[13px] font-medium text-[#991B1B] dark:text-[#F87171] hover:bg-[#FEF2F2] dark:hover:bg-[#3B0D0D] transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  <span>{deleting ? "Deleting..." : "Delete"}</span>
+                </button>
+              ) : (
+                <div />
+              )}
 
               <div className="flex items-center gap-2.5">
                 <button
@@ -306,7 +354,7 @@ export function TaskDetailModal({
             )}
 
             {/* Metadata Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-3.5 rounded-lg bg-surface-subtle border border-border text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 p-3.5 rounded-lg bg-surface-subtle border border-border text-sm">
               <div>
                 <span className="text-text-tertiary block mb-1 font-medium text-[12px]">
                   Assigned members
@@ -360,30 +408,36 @@ export function TaskDetailModal({
                 <span className="text-text-tertiary block mb-1 font-medium text-[12px]">
                   Status
                 </span>
-                {canUpdateStatus && !canManageAll ? (
-                  <select
-                    value={status}
-                    onChange={(e) => {
-                      setStatus(e.target.value);
-                      updateHandler?.(task._id || task.id, { status: e.target.value });
-                    }}
-                    className="h-8 rounded-md border border-border bg-surface px-2.5 text-[13px] font-medium text-text-primary outline-none focus:border-brand cursor-pointer shadow-subtle"
-                  >
-                    <option value="todo">To do</option>
-                    <option value="in-progress">In progress</option>
-                    <option value="testing">Testing</option>
-                    <option value="completed">Completed</option>
-                    <option value="done">Done</option>
-                  </select>
-                ) : (
-                  <StatusBadge status={status} size="xs" />
-                )}
+                <TaskStatusDropdown
+                  status={status}
+                  canEdit={canChangeStatus}
+                  onUpdate={async (newStatus) => {
+                    setStatus(newStatus);
+                    return await updateHandler?.(task._id || task.id, { status: newStatus });
+                  }}
+                  size="sm"
+                />
+              </div>
+
+              <div>
+                <span className="text-text-tertiary block mb-1 font-medium text-[12px]">
+                  Priority
+                </span>
+                <TaskPriorityDropdown
+                  priority={priority}
+                  canEdit={canChangePriority}
+                  onUpdate={async (newPriority) => {
+                    setPriority(newPriority);
+                    return await updateHandler?.(task._id || task.id, { priority: newPriority });
+                  }}
+                  size="sm"
+                />
               </div>
             </div>
 
             {/* Footer Actions */}
             <div className="flex items-center justify-between pt-3 border-t border-border">
-              {canManageAll ? (
+              {canDeleteTask ? (
                 <button
                   type="button"
                   onClick={handleDelete}
@@ -398,7 +452,7 @@ export function TaskDetailModal({
               )}
 
               <div className="flex items-center gap-2.5">
-                {canManageAll && (
+                {canEdit && (
                   <button
                     type="button"
                     onClick={() => setIsEditing(true)}

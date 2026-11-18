@@ -1,9 +1,12 @@
 import TaskCard from "./TaskCard";
 import KanbanBoard from "./KanbanBoard";
-import { StatusBadge, PriorityBadge } from "../common/Badge";
 import { AvatarGroup } from "../common/Avatar";
 import { CheckSquareIcon, CalendarIcon, TrashIcon } from "../common/Icons";
 import Pagination from "../common/Pagination";
+import { useAuth } from "../../context/AuthContext";
+import { getEntityId, getTaskPermissions } from "../../utils/taskPermissions";
+import TaskStatusDropdown from "./TaskStatusDropdown";
+import TaskPriorityDropdown from "./TaskPriorityDropdown";
 
 export function TaskList({
   tasks = [],
@@ -20,9 +23,8 @@ export function TaskList({
   onTaskClick,
   viewMode = "kanban",
 }) {
-  const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
-  const currentUserId = String(getId(user) || "");
-  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
+  const { user: authUser } = useAuth();
+  const effectiveUser = user || authUser;
 
   return (
     <div className="space-y-4">
@@ -67,10 +69,15 @@ export function TaskList({
             </thead>
             <tbody className="divide-y divide-border-subtle">
               {tasks.map((task) => {
-                const pId = getId(task.project);
-                const proj = projects.find((p) => String(getId(p)) === String(pId));
-                const isProjectOwner = String(getId(proj?.owner) || "") === currentUserId;
-                const canManage = isAdmin || isProjectOwner;
+                const pId = getEntityId(task.project);
+                const proj = projects.find((p) => String(getEntityId(p)) === String(pId));
+
+                const {
+                  canView,
+                  canChangeStatus,
+                  canChangePriority,
+                  canDeleteTask,
+                } = getTaskPermissions(task, proj, effectiveUser);
 
                 const assignedUsers = Array.isArray(task.assignedTo)
                   ? task.assignedTo
@@ -95,17 +102,39 @@ export function TaskList({
                 return (
                   <tr
                     key={task._id || task.id}
-                    onClick={() => onTaskClick && onTaskClick(task)}
-                    className="hover:bg-surface-subtle/50 transition-colors cursor-pointer"
+                    onClick={() => {
+                      if (canView && onTaskClick) {
+                        onTaskClick(task);
+                      }
+                    }}
+                    className={`${
+                      canView
+                        ? "hover:bg-surface-subtle/50 cursor-pointer"
+                        : "opacity-85 cursor-default"
+                    } transition-colors`}
                   >
                     <td className="px-4 py-3 font-medium text-text-primary max-w-xs truncate">
                       {task.title}
                     </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={task.status} size="xs" />
+                    <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <TaskStatusDropdown
+                        status={task.status}
+                        canEdit={canChangeStatus}
+                        onUpdate={(newStatus) =>
+                          onUpdate?.(task._id || task.id, { status: newStatus })
+                        }
+                        size="xs"
+                      />
                     </td>
-                    <td className="px-4 py-3">
-                      <PriorityBadge priority={task.priority} size="xs" />
+                    <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <TaskPriorityDropdown
+                        priority={task.priority}
+                        canEdit={canChangePriority}
+                        onUpdate={(newPriority) =>
+                          onUpdate?.(task._id || task.id, { priority: newPriority })
+                        }
+                        size="xs"
+                      />
                     </td>
                     <td className="px-4 py-3 text-text-secondary text-[13px]">
                       {proj?.name || task.project?.name || "Workspace"}
@@ -126,7 +155,7 @@ export function TaskList({
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      {canManage && (
+                      {canDeleteTask && (
                         <button
                           type="button"
                           onClick={() => {

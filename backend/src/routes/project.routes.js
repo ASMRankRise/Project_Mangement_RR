@@ -12,9 +12,12 @@ const {
   deleteProject,
   addProjectMember,
   removeProjectMember,
+  assignProjectHead,
+  removeProjectHead,
 } = require("../controllers/project.controller");
 
-router.post("/", authMiddleware, createProject);
+// Only Admin or Super Admin can create new projects
+router.post("/", authMiddleware, requireRole("admin"), createProject);
 
 router.get("/", authMiddleware, getProjects);
 
@@ -23,7 +26,6 @@ router.patch("/:projectId", authMiddleware, requireProjectOwner, updateProject);
 router.delete(
   "/:projectId",
   authMiddleware,
-  requireRole("admin"),
   requireProjectOwner,
   deleteProject,
 );
@@ -40,6 +42,20 @@ router.delete(
   authMiddleware,
   requireProjectOwner,
   removeProjectMember,
+);
+
+router.post(
+  "/:projectId/project-head",
+  authMiddleware,
+  requireProjectOwner,
+  assignProjectHead,
+);
+
+router.delete(
+  "/:projectId/project-head",
+  authMiddleware,
+  requireProjectOwner,
+  removeProjectHead,
 );
 
 router.get("/admin-check", authMiddleware, requireRole("admin"), (req, res) => {

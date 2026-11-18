@@ -18,8 +18,11 @@ import {
   PlusIcon,
 } from "./common/Icons";
 import { useToast } from "../context/ToastContext";
+import { useAuth } from "../context/AuthContext";
 
 export function AdminDashboard({ user }) {
+  const { user: authUser } = useAuth();
+  const effectiveUser = user || authUser;
   const { success, error: toastError } = useToast();
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
@@ -41,9 +44,11 @@ export function AdminDashboard({ user }) {
     deleteProject,
     addMember,
     removeMember,
+    assignProjectHead,
+    removeProjectHead,
   } = useProjects();
 
-  const taskState = useTasks(user, { limit: 100 });
+  const taskState = useTasks(effectiveUser, { limit: 100 });
   const { fetchTasks } = taskState;
 
   const fetchDashboard = useCallback(async () => {
@@ -127,7 +132,13 @@ export function AdminDashboard({ user }) {
     }
   };
 
-  const getId = (v) => (typeof v === "object" && v !== null ? v._id || v.id : v);
+  const getEntityId = (entity) => {
+    if (!entity) return "";
+    if (typeof entity === "object") {
+      return String(entity._id || entity.id || entity.userId || "").trim();
+    }
+    return String(entity).trim();
+  };
 
   // Metric computations (unchanged)
   const summary = dashboardData?.summary || {};
@@ -160,8 +171,24 @@ export function AdminDashboard({ user }) {
       ? Math.round((completedTasksCount / totalTasksCount) * 100)
       : 0;
 
+  const isSuperAdmin = effectiveUser?.role === "superadmin";
+  const currentUserId = getEntityId(effectiveUser);
+
+  const permittedProjectsForTaskCreation = useMemo(() => {
+    if (!effectiveUser) return [];
+    if (isSuperAdmin) return projects;
+    if (!currentUserId) return [];
+    return projects.filter((p) => {
+      const ownerId = getEntityId(p.owner);
+      const headId = getEntityId(p.projectHead);
+      const isOwner = ownerId !== "" && ownerId === currentUserId;
+      const isHead = headId !== "" && headId === currentUserId;
+      return isOwner || isHead;
+    });
+  }, [projects, currentUserId, isSuperAdmin, effectiveUser]);
+
   const selectedProject = projects.find(
-    (p) => String(getId(p)) === String(selectedProjectId),
+    (p) => getEntityId(p) === String(selectedProjectId),
   );
 
   return (
@@ -180,6 +207,8 @@ export function AdminDashboard({ user }) {
           onTaskDelete={handleDeleteTask}
           onAddMember={addMember}
           onRemoveMember={removeMember}
+          onAssignProjectHead={assignProjectHead}
+          onRemoveProjectHead={removeProjectHead}
           onRefresh={fetchProjects}
         />
       ) : (
@@ -213,14 +242,16 @@ export function AdminDashboard({ user }) {
                 New project
               </Button>
 
-              <Button
-                variant="primary"
-                size="md"
-                icon={PlusIcon}
-                onClick={() => setCreateTaskOpen(true)}
-              >
-                New task
-              </Button>
+              {permittedProjectsForTaskCreation.length > 0 && (
+                <Button
+                  variant="primary"
+                  size="md"
+                  icon={PlusIcon}
+                  onClick={() => setCreateTaskOpen(true)}
+                >
+                  New task
+                </Button>
+              )}
             </div>
           </div>
 
@@ -364,9 +395,9 @@ export function AdminDashboard({ user }) {
             ) : (
               <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
                 {projects.map((proj) => {
-                  const pId = String(getId(proj));
+                  const pId = getEntityId(proj);
                   const projTasks = taskState.allTasks.filter(
-                    (t) => String(getId(t.project)) === pId,
+                    (t) => getEntityId(t.project) === pId,
                   );
                   const completed = projTasks.filter(
                     (t) => t.status === "completed" || t.status === "done",
@@ -387,9 +418,16 @@ export function AdminDashboard({ user }) {
                           <h4 className="text-sm font-semibold text-text-primary group-hover:text-brand transition-colors truncate">
                             {proj.name}
                           </h4>
-                          <span className="rounded-md px-2 py-0.5 text-[12px] font-medium bg-surface text-text-secondary border border-border">
-                            Admin
-                          </span>
+                          {(() => {
+                            const isOwner = currentUserId !== "" && getEntityId(proj.owner) === currentUserId;
+                            const isHead = currentUserId !== "" && getEntityId(proj.projectHead) === currentUserId;
+                            const badge = isSuperAdmin ? "Super Admin" : isOwner ? "Owner" : isHead ? "Project Head" : "Member";
+                            return (
+                              <span className="rounded-md px-2 py-0.5 text-[12px] font-medium bg-surface text-text-secondary border border-border">
+                                {badge}
+                              </span>
+                            );
+                          })()}
                         </div>
                         <p className="mt-1 line-clamp-1 text-[13px] text-text-secondary">
                           {proj.description || "No description provided."}
@@ -485,7 +523,8 @@ export function AdminDashboard({ user }) {
       <CreateTaskModal
         isOpen={createTaskOpen}
         onClose={() => setCreateTaskOpen(false)}
-        projects={projects}
+        projects={permittedProjectsForTaskCreation}
+        user={user}
         onSubmit={handleCreateTask}
       />
 
