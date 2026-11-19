@@ -48,6 +48,8 @@ export function ProjectList({
   const getId = getEntityId;
 
   const isSuperAdmin = effectiveUser?.role === "superadmin";
+  const isAdmin = effectiveUser?.role === "admin";
+  const canRemoveMember = () => isSuperAdmin || isAdmin;
   const userId = getEntityId(effectiveUser);
 
   const isProjectOwner = (p) =>
@@ -55,6 +57,7 @@ export function ProjectList({
 
   const isProjectHead = (p) =>
     userId !== "" && getId(p?.projectHead) === userId;
+
 
   const canManage = (p) => isSuperAdmin || isProjectOwner(p);
 
@@ -375,6 +378,7 @@ export function ProjectList({
           canManage={canManage(manageMembersProject)}
           onAddMember={onAddMember}
           onRemoveMember={onRemoveMember}
+          canRemoveMember={canRemoveMember()}
           onAssignProjectHead={onAssignProjectHead}
           onRemoveProjectHead={onRemoveProjectHead}
         />

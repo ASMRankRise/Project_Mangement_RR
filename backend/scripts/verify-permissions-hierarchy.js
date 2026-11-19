@@ -31,6 +31,11 @@ const {
 
 const { getDashboard } = require("../src/controllers/dashboard.controller");
 const cacheUtils = require("../src/utils/cache");
+const TaskActivity = require("../src/models/TaskActivity");
+
+TaskActivity.create = async (doc) => doc;
+TaskActivity.insertMany = async (docs) => docs;
+TaskActivity.deleteMany = async () => ({ deletedCount: 0 });
 
 let totalTests = 0;
 let passedTests = 0;
@@ -489,7 +494,7 @@ async function runAllTests() {
       _id: taskId,
       project: projId,
       assignedTo: [{ toString: () => memberId }],
-      status: "todo",
+      status: "testing",
       save: async function () { return this; },
       populate: async function () { return this; },
     };

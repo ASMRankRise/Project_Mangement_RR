@@ -13,6 +13,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getEntityId, getTaskPermissions } from "../../utils/taskPermissions";
 import TaskStatusDropdown from "./TaskStatusDropdown";
 import TaskPriorityDropdown from "./TaskPriorityDropdown";
+import TaskActivityHistory from "./TaskActivityHistory";
 
 export function TaskDetailModal({
   isOpen,
@@ -40,6 +41,9 @@ export function TaskDetailModal({
   const [isEditing, setIsEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+
+  const triggerHistoryRefresh = () => setHistoryRefreshKey((prev) => prev + 1);
 
   useEffect(() => {
     if (task) {
@@ -198,7 +202,11 @@ export function TaskDetailModal({
               canEdit={canChangeStatus}
               onUpdate={async (newStatus) => {
                 setStatus(newStatus);
-                return await updateHandler?.(task._id || task.id, { status: newStatus });
+                const res = await updateHandler?.(task._id || task.id, { status: newStatus });
+                if (res?.success !== false) {
+                  triggerHistoryRefresh();
+                }
+                return res;
               }}
               size="xs"
             />
@@ -207,7 +215,11 @@ export function TaskDetailModal({
               canEdit={canChangePriority}
               onUpdate={async (newPriority) => {
                 setPriority(newPriority);
-                return await updateHandler?.(task._id || task.id, { priority: newPriority });
+                const res = await updateHandler?.(task._id || task.id, { priority: newPriority });
+                if (res?.success !== false) {
+                  triggerHistoryRefresh();
+                }
+                return res;
               }}
               size="xs"
             />
@@ -413,7 +425,11 @@ export function TaskDetailModal({
                   canEdit={canChangeStatus}
                   onUpdate={async (newStatus) => {
                     setStatus(newStatus);
-                    return await updateHandler?.(task._id || task.id, { status: newStatus });
+                    const res = await updateHandler?.(task._id || task.id, { status: newStatus });
+                    if (res?.success !== false) {
+                      triggerHistoryRefresh();
+                    }
+                    return res;
                   }}
                   size="sm"
                 />
@@ -428,11 +444,23 @@ export function TaskDetailModal({
                   canEdit={canChangePriority}
                   onUpdate={async (newPriority) => {
                     setPriority(newPriority);
-                    return await updateHandler?.(task._id || task.id, { priority: newPriority });
+                    const res = await updateHandler?.(task._id || task.id, { priority: newPriority });
+                    if (res?.success !== false) {
+                      triggerHistoryRefresh();
+                    }
+                    return res;
                   }}
                   size="sm"
                 />
               </div>
+            </div>
+
+            {/* Activity History Section */}
+            <div className="pt-3 border-t border-border">
+              <TaskActivityHistory
+                taskId={task._id || task.id}
+                refreshTrigger={historyRefreshKey}
+              />
             </div>
 
             {/* Footer Actions */}

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { StatusBadge } from "../common/Badge";
 import { useToast } from "../../context/ToastContext";
@@ -19,12 +20,21 @@ export function TaskStatusDropdown({
 
   const handleChange = async (e) => {
     e.stopPropagation();
+
     const newStatus = e.target.value;
     if (newStatus === status || isUpdating || disabled) return;
 
+    const confirmed = window.confirm(
+      `Are you sure you want to change status from "${status}" to "${newStatus}"?`
+    );
+
+    if (!confirmed) return;
+
     setIsUpdating(true);
+
     try {
       const res = await onUpdate?.(newStatus);
+
       if (res?.success === false) {
         toastError(res?.error || "Failed to update status");
       } else {
@@ -63,6 +73,7 @@ export function TaskStatusDropdown({
         <option value="completed">Completed</option>
         <option value="done">Done</option>
       </select>
+
       {isUpdating && (
         <span className="h-3 w-3 animate-spin rounded-full border-2 border-brand border-t-transparent shrink-0" />
       )}

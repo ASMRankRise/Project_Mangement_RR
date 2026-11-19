@@ -9,7 +9,14 @@ const redis = require("../config/redis");
 const {
   invalidateProjectRelatedCaches,
   PROJECT_CACHE_VERSION_KEY,
+  getShortId,
 } = require("../utils/cache");
+
+const getProjectLabel = (project, fallbackId) => {
+  if (project?.name) return `"${project.name}"`;
+  const id = fallbackId || project?._id;
+  return id ? `#${getShortId(id)}` : "#unknown";
+};
 
 const projectPopulateFields = [
   { path: "owner", select: "name email" },
@@ -100,12 +107,14 @@ const createProject = async (req, res) => {
 
     await invalidateProjectRelatedCaches();
 
+    console.log(`[Project] Project created — ${getProjectLabel(project)} (#${getShortId(project._id)})`);
+
     return res.status(201).json({
       message: "Project created successfully",
       project,
     });
   } catch (error) {
-    console.error("Create project error:", error);
+    console.error("[Project] Create project error:", error.message || error);
 
     return res.status(500).json({
       message: "Failed to create project",
@@ -122,7 +131,7 @@ const getProjects = async (req, res) => {
     try {
       version = Number(await redis.get(PROJECT_CACHE_VERSION_KEY)) || 0;
     } catch (error) {
-      console.error("Projects Redis version error:", error.message);
+      console.error("[Redis] Projects version error:", error.message || error);
     }
 
     const cacheKey = `projects:v${version}:user:${req.user.userId}:role:${req.user.role}`;
@@ -131,13 +140,13 @@ const getProjects = async (req, res) => {
       const cachedProjects = await redis.get(cacheKey);
 
       if (cachedProjects !== null) {
-        console.log("Projects fetched from Redis");
+        console.log("[Redis] Projects list cache HIT");
         return res.status(200).json(cachedProjects);
       }
 
-      console.log("Projects Redis cache miss");
+      console.log("[Redis] Projects list cache MISS");
     } catch (error) {
-      console.error("Projects Redis cache read error:", error.message);
+      console.error("[Redis] Projects list cache read error:", error.message || error);
     }
 
     const isSuperAdmin = req.user.role === "superadmin";
@@ -161,23 +170,21 @@ const getProjects = async (req, res) => {
       projects,
     };
 
-    console.log("Projects fetched from MongoDB");
-
     try {
       const latestVersion =
         Number(await redis.get(PROJECT_CACHE_VERSION_KEY)) || 0;
 
       if (version === latestVersion) {
         await redis.set(cacheKey, responseData, { ex: 60 });
-        console.log("Projects saved to Redis cache");
+        console.log("[Redis] Projects list cached successfully — TTL: 60s");
       }
     } catch (error) {
-      console.error("Projects Redis cache write error:", error.message);
+      console.error("[Redis] Projects list cache write error:", error.message || error);
     }
 
     return res.status(200).json(responseData);
   } catch (error) {
-    console.error("Get projects error:", error);
+    console.error("[Project] Get projects error:", error.message || error);
 
     return res.status(500).json({
       message: "Failed to fetch projects",
@@ -186,9 +193,24 @@ const getProjects = async (req, res) => {
 };
 
 // Update Project
+
 const updateProject = async (req, res) => {
   try {
     const project = req.project;
+
+    const allowedFields = ["name", "description", "projectHead"];
+
+    const extraFields = Object.keys(req.body).filter(
+      (key) => !allowedFields.includes(key),
+    );
+
+    if (extraFields.length > 0) {
+      return res.status(400).json({
+        message: "Unexpected fields are not allowed",
+        fields: extraFields,
+      });
+    }
+
     const { name, description, projectHead } = req.body;
 
     if (name !== undefined) {
@@ -252,16 +274,6 @@ const updateProject = async (req, res) => {
           });
         }
 
-        if (
-          project.projectHead &&
-          project.projectHead.toString() !== headUser._id.toString()
-        ) {
-          return res.status(400).json({
-            message:
-              "Project already has a Project Head. Remove the current Project Head before assigning a new one.",
-          });
-        }
-
         const isMember = project.members.some(
           (id) => (id._id || id).toString() === headUser._id.toString(),
         );
@@ -282,12 +294,14 @@ const updateProject = async (req, res) => {
 
     await invalidateProjectRelatedCaches();
 
+    console.log(`[Project] Project updated — ${getProjectLabel(project)} (#${getShortId(project._id)})`);
+
     return res.status(200).json({
       message: "Project updated successfully",
       project,
     });
   } catch (error) {
-    console.error("Update project error:", error);
+    console.error(`[Project] Update project error (#${getShortId(req.project?._id || req.params.id)}):`, error.message || error);
 
     return res.status(500).json({
       message: "Failed to update project",
@@ -324,11 +338,13 @@ const deleteProject = async (req, res) => {
 
     await invalidateProjectRelatedCaches();
 
+    console.log(`[Project] Project deleted — ${getProjectLabel(project)} (#${getShortId(project._id)})`);
+
     return res.status(200).json({
       message: "Project and its tasks deleted successfully",
     });
   } catch (error) {
-    console.error("Delete project error:", error);
+    console.error(`[Project] Delete project error (#${getShortId(req.project?._id || req.params.id)}):`, error.message || error);
 
     return res.status(500).json({
       message: "Failed to delete project",
@@ -378,12 +394,14 @@ const addProjectMember = async (req, res) => {
 
     await invalidateProjectRelatedCaches();
 
+    console.log(`[Project] Member added to ${getProjectLabel(project)} (#${getShortId(project._id)})`);
+
     return res.status(200).json({
       message: "Project member added successfully",
       project,
     });
   } catch (error) {
-    console.error("Add project member error:", error);
+    console.error(`[Project] Add project member error (#${getShortId(project?._id || req.params.id)}):`, error.message || error);
 
     return res.status(500).json({
       message: "Failed to add project member",
@@ -438,12 +456,14 @@ const removeProjectMember = async (req, res) => {
 
     await invalidateProjectRelatedCaches();
 
+    console.log(`[Project] Member removed from ${getProjectLabel(project)} (#${getShortId(project._id)})`);
+
     return res.status(200).json({
       message: "Project member removed successfully",
       project,
     });
   } catch (error) {
-    console.error("Remove project member error:", error);
+    console.error(`[Project] Remove project member error (#${getShortId(project?._id || req.params.id)}):`, error.message || error);
 
     return res.status(500).json({
       message: "Failed to remove project member",
@@ -501,12 +521,14 @@ const assignProjectHead = async (req, res) => {
 
     await invalidateProjectRelatedCaches();
 
+    console.log(`[Project] Project Head assigned to ${getProjectLabel(project)} (#${getShortId(project._id)})`);
+
     return res.status(200).json({
       message: "Project Head assigned successfully",
       project,
     });
   } catch (error) {
-    console.error("Assign Project Head error:", error);
+    console.error(`[Project] Assign Project Head error (#${getShortId(project?._id || req.params.id)}):`, error.message || error);
 
     return res.status(500).json({
       message: "Failed to assign Project Head",
@@ -526,12 +548,14 @@ const removeProjectHead = async (req, res) => {
 
     await invalidateProjectRelatedCaches();
 
+    console.log(`[Project] Project Head removed from ${getProjectLabel(project)} (#${getShortId(project._id)})`);
+
     return res.status(200).json({
       message: "Project Head removed successfully",
       project,
     });
   } catch (error) {
-    console.error("Remove Project Head error:", error);
+    console.error(`[Project] Remove Project Head error (#${getShortId(project?._id || req.params.id)}):`, error.message || error);
 
     return res.status(500).json({
       message: "Failed to remove Project Head",
